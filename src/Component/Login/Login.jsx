@@ -1,16 +1,21 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useForm, SubmitHandler } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import anh from './Green Creative Pharmacy Concept Logo Design.png'
+import { schemaLogin } from '../ValidateScheme/Validate'
+import { yupResolver } from '@hookform/resolvers/yup'
+
 export default function Login() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors }
-  } = useForm()
+  } = useForm({
+    resolver: yupResolver(schemaLogin)
+  })
 
   const onSubmit = handleSubmit((data) => {
+    // gửi lên api data
     console.log(data)
   })
   return (

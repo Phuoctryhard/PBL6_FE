@@ -1,28 +1,14 @@
-// import React from 'react'
-// import Header from '../../Component/Header'
-// export default function MainLayout() {
-//   return (
-//     <div className=''>
-//       <div className='grid grid-cols-4 min-h-screen '>
-//         <div class='col-span-1 bg-slate-500 '>03</div>
-//         <div class='col-span-3 bg-gray-light'>
-//           <div className='bg-red-600'>Header</div>
-//           <div className='h-[1000px]'>Contend</div>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
 import React from 'react'
 import Header from '../../Component/Header'
 import { NavLink } from 'react-router-dom'
+
 export default function MainLayout({ children }) {
   return (
     <div className=''>
-      <div className='bg-red-600 sticky top-0 z-10 h-10'>Header</div>
-      <div className='grid grid-cols-4 min-h-screen'>
+      <div className='bg-red-600 sticky top-0 z-10 h-10 fixed'>Header</div>
+      <div className='grid grid-cols-4 min-h-screen '>
         {/* Sidebar */}
-        <div className='col-span-1 bg-white'>
+        <div className='col-span-1 bg-white fixed w-[250px]'>
           <div className='flex-1 overflow-y-scroll h-[calc(100vh)] '>
             <div className='h-[1000px]'>
               <div className='flex flex-col mt-5 ml-5 gap-y-5'>

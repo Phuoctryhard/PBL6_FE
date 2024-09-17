@@ -17,9 +17,9 @@ export default function useRouterElement() {
         <MainLayout>
           <div className='col-span-3 bg-gray-light  '>
             {/* Scrollable content */}
-            <div className='flex-1 overflow-y-scroll h-[calc(100vh)]'>
+            <div className=''>
               {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>Tổng quan </div>
+              <div className=' flex items-center justify-center'>Tổng quan </div>
             </div>
           </div>
         </MainLayout>
@@ -31,9 +31,10 @@ export default function useRouterElement() {
         <MainLayout>
           <div className='col-span-3 bg-gray-light  '>
             {/* Scrollable content */}
-            <div className='flex-1 overflow-y-scroll h-[calc(100vh)]'>
+            //{' '}
+            <div className=''>
               {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>Content overview </div>
+              <div className=' flex items-center justify-center'>Content overview </div>
             </div>
           </div>
         </MainLayout>
@@ -45,7 +46,7 @@ export default function useRouterElement() {
         <MainLayout>
           <div className='col-span-3 bg-gray-light  '>
             {/* Scrollable content */}
-            <div className='flex-1 overflow-y-scroll h-[calc(100vh)]'>
+            <div className=''>
               {/* Adjust the height according to your header's height */}
               <div className='h-[1000px] flex items-center justify-center'>Content post </div>
             </div>
@@ -59,7 +60,7 @@ export default function useRouterElement() {
         <MainLayout>
           <div className='col-span-3 bg-gray-light  '>
             {/* Scrollable content */}
-            <div className='flex-1 overflow-y-scroll h-[calc(100vh)]'>
+            <div className=''>
               {/* Adjust the height according to your header's height */}
               <div className='h-[1000px] flex items-center justify-center'>Content product</div>
             </div>
@@ -91,3 +92,8 @@ export default function useRouterElement() {
 
   return element
 }
+
+// <div className='flex-1 overflow-y-scroll h-[calc(100vh)]'>
+//               {/* Adjust the height according to your header's height */}
+//               <div className='h-[1000px] flex items-center justify-center'>Content overview </div>
+//             </div>
