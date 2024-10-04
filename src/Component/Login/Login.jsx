@@ -20,7 +20,7 @@ export default function Login() {
   })
   return (
     <div className=' '>
-      <div className=' lg:grid-cols-6 bg-red1 grid h-full'>
+      <div className=' lg:grid-cols-6 bg-blue grid h-full'>
         <div className=' hidden lg:flex lg:flex-col lg:justify-center lg:items-center lg:col-start-1 lg:col-span-3 lg:block'>
           <div className='w-[200px] mb-10 rounded-sm '>
             <img src={anh} alt='' className='rounded-sm' />

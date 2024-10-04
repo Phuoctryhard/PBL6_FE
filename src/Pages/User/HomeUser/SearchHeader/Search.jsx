@@ -2,10 +2,22 @@ import React from 'react'
 import { Popover } from 'antd'
 import Button1 from '../../../../Component/Button/Button'
 import Avatar1 from '../../../../Component/Avatar/Avatar'
-
+import { useNavigate, createSearchParams } from 'react-router-dom'
+import { useState } from 'react'
 export default function Search() {
+  const [openCategory, setopenCategory] = useState(false)
+  const navigate = useNavigate()
   const handleDrop = () => {
-    console.log('s')
+    navigate({
+      pathname: '/search',
+      search: `?${createSearchParams({
+        keyword: 'John'
+      })}`
+    })
+  }
+
+  var handleClick = () => {
+    setopenCategory(!openCategory)
   }
   const profile = (
     <div className='w-full  rounded-md '>
@@ -235,8 +247,130 @@ export default function Search() {
           </div>
         </div>
 
-        <div className=''></div>
+        <div className='px-24 flex gap-2'>
+          <div className='flex '>
+            <button
+              onClick={handleClick}
+              className='flex font-semibold bg-white test-sm py-2 px-2 rounded-sm justify-between w-[200px] hover:text-blue'
+            >
+              <div className='flex justify-center items-center gap-2'>
+                <span>
+                  <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' className='bg-white w-5 h-5'>
+                    <path
+                      d='M21.2188 11.2222H2.78125C2.34977 11.2222 2 11.5704 2 11.9999C2 12.4295 2.34977 12.7777 2.78125 12.7777H21.2188C21.6502 12.7777 22 12.4295 22 11.9999C22 11.5704 21.6502 11.2222 21.2188 11.2222Z'
+                      fill='currentColor'
+                    ></path>
+                    <path
+                      d='M21.2188 5H2.78125C2.34977 5 2 5.34821 2 5.77777C2 6.20733 2.34977 6.55554 2.78125 6.55554H21.2188C21.6502 6.55554 22 6.20733 22 5.77777C22 5.34821 21.6502 5 21.2188 5Z'
+                      fill='currentColor'
+                    ></path>
+                    <path
+                      d='M21.2188 17.4446H2.78125C2.34977 17.4446 2 17.7928 2 18.2223C2 18.6519 2.34977 19.0001 2.78125 19.0001H21.2188C21.6502 19.0001 22 18.6519 22 18.2223C22 17.7928 21.6502 17.4446 21.2188 17.4446Z'
+                      fill='currentColor'
+                    ></path>
+                  </svg>
+                </span>
+                <span>Danh mục</span>
+              </div>
+              <span
+                className={`inline-flex justify-center max-h-full max-w-full h-full w-[calc(14rem/16)] transition duration-200 ${!openCategory ? '' : 'rotate-180'}`}
+              >
+                <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                  <path
+                    d='M12.7138 16.7077L21.7048 7.71374C22.0984 7.31909 22.0984 6.6797 21.7048 6.28406C21.3111 5.88941 20.6717 5.88941 20.2781 6.28406L12.0005 14.5646L3.72293 6.28505C3.32928 5.89041 2.68989 5.89041 2.29524 6.28505C1.90159 6.6797 1.90159 7.32009 2.29524 7.71474L11.2861 16.7087C11.6757 17.0973 12.3251 17.0973 12.7138 16.7077Z'
+                    fill='currentColor'
+                  ></path>
+                </svg>
+              </span>
+            </button>
+
+
+            <div className=''></div>
+          
+            </div>
+        </div>
       </div>
+      {openCategory && (
+        <div
+          className='grid grid-cols-8 px-24  gap-x-3 z-10 absolute bg-white '
+          onMouseLeave={() => setopenCategory(false)}
+        >
+          <div className='col-span-2 bg-yellow-500  pt-3 bordder border-r-2'>
+            <div className='flex flex-col rounded-lg'>
+              <div className='flex p-3 gap-2 bg-[#EBFAFB] text-blue rounded-sm mb-3 mr-2'>
+                <img src='' alt='kocoanh' />
+
+                <span>Thuốc</span>
+              </div>
+
+              <div className='flex px-2 py-3 hover:bg-[#EBFAFB] hover:text-blue mb-3 mr-2'>
+                <img src='' alt='kocoanh' />
+
+                <span>Tra cứu bệnh</span>
+              </div>
+
+              <div className='flex px-2 py-3 hover:bg-[#EBFAFB] hover:text-blue mb-3 mr-2'>
+                <img src='' alt='kocoanh' />
+
+                <span>Tra cứu bệnh</span>
+              </div>
+
+              <div className='flex px-2 py-3 hover:bg-[#EBFAFB] hover:text-blue mb-3 mr-2'>
+                <img src='' alt='kocoanh' />
+
+                <span>Tra cứu bệnh</span>
+              </div>
+            </div>
+          </div>
+          <div className='col-span-4 bg-yellow-500 rounded-lg pt-3   '>
+            <div className='flex gap-4  cursor-pointer '>
+              <div className='flex flex-col gap-y-2 justify-center '>
+                <img
+                  src='https://prod-cdn.pharmacity.io/e-com/images/ecommerce/300x300/20240223191727-0-P00126_5.png'
+                  alt='anh'
+                  className='w-[100px] h-[100px] object-cover border border-1'
+                />
+                <p className=''>Thuốc không kê đơn</p>
+              </div>
+
+              <div className='flex flex-col gap-y-2 justify-center'>
+                <img
+                  src='https://prod-cdn.pharmacity.io/e-com/images/ecommerce/300x300/20240223191446-0-P00218_1_l.png'
+                  alt='anh'
+                  className='w-[100px]  h-[100px] object-cover border border-1'
+                />
+                <p className=''>Thuốc kê đơn</p>
+              </div>
+
+              <div className='flex flex-col gap-y-2  '>
+                <div className='w-[100px]  h-[100px] flex justify-center items-center border  border-b-2  '>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    strokeWidth={1.5}
+                    stroke='currentColor'
+                    className='size-6   '
+                  >
+                    <path strokeLinecap='round' strokeLinejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' />
+                  </svg>
+                </div>
+
+                <p>Xem Tất Cả</p>
+              </div>
+            </div>
+          </div>
+          <div className='col-span-2 flex flex-col justify-between rounded-lg overflow-hidden  pt-3  mb-5'>
+            <div className=''>
+              <img
+                src='https://prod-cdn.pharmacity.io/e-com/images/banners/20240920042514-0-Web_AllScreen%20Directory%20menu0310_%28522x976%29px.webp'
+                alt=''
+                className=''
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

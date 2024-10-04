@@ -1,7 +1,10 @@
 import React from 'react'
 import Nav from '../../../Component/Nav/Nav'
 import Search from './SearchHeader/Search'
-
+import Slider from './Slider/Slider'
+import Footer from '../../../Component/Footer/Footer.jsx'
+import ProductList from '../ProductList/ProductList'
+import DetailProduct from '../DetailProduct/DetailProduct.jsx'
 export default function HomeUser() {
   return (
     <div className=''>
@@ -12,7 +15,6 @@ export default function HomeUser() {
           className='px-24'
         />
       </div>
-
       <div className='px-24 py-1 flex items-center justify-between space-x-6  bg-[#ebf3fa] '>
         <div className='flex gap-3 '>
           <div data-state='closed' class='focus-visible:outline-none'>
@@ -102,10 +104,15 @@ export default function HomeUser() {
             </p>
           </a>
         </div>
-      </div>
 
+       
+      </div>
       <Search />
+      <Slider />
+      <ProductList />
+      <Footer />
     </div>
   )
 }
 
+// <DetailProduct />
