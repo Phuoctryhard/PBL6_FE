@@ -10,11 +10,10 @@ export default function Header() {
 
         <div className='text-[#ee4d2d]'>
           <a
-            className=''
             href='https://help.shopee.vn/vn/s'
             target='_blank'
             rel='noopener noreferrer'
-            class='aSJqEv'
+            className='aSJqEv'
             _msttexthash='4020718'
             _msthash='3'
           >

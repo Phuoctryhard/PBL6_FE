@@ -5,11 +5,26 @@ import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
 import Login from '../Component/Login/Login.jsx'
 import Register from '../Component/Register/index.js'
 import MainLayout from '../Layouts/MainLayout/MainLayout.jsx'
+import MainLayoutUser from '../Layouts/User/MainLayout/index.js'
+import CategoryListProduct from '../Pages/User/CategoryListProduct/CategoryListProduct.jsx'
+import VerifyEmail from '../Pages/User/VerifyEmail/index.jsx'
 export default function useRouterElement() {
   const element = useRoutes([
     {
       path: '/',
       element: <HomeUser />
+    },
+    {
+      path: '/cart',
+      element: <MainLayoutUser />
+    },
+    {
+      path: '/auth/verify-email/:user',
+      element: <VerifyEmail />
+    },
+    {
+      path: '/:slug',
+      element: <CategoryListProduct />
     },
     {
       path: '/admin',

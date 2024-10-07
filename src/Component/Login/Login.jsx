@@ -1,11 +1,17 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import anh from './Green Creative Pharmacy Concept Logo Design.png'
 import { schemaLogin } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import authAPI from '../../Api/user/auth'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useNavigate } from 'react-router-dom'
 
 export default function Login() {
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -13,15 +19,30 @@ export default function Login() {
   } = useForm({
     resolver: yupResolver(schemaLogin)
   })
-
-  const onSubmit = handleSubmit((data) => {
-    // gửi lên api data
-    console.log(data)
+  // Mutations
+  const mutation = useMutation({
+    mutationFn: authAPI.loginAccount
   })
+  const onSubmit = handleSubmit((data) => {
+    console.log(data)
+    // gửi lên api data
+    mutation.mutate(data, {
+      onSuccess: () => {
+        console.log('Thành công')
+        toast.success('Wow so easy !')
+        navigate('/')
+      },
+      onError: () => {
+        console.log('Thất bại')
+        toast.error('Đăng nhập thất bại!')
+      }
+    })
+  })
+
   return (
     <div className=' '>
       <div className=' lg:grid-cols-6 bg-blue grid h-full'>
-        <div className=' hidden lg:flex lg:flex-col lg:justify-center lg:items-center lg:col-start-1 lg:col-span-3 lg:block'>
+        <div className=' hidden lg:flex lg:flex-col lg:justify-center lg:items-center lg:col-start-1 lg:col-span-3 '>
           <div className='w-[200px] mb-10 rounded-sm '>
             <img src={anh} alt='' className='rounded-sm' />
           </div>

@@ -1,8 +1,5 @@
 import axios from 'axios'
-import { toast } from 'react-toastify'
-import HttpStatusCode from 'src/constants/httpStatusCode.eum'
-import { AuthResponse } from 'src/type/auth.type'
-import { clearLS, getAccessToken, saveAccessToken, setProfileLS } from './auth'
+import { getAccessToken } from '.'
 
 class Http {
   instance
@@ -10,9 +7,9 @@ class Http {
   // khởi tạo biến ở class thì khởi tạo trong contructor luôn
   accessToken
   constructor() {
-    //  this.accessToken = getAccessToken()
+    this.accessToken = getAccessToken()
     this.instance = axios.create({
-      baseURL: 'https://api-ecom.duthanhduoc.com',
+      baseURL: 'https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/',
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json'
@@ -23,7 +20,9 @@ class Http {
         if (this.accessToken && config.headers) {
           // header có thể undified -> kick chuột vô nó
           //authorization : viết đúng định dạng để server chấp nhận
-          config.headers.authorization = this.accessToken
+          console.log(this.accessToken)
+          config.headers.Authorization = this.accessToken
+
           return config
         }
         return config
@@ -43,14 +42,6 @@ class Http {
       },
       function (error) {
         console.log(error)
-        if (error.response?.status !== HttpStatusCode.UnprocessableEntity) {
-          // nếu mà ko có error?.response?.data?.message lấy error.message
-          // const data: any | undefined = error?.response?.data
-          const message = error?.response?.data?.message || error.message
-          console.log(message)
-          // sử dụng 1 toast để hiển thị
-          toast.error(message)
-        }
         return Promise.reject(error)
       }
     )
@@ -58,3 +49,43 @@ class Http {
 }
 const http = new Http().instance
 export default http
+// import axios from 'axios'
+//import { getAccessToken } from './auth'
+
+// class Http {
+//   instance
+//   _accessToken
+//   constructor() {
+//     this.accessToken = getAccessToken()
+//     this.instance = axios.create({
+//       // baseURL: 'https://8h8zcx79-4000.asse.devtunnels.ms/',
+//       baseURL: 'http://localhost:4000/',
+//       timeout: 10000,
+//       headers: { 'Content-Type': 'application/json' }
+//     })
+
+//     this.instance.interceptors.request.use(
+//       (config) => {
+//         if (this._accessToken && config.headers) {
+//           config.headers.authorization = this._accessToken
+//           return config
+//         }
+//         return config
+//       },
+//       (error) => {
+//         return Promise.reject(error)
+//       }
+//     )
+//     this.instance.interceptors.response.use(
+//       (response) => {
+//         console.log(response)
+//         return response
+//       },
+//       (error) => {
+//         return Promise.reject(error)
+//       }
+//     )
+//   }
+// }
+// const http = new Http().instance
+// export default http

@@ -4,7 +4,10 @@ import { useForm } from 'react-hook-form'
 import anh from './Green Creative Pharmacy Concept Logo Design.png'
 import { schemaRegister } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
-
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import authAPI from '../../Api/user/auth'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 export default function Register() {
   const {
     register,
@@ -13,10 +16,23 @@ export default function Register() {
   } = useForm({
     resolver: yupResolver(schemaRegister)
   })
-
+  // Mutations
+  const mutation = useMutation({
+    mutationFn: authAPI.registerAccount
+  })
   const onSubmit = handleSubmit((data) => {
     // gửi lên api data
-    console.log(data)
+    console.log(data) // gửi lên api data
+    mutation.mutate(data, {
+      onSuccess: () => {
+        console.log('Thành công')
+        toast.success('Wow so easy !')
+      },
+      onError: () => {
+        console.log('Thất bại')
+        toast.error('Đăng  kí thất bại!')
+      }
+    })
   })
   return (
     <div className=' '>
@@ -43,7 +59,7 @@ export default function Register() {
                 />
                 <div className='mt-1 text-red-600 text-sm min-h-[1.5rem]'>{errors.fullname?.message}</div>
               </div>
-              <div className='mt-8'>
+              <div className='mt-4'>
                 <input
                   placeholder='Email'
                   {...register('email')}
@@ -53,7 +69,7 @@ export default function Register() {
                 />
                 <div className='mt-1 text-red-600 text-sm min-h-[1.5rem]'>{errors.email?.message}</div>
               </div>
-              <div className='mt-8'>
+              <div className='mt-4'>
                 <input
                   placeholder='Password'
                   type='password'
@@ -63,6 +79,17 @@ export default function Register() {
                   className=' p-3 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm shadow-sm '
                 />
                 <div className='mt-1 text-red-600 text-sm min-h-[1.5rem]'>{errors.password?.message}</div>
+              </div>
+              <div className='mt-4'>
+                <input
+                  placeholder='password_confirmation'
+                  type='password'
+                  name='Password_confirmation'
+                  {...register('password_confirmation')}
+                  autoComplete='on'
+                  className=' p-3 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm shadow-sm '
+                />
+                <div className='mt-1 text-red-600 text-sm min-h-[1.5rem]'>{errors.password_confirmation?.message}</div>
               </div>
 
               <div className='mt-10'>

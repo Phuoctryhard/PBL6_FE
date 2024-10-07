@@ -5,7 +5,10 @@ import Slider from './Slider/Slider'
 import Footer from '../../../Component/Footer/Footer.jsx'
 import ProductList from '../ProductList/ProductList'
 import DetailProduct from '../DetailProduct/DetailProduct.jsx'
+
+
 export default function HomeUser() {
+
   return (
     <div className=''>
       <div className='bg-[#66cffd]'>
@@ -104,12 +107,11 @@ export default function HomeUser() {
             </p>
           </a>
         </div>
-
-       
       </div>
       <Search />
       <Slider />
       <ProductList />
+
       <Footer />
     </div>
   )

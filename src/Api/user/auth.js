@@ -1,4 +1,4 @@
-import http from 'src/until/http'
+import http from '../../until/until'
 
 // export const registerAccount = (body: { email: string; password: string }) => http.post<AuthResponse>('/register', body)
 
@@ -8,8 +8,9 @@ import http from 'src/until/http'
 
 // đưa vô 1 object
 const authAPI = {
-  registerAccount: (body) => http.post('/register', body),
-  loginAccount: (body) => http.post('/login', body),
-  logout: () => http.post('/logout')
+  registerAccount: (body) => http.post('user/register', body),
+  loginAccount: (body) => http.post('user/login', body),
+  logout: () => http.post('user/logout'),
+  verifyEmail: (token) => http.post('user/verify-email', token)
 }
 export default authAPI
