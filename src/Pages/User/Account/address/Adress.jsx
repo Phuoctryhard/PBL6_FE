@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import ModalComponent from '../../../../Component/Modal/Modal'
 import { Modal } from 'antd'
 import AddressForm from './component/createAddress/CreateAddress'
+import { useQuery } from '@tanstack/react-query'
+import AddressApi from '../../../../Api/user/address'
 export default function Adress() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const showModal = () => {
@@ -29,6 +31,12 @@ export default function Adress() {
       />
     </svg>
   )
+
+  const { data } = useQuery({
+    queryKey: ['getAddress'],
+    queryFn: AddressApi.getAddress_receive
+  })
+  console.log(data)
   return (
     <div className='px-3 py-3 '>
       <div className=' flex items-center justify-between  border-b border-b-gray-300 pb-4'>

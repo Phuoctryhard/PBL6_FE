@@ -1,0 +1,23 @@
+icon : iconsax
+shrink : 0 ko co lại 
+shrink : co lại'
+
+Khi sử dụng grid-flow-col,
+các phần tử trong grid sẽ được sắp xếp từ trái sang phải, và nếu hết không gian trong một hàng, chúng sẽ tiếp tục được xếp vào hàng tiếp theo.
+Nếu không gian hàng ngang bị giới hạn, các phần tử sẽ tự động "đổ" xuống dòng kế tiếp nhưng vẫn sắp xếp theo cột (theo chiều ngang).
+
+Tailwind CSS React - Flowbite
+https://headlessui-float.vercel.app/react/arrow
+
+https://ant.design/components/popover
+
+
+"Sử dụng utility object-cover để thay đổi kích thước nội dung của một phần tử sao cho phù hợp với khung chứa của nó."
+
+
++ viet category de hien thi list product 
+ path: '/:slug',
+      element: <CategoryPage />
+
+
+
