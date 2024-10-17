@@ -1,8 +1,8 @@
 import React from 'react'
-import anh1 from '../HomeUser/Slider/img/sanpham.jpg'
-import anh2 from '../HomeUser/Slider/img/sanDeal.png'
-import Button1 from '../../../Component/Button/Button'
-import Category from '../HomeUser/CategoryProduct/Category'
+import anh1 from '../../HomeUser/Slider/img/sanpham.jpg'
+import anh2 from '../../HomeUser/Slider/img/sanDeal.png'
+import Button1 from '../../../../Component/Button/Button'
+import Category from '../../HomeUser/CategoryProduct/Category'
 export default function ProductList() {
   return (
     <div className='bg-white'>

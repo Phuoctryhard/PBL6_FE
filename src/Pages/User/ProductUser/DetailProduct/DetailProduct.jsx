@@ -1,8 +1,9 @@
 import React from 'react'
 
 export default function DetailProduct() {
+  const handleQuantity = (event) => {}
   return (
-    <div className='px-24'>
+    <div className='px-24  '>
       <div class='hidden bg-neutral-100 md:block  mb-4'>
         <div class='container '>
           <div>
@@ -56,9 +57,10 @@ export default function DetailProduct() {
         </div>
       </div>
 
-      <div className='bg-red-500 grid grid-cols-12'>
-        <div className='col-span-9 grid grid-cols-4 gap-4 ml-4'>
-          <div className='col-span-2 '>
+      {/* ffffff:    */}
+      <div className='bg-[#ffffff] grid grid-cols-12 gap-6'>
+        <div className='col-span-9 grid grid-cols-4 gap-6 ml-4'>
+          <div className='col-span-2 border-b-2 '>
             <div className='sticky top-0'>
               <div className=''>
                 <img src='	https://prod-cdn.pharmacity.io/e-com/images/ecommerce/1000x1000/P22255.png' alt='' />
@@ -83,7 +85,7 @@ export default function DetailProduct() {
               </div>
             </div>
           </div>
-          <div className='bg-white col-span-2'>
+          <div className='bg-white col-span-2 border-b-2'>
             <div class='relative grid grid-flow-col justify-between bg-center bg-[image:var(--url-bg)] bg-cover bg-no-repeat h-[calc(62rem/16)] px-4 md:h-[calc(39rem/16)] md:p-2'>
               <div class='grid items-center justify-between gap-1 md:grid-flow-col md:grid-cols-[calc(93rem/16),1fr]'>
                 <div class='relative mt-2.5 h-[calc(23rem/16)] w-[calc(104rem/16)] md:mt-0 md:h-[calc(23rem/16)] md:w-[calc(93rem/16)]'>
@@ -100,7 +102,7 @@ export default function DetailProduct() {
                 </div>
               </div>
               <div class='grid content-start items-center justify-items-end gap-[3px] pt-[calc(7rem/16)] md:grid-flow-col md:justify-start md:gap-2 md:pt-0'>
-                <p class='text-xs leading-5 text-[var(--color)] min-[768px]:block min-[1024px]:hidden min-[1200px]:block'>
+                <p class='text-base leading-5 text-[var(--color)] min-[768px]:block min-[1024px]:hidden min-[1200px]:block'>
                   Kết thúc trong
                 </p>
                 <span class='flex items-center'>
@@ -127,18 +129,18 @@ export default function DetailProduct() {
             >
               Gel URGO ECZEKALM hỗ trợ giảm các triệu chứng viêm da và khô da (Tuýp 50ml)
             </h1>
-            <div class='flex items-center justify-between mb-3 md:mb-4'>
+            <div class='flex items-center justify-between mb-3 md:mb-4 mt-2'>
               <div class='flex content-start items-center space-x-1 py-[calc(2rem/16)]'>
                 <p class='text-sm leading-5 text-neutral-600'>P22255</p>
                 <span class='h-1 w-1 rounded-full bg-neutral-600'></span>
-                <a class='text-sm leading-5 text-primary-500' href='/thuong-hieu/urgo'>
+                <a class='text-sm leading-5 text-[#1A51A2]' href='/thuong-hieu/urgo'>
                   Thương hiệu: Urgo
                 </a>
               </div>
             </div>
 
-            <div class='flex flex-col flex-wrap items-start justify-start animate-in md:flex-row md:items-center mb-1.5 md:mb-1'>
-              <h3 class='text-[28px] leading-[36px] order-2 shrink-0 whitespace-nowrap pt-1 font-bold text-primary-500 md:order-1 md:me-4 md:pt-0'>
+            <div class='flex flex-col flex-wrap items-start justify-start animate-in md:flex-row md:items-center mb-1.5 md:mb-1 mt-1'>
+              <h3 class='text-[28px] leading-[36px] order-2 shrink-0 whitespace-nowrap pt-1 font-bold text-[#1A51A2] md:order-1 md:me-4 md:pt-0'>
                 272.700&nbsp;₫/Hộp
               </h3>
               <div class='order-1 flex items-center justify-start md:order-2'>
@@ -152,12 +154,15 @@ export default function DetailProduct() {
               </div>
             </div>
 
-            <p class='text-[12px] leading-[20px] font-normal text-neutral-700 md:text-sm mb-1.5 md:mb-1'>
+            <p class='text-[14px] leading-[20px] font-normal text-neutral-500 md:text-sm mb-1.5 md:mb-1 mt-1'>
               Giá đã bao gồm thuế. Phí vận chuyển và các chi phí khác (nếu có) sẽ được thể hiện khi đặt hàng.
             </p>
 
-            <div class='flex items-center justify-start space-x-1 md:space-x-2 mb-3 md:mb-1'>
-              <span class='text-xs font-semibold text-gold-500 md:text-sm'>Tích lũy từ 2.727 P-Xu vàng</span>
+            <div class='flex items-center justify-start space-x-1 md:space-x-2 mb-3 md:mb-1 mt-1'>
+              <span class='text-xs font-semibold text-gold-500 md:text-sm text-[#FAAE14]'>
+                Tích lũy từ 2.727 P-Xu vàng
+              </span>
+
               <div class='[&amp;>[data-radix-popper-content-wrapper]]:!z-[9]'>
                 <div data-state='closed'>
                   <button
@@ -199,8 +204,8 @@ export default function DetailProduct() {
                 <p class='text-sm text-neutral-900'>Đã bán 6.0k</p>
               </div>
             </div>
-
-            <div class='mb-3 md:mb-4'>
+            <div className='w-full border border-[1px]'></div>
+            <div class='mb-3 md:mb-4 my-2 '>
               <div class='space-y-3'>
                 <label
                   class='peer-disabled:cursor-not-allowed peer-disabled:opacity-70 w-fit text-sm font-semibold text-neutral-900'
@@ -217,10 +222,31 @@ export default function DetailProduct() {
                   <button
                     data-size='sm'
                     type='button'
-                    class='relative flex justify-center outline-none font-semibold bg-white border border-solid border-primary-500 text-primary-500 disabled:border-neutral-200 disabled:text-neutral-600 disabled:!bg-white text-sm px-4 py-2 items-center rounded-lg h-8 min-w-[82px] md:h-8 !bg-primary-50 hover:border-primary-500 hover:text-primary-500 md:hover:border-primary-200 md:hover:text-primary-200'
+                    className='relative flex justify-center outline-none font-semibold bg-white border border-solid border-[#1A51A2] text-[#1A51A2] disabled:border-neutral-200 disabled:text-neutral-600 disabled:!bg-white text-sm px-4 py-2 items-center rounded-lg h-8 min-w-[82px] md:h-8 !bg-primary-50 hover:border-[#587cb2] hover:text-[#5883c2] '
                   >
                     <span>Hộp</span>
                   </button>
+                </div>
+                <div className='border border-b-[1px]'></div>
+                <h4 class='text-[16px] leading-[24px] relative whitespace-nowrap bg-[#6EBE46] px-4 font-semibold text-white w-32'>
+                  Khuyến mãi
+                  <span class='absolute right-0 top-0 block h-0 w-0 border-b-[12px] border-r-[8px] border-t-[12px] border-white border-b-transparent border-t-transparent'></span>
+                </h4>
+
+                <div class='grid gap-2 px-4 md:px-0'>
+                  <div class='grid grid-flow-col items-start justify-start gap-1.5'>
+                    <div class='relative h-6 w-6 shrink-0'>
+                      <img
+                        class='object-cover'
+                        src='https://prod-cdn.pharmacity.io/e-com/images/promotion/20240730092803-0-Delivery%202H@3x.png'
+                        alt='Icon of Giao Nhanh 2H'
+                      />
+                    </div>
+                    <p class='text-[12px] leading-[20px] first-letter:uppercase md:text-sm'>
+                      <span class='inline pe-1 font-semibold'>Giao Nhanh 2H</span>áp dụng tùy khu vực, xem dự kiến thời
+                      gian hàng ở trang thanh toán
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -420,9 +446,9 @@ export default function DetailProduct() {
         </div>
 
         <div className='col-span-3 bg-white ml-2 '>
-          <div className='sticky top-0'>
-            <div class='flex cursor-pointer items-center justify-between'>
-              <p class='text-base font-semibold text-neutral-900 md:text-sm'>Nhà thuốc còn hàng</p>
+          <div className='sticky top-0 border p-3 rounded-md'>
+            <div class='flex cursor-pointer items-center justify-between border-b-2 pb-3 '>
+              <p class='text-sm font-semibold text-neutral-900 md:text-base '>Nhà thuốc còn hàng</p>
               <button
                 data-size='sm'
                 type='button'
@@ -439,8 +465,24 @@ export default function DetailProduct() {
               </button>
             </div>
 
-            <p class='text-sm font-semibold text-neutral-900'>Số lượng</p>
+            <p class='text-base font-semibold text-neutral-900 pt-3'>Số lượng</p>
+            <div className='flex items-center gap-x-1 pt-3'>
+              <button className='p-2 rounded-full bg-slate-100 hover:bg-slate-300'>-</button>
+              <input
+                type='text'
+                onChange={(e) => handleQuantity(e)}
+                className='w-[27px] h-5 outline-none text-center'
+                maxLength={3}
+              />
+              <button className='p-2 rounded-full bg-slate-100 hover:bg-slate-300'>+</button>
+            </div>
 
+            <div className='p-3 w-full bg-[#1A51A2] border rounded-lg text-center mt-3 hover:bg-[#1A51A2] hover:opacity-80 text-white font-semibold'>
+              Mua ngay
+            </div>
+            <div className='p-3 w-full bg-[#ffffff] border rounded-lg text-center mt-3 font-semibold'>
+              Thêm giỏ hàng
+            </div>
             <div class='mt-2 grid grid-cols-3 gap-2'>
               <div class='flex items-center gap-2 text-center md:inline md:gap-0'>
                 <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full w-6 h-6'>
@@ -687,6 +729,8 @@ export default function DetailProduct() {
           </div>
         </div>
       </div>
+
+      <div className='bg-yellow'>Sản phẩm tương tự</div>
     </div>
   )
 }

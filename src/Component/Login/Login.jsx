@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import anh from './Green Creative Pharmacy Concept Logo Design.png'
@@ -9,8 +9,9 @@ import authAPI from '../../Api/user/auth'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
-
+import { AuthContext } from '../../context/app.context'
 export default function Login() {
+  const { setIsAuthenticated, login } = useContext(AuthContext)
   const navigate = useNavigate()
   const {
     register,
@@ -24,12 +25,13 @@ export default function Login() {
     mutationFn: authAPI.loginAccount
   })
   const onSubmit = handleSubmit((data) => {
-    console.log(data)
     // gửi lên api data
     mutation.mutate(data, {
-      onSuccess: () => {
-        console.log('Thành công')
+      onSuccess: (dat) => {
+        /* localStorage.setItem('accesstoken', dat.data.data.access_token)*/
+        // login(dat.data.data.access_token)
         toast.success('Wow so easy !')
+        setIsAuthenticated(true)
         navigate('/')
       },
       onError: () => {

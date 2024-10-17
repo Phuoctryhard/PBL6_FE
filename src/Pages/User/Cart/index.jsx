@@ -1,14 +1,37 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback, useContext } from 'react'
 import { Modal } from 'antd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import CartAPI from '../../../Api/user/cart'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
-export default function Cart({ data }) {
+import { useQuery } from '@tanstack/react-query'
+
+import { AuthContext } from '../../../context/app.context'
+export default function Cart() {
+  const { isAuthenticated, logout } = useContext(AuthContext)
+  // get list cart
+  const { data } = useQuery({
+    queryKey: ['getCart'],
+    queryFn: CartAPI.getCart,
+    enabled: isAuthenticated // Chỉ gọi query khi người dùng đã đăng nhập
+  })
+
+  const [products, setProducts] = useState([]) // Khởi tạo state cho sản phẩm
+
+  // Lưu trạng thái của các sản phẩm được chọn
+  const [checkedProducts, setCheckedProducts] = useState([])
+  useEffect(() => {
+    // Kiểm tra xem data có giá trị hợp lệ không
+    if (data && data.data && Array.isArray(data.data.data)) {
+      setProducts(data.data.data)
+    }
+  }, [data])
+
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [modalText, setModalText] = useState('Bạn có chắc chắn muốn xóa sản phẩm này?')
+  const [total, setTotal] = useState(0)
   const showModal = () => {
     setOpen(true)
   }
@@ -28,6 +51,107 @@ export default function Cart({ data }) {
       }
     })
   }
+  // ham cap nhat so luong
+  const handleUpdateQuantity = (element, quantity) => {
+    let elementProduct = {
+      ...element,
+      cart_quantity: quantity
+    }
+    return elementProduct
+  }
+
+  // handle - +
+  const mutateUpdate = useMutation({
+    mutationFn: CartAPI.updateCart
+  })
+
+  const handleSubstract = (element) => {
+    const quantity = element.cart_quantity - 1
+    console.log(quantity)
+    let elementProduct = handleUpdateQuantity(element, quantity)
+    mutateUpdate.mutate(elementProduct, {
+      onSuccess: () => {
+        toast.success('Update sản phẩm thành công !')
+        queryClient.invalidateQueries({ queryKey: ['getCart'] })
+        const calculateTotal = () => {
+          return products
+            .filter((product) => checkedProducts.includes(product.cart_id))
+            .reduce((total, product) => total + parseFloat(product.cart_price * product.cart_quantity), 0) // Ép kiểu về số
+        } // Chỉ tính lại khi  checkedProducts thay đổi
+        setTotal(calculateTotal())
+      },
+      onError() {
+        console.log('Thấtbai ')
+        toast.error('Fail !')
+      }
+    })
+  }
+  const handlePlus = (element) => {
+    const quantity = element.cart_quantity + 1
+    console.log(quantity)
+    let elementProduct = handleUpdateQuantity(element, quantity)
+    console.log(elementProduct)
+    mutateUpdate.mutate(elementProduct, {
+      onSuccess: () => {
+        toast.success('Update sản phẩm thành công !')
+        queryClient.invalidateQueries({ queryKey: ['getCart'] })
+        // Tính tổng tiền của các sản phẩm đã được check
+        const calculateTotal = () => {
+          return products
+            .filter((product) => checkedProducts.includes(product.cart_id))
+            .reduce((total, product) => total + parseFloat(product.cart_price * product.cart_quantity), 0) // Ép kiểu về số
+        } // Chỉ tính lại khi  checkedProducts thay đổi
+        setTotal(calculateTotal())
+      },
+      onError() {
+        console.log('Thấtbai ')
+        toast.error('Fail !')
+      }
+    })
+  }
+  const handleInputChange = (element, event) => {
+    const cart_quantity = parseInt(event.target.value)
+    console.log(cart_quantity)
+
+    // Kiểm tra giá trị nhập vào
+    if (isNaN(cart_quantity) || cart_quantity < 1) {
+      // Nếu không hợp lệ, có thể xóa sản phẩm hoặc cập nhật lại số lượng
+      setProducts((prevProducts) =>
+        prevProducts.map((product) =>
+          product.cart_id === element.cart_id ? { ...product, cart_quantity: '' } : product
+        )
+      )
+    } else {
+      // Nếu hợp lệ, cập nhật số lượng cho sản phẩm
+      setProducts((prevProducts) =>
+        prevProducts.map((product) => (product.cart_id === element.cart_id ? { ...product, cart_quantity } : product))
+      )
+    }
+  }
+  const handleInputBlur = (element, event) => {
+    const cart_quantity = parseInt(event.target.value)
+    console.log('Gọi api ' + cart_quantity)
+    // Kiểm tra giá trị nhập vào
+    let elementProduct = handleUpdateQuantity(element, cart_quantity)
+    mutateUpdate.mutate(elementProduct, {
+      onSuccess: () => {
+        toast.success('Update sản phẩm thành công !')
+        queryClient.invalidateQueries({ queryKey: ['getCart'] })
+        // Tính tổng tiền của các sản phẩm đã được check
+        const calculateTotal = () => {
+          return products
+            .filter((product) => checkedProducts.includes(product.cart_id))
+            .reduce((total, product) => total + parseFloat(product.cart_price * product.cart_quantity), 0) // Ép kiểu về số
+        } // Chỉ tính lại khi  checkedProducts thay đổi
+        setTotal(calculateTotal())
+      },
+      onError() {
+        console.log('Thấtbai ')
+        toast.error('Fail !')
+      }
+    })
+  }
+  //// xóa
   const handleOk = (id) => {
     handleDelete(id)
     setTimeout(() => {
@@ -35,37 +159,123 @@ export default function Cart({ data }) {
     }, 2000)
   }
   const handleCancel = () => {
-    console.log('Clicked cancel button')
     setOpen(false)
   }
   const mutate = useMutation({
     mutationFn: CartAPI.deleteCart
   })
 
+  // Xử lý khi một checkbox được check hoặc uncheck
+  const handleCheck = (productId) => {
+    setCheckedProducts((prevChecked) => {
+      if (prevChecked.includes(productId)) {
+        // Nếu sản phẩm đã được check thì bỏ check
+        return prevChecked.filter((id) => id !== productId)
+      } else {
+        // Nếu chưa được check thì thêm vào danh sách đã check
+        return [...prevChecked, productId]
+      }
+    })
+  }
+
+  //// Tính tổng tiền của các sản phẩm đã được check
+  const calculateTotal = useCallback(() => {
+    const totalAmount = products
+      .filter((product) => checkedProducts.includes(product.cart_id))
+      .reduce((total, product) => total + parseFloat(product.cart_price * product.cart_quantity), 0)
+
+    setTotal(totalAmount) // Cập nhật tổng tiền
+  }, [checkedProducts])
+
+  // Gọi lại tính tổng mỗi khi checkedProducts thay đổi
+  useEffect(() => {
+    calculateTotal()
+  }, [calculateTotal])
+
+  const calculateTotal1 = useCallback(() => {
+    const totalAmount = products
+      .filter((product) => checkedProducts.includes(product.cart_id))
+      .reduce((total, product) => total + parseFloat(product.cart_price * product.cart_quantity), 0)
+
+    setTotal(totalAmount) // Cập nhật tổng tiền
+  }, [products])
+
+  // Gọi lạicheckedProducts tính tổng mỗi khi checkedProducts thay đổi
+  useEffect(() => {
+    calculateTotal1()
+  }, [calculateTotal1])
+  // Tính tổng tiền của các sản phẩm đã được check
+
+  const handleCheckAll = (e) => {
+    console.log(e.target.checked)
+    if (e.target.checked) {
+      const arrayCheckAll = products.map((element) => {
+        return element.cart_id
+      })
+      console.log(arrayCheckAll)
+      setCheckedProducts(arrayCheckAll)
+    } else {
+      setCheckedProducts([])
+    }
+  }
+  // xoa nhieu
+  const mutateDeleteMany = useMutation({
+    mutationFn: CartAPI.deleteManyCart
+  })
+  const handleDeleteMany = () => {
+    console.log(checkedProducts)
+    const ids_cart1 = {
+      ids_cart: checkedProducts
+    }
+    console.log(ids_cart1)
+    if (checkedProducts.length > 0) {
+      mutateDeleteMany.mutate(ids_cart1, {
+        onSuccess: () => {
+          toast.success('Xóa sản phẩm thành công !')
+          queryClient.invalidateQueries({ queryKey: ['getCart'] })
+          setCheckedProducts([])
+        }
+      })
+    } else {
+      toast.error('Vui lòng chọn sản phẩm cần xóa')
+    }
+  }
   return (
     <div className='px-24'>
       <div className='grid grid-cols-9 pt-5 gap-x-5 '>
         <div className='col-span-6'>
           <div className='flex justify-between '>
             <div className='text-2xl font-semibold'>Giỏ hàng 5 </div>
-            <button className='text-[#0070e0] hover:text-black'>Xóa</button>
+            <button className='text-[#0070e0] hover:text-black' onClick={handleDeleteMany}>
+              Xóa
+            </button>
           </div>
           <div className=''>
             <div class='w-full max-w-4xl mx-auto my-4 border rounded-lg shadow'>
               <div class='flex items-center border-b p-4 bg-gray-100'>
-                <input type='checkbox' class='mr-4' />
+                <input
+                  type='checkbox'
+                  class='mr-4'
+                  checked={products.length == checkedProducts.length}
+                  onChange={(event) => handleCheckAll(event)}
+                />
                 <div class='w-1/2 font-semibold '>Sản phẩm</div>
-                <div class='w-1/6 font-semibold text-center'>Số lượng</div>
                 <div class='w-1/6 font-semibold  text-center'>Đơn giá</div>
+                <div class='w-1/6 font-semibold text-center'>Số lượng</div>
                 <div class='w-1/6 font-semibold text-center'>Thành tiền</div>
               </div>
               {/*Product List cart */}
 
-              {data?.data?.data ? (
-                data.data.data.map((element) => {
+              {products.length > 0 ? (
+                products.map((element) => {
                   return (
                     <div class='flex items-center p-4'>
-                      <input type='checkbox' class='mr-4' />
+                      <input
+                        type='checkbox'
+                        class='mr-4'
+                        checked={checkedProducts.includes(element.cart_id)}
+                        onChange={() => handleCheck(element.cart_id)}
+                      />
                       <div class='w-1/2 flex items-center justify-between'>
                         <img src={element.product_images[0]} alt='product image' class='w-16 h-16   ' />
                         <div>
@@ -81,9 +291,29 @@ export default function Cart({ data }) {
                       </div>
                       <div class='w-1/6 text-center pl-6'>{element.cart_price}</div>
                       <div class='w-1/6 flex text-center justify-end pr-3'>
-                        <button class='px-2 py-1 text-lg text-gray-500 border rounded-l'>-</button>
-                        <input class='  p-2 w-6 outline-none' value={element.cart_quantity} />
-                        <button class='px-2 py-1 text-lg text-gray-500 border rounded-r'>+</button>
+                        <button
+                          class='px-2 py-1 text-lg text-gray-500 border rounded-l'
+                          onClick={() => {
+                            handleSubstract(element)
+                          }}
+                        >
+                          -
+                        </button>
+
+                        <input
+                          className='p-2 w-10 outline-none'
+                          value={element.cart_quantity}
+                          onChange={(event) => handleInputChange(element, event)}
+                          onBlur={(event) => handleInputBlur(element, event)}
+                        />
+                        <button
+                          class='px-2 py-1 text-lg text-gray-500 border rounded-r'
+                          onClick={() => {
+                            handlePlus(element)
+                          }}
+                        >
+                          +
+                        </button>
                       </div>
                       <div class='w-1/6 text-right pr-4'>{element.cart_price * element.cart_quantity} đ</div>
                       <span
@@ -179,7 +409,7 @@ export default function Cart({ data }) {
               <div className='flex justify-between  py-3 px-2  my-1 '>
                 <div className='font-semibold '>Tổng tiền </div>
 
-                <div className='text-[#F22121] font-semibold'>415.000 đ</div>
+                <div className='text-[#F22121] font-semibold'>{total}</div>
               </div>
               <div className='flex mt-2 '>
                 <button className='text-white font-medium text-2xl bg-[#1A51A2] px-4 py-2  rounded-lg w-full'>

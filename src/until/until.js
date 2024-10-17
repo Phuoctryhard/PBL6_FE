@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getAccessToken } from '.'
+import { getAccessToken, saveAccessToken, tokenBear } from '.'
 
 class Http {
   instance
@@ -36,9 +36,15 @@ class Http {
       (response) => {
         // Any status code that lie within the range of 2xx cause this function to trigger
         // Do something with response data
-
+        console.log(response)
+        const { url } = response.config
+        if (url == 'user/login') {
+          const tokenBear = 'Bearer ' + response.data.data?.access_token
+          this.accessToken = tokenBear
+          console.log(this.accessToken)
+          saveAccessToken(response.data.data?.access_token)
+        }
         return response
-        // response.data.data?.access_token
       },
       function (error) {
         console.log(error)
@@ -49,43 +55,3 @@ class Http {
 }
 const http = new Http().instance
 export default http
-// import axios from 'axios'
-//import { getAccessToken } from './auth'
-
-// class Http {
-//   instance
-//   _accessToken
-//   constructor() {
-//     this.accessToken = getAccessToken()
-//     this.instance = axios.create({
-//       // baseURL: 'https://8h8zcx79-4000.asse.devtunnels.ms/',
-//       baseURL: 'http://localhost:4000/',
-//       timeout: 10000,
-//       headers: { 'Content-Type': 'application/json' }
-//     })
-
-//     this.instance.interceptors.request.use(
-//       (config) => {
-//         if (this._accessToken && config.headers) {
-//           config.headers.authorization = this._accessToken
-//           return config
-//         }
-//         return config
-//       },
-//       (error) => {
-//         return Promise.reject(error)
-//       }
-//     )
-//     this.instance.interceptors.response.use(
-//       (response) => {
-//         console.log(response)
-//         return response
-//       },
-//       (error) => {
-//         return Promise.reject(error)
-//       }
-//     )
-//   }
-// }
-// const http = new Http().instance
-// export default http

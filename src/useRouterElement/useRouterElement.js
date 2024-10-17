@@ -8,6 +8,13 @@ import MainLayout from '../Layouts/MainLayout/MainLayout.jsx'
 import MainLayoutUser from '../Layouts/User/MainLayout/index.js'
 import CategoryListProduct from '../Pages/User/CategoryListProduct/CategoryListProduct.jsx'
 import VerifyEmail from '../Pages/User/VerifyEmail/index.jsx'
+import DetailProduct from '../Pages/User/ProductUser/DetailProduct/DetailProduct.jsx'
+import Cart from '../Pages/User/Cart/index.jsx'
+import Profile from '../Pages/User/Account/personal-info/Profile.jsx'
+import Adress from '../Pages/User/Account/address/Adress.jsx'
+import LayoutAccount from '../Pages/User/Account/LayoutAccount/LayoutAccount.jsx'
+import OrderHistory from '../Pages/User/Account/order_history/OrderHistory.jsx'
+import UpdatePassword from '../Pages/User/Account/personal-info/components/UpdatePassword/UpdatePassword.jsx'
 export default function useRouterElement() {
   const element = useRoutes([
     {
@@ -16,15 +23,61 @@ export default function useRouterElement() {
     },
     {
       path: '/cart',
-      element: <MainLayoutUser />
+      element: (
+        <MainLayoutUser>
+          <Cart />
+        </MainLayoutUser>
+      )
     },
     {
       path: '/auth/verify-email/:user',
       element: <VerifyEmail />
     },
     {
+      path: '/detail',
+      element: (
+        <MainLayoutUser>
+          <DetailProduct />
+        </MainLayoutUser>
+      )
+    },
+    {
+      path: '/account',
+      element: (
+        <MainLayoutUser>
+          <LayoutAccount />
+        </MainLayoutUser>
+      ),
+      children: [
+        {
+          path: '/account',
+          element: <Profile />
+        },
+        {
+          path: '/account/profile',
+          element: <Profile />
+        },
+        {
+          path: '/account/address',
+          element: <Adress />
+        },
+        {
+          path: '/account/order-history',
+          element: <OrderHistory />
+        },
+        {
+          path: '/account/profile/update-password',
+          element: <UpdatePassword />
+        }
+      ]
+    },
+    {
       path: '/:slug',
-      element: <CategoryListProduct />
+      element: (
+        <MainLayoutUser>
+          <CategoryListProduct />
+        </MainLayoutUser>
+      )
     },
     {
       path: '/admin',
