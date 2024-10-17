@@ -8,138 +8,15 @@ import AdminAddProduct from '../Component/AdminAddProduct'
 import AdminEditProduct from '../Component/AdminEditProduct'
 import AdminViewProduct from '../Component/AdminViewProduct'
 import React from 'react'
-import MainLayoutUser from '../Layouts/User/MainLayout/index.js'
-import CategoryListProduct from '../Pages/User/CategoryListProduct/CategoryListProduct.jsx'
-import VerifyEmail from '../Pages/User/VerifyEmail/index.jsx'
-import DetailProduct from '../Pages/User/ProductUser/DetailProduct/DetailProduct.jsx'
-import Cart from '../Pages/User/Cart/index.jsx'
-import Profile from '../Pages/User/Account/personal-info/Profile.jsx'
-import Adress from '../Pages/User/Account/address/Adress.jsx'
-import LayoutAccount from '../Pages/User/Account/LayoutAccount/LayoutAccount.jsx'
-import OrderHistory from '../Pages/User/Account/order_history/OrderHistory.jsx'
-import UpdatePassword from '../Pages/User/Account/personal-info/components/UpdatePassword/UpdatePassword.jsx'
-import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
-
+//https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/
 export default function useRouterElement() {
   const element = useRoutes([
     {
       path: '/',
-      element: <HomeUser />
-    },
-    {
-      path: '/cart',
       element: (
-        <MainLayoutUser>
-          <Cart />
-        </MainLayoutUser>
-      )
-    },
-    {
-      path: '/auth/verify-email/:user',
-      element: <VerifyEmail />
-    },
-    {
-      path: '/detail',
-      element: (
-        <MainLayoutUser>
-          <DetailProduct />
-        </MainLayoutUser>
-      )
-    },
-    {
-      path: '/account',
-      element: (
-        <MainLayoutUser>
-          <LayoutAccount />
-        </MainLayoutUser>
-      ),
-      children: [
-        {
-          path: '/account',
-          element: <Profile />
-        },
-        {
-          path: '/account/profile',
-          element: <Profile />
-        },
-        {
-          path: '/account/address',
-          element: <Adress />
-        },
-        {
-          path: '/account/order-history',
-          element: <OrderHistory />
-        },
-        {
-          path: '/account/profile/update-password',
-          element: <UpdatePassword />
-        }
-      ]
-    },
-    {
-      path: '/:slug',
-      element: (
-        <MainLayoutUser>
-          <CategoryListProduct />
-        </MainLayoutUser>
-      )
-    },
-    {
-      path: '/cart',
-      element: (
-        <MainLayoutUser>
-          <Cart />
-        </MainLayoutUser>
-      )
-    },
-    {
-      path: '/auth/verify-email/:user',
-      element: <VerifyEmail />
-    },
-    {
-      path: '/detail',
-      element: (
-        <MainLayoutUser>
-          <DetailProduct />
-        </MainLayoutUser>
-      )
-    },
-    {
-      path: '/account',
-      element: (
-        <MainLayoutUser>
-          <LayoutAccount />
-        </MainLayoutUser>
-      ),
-      children: [
-        {
-          path: '/account',
-          element: <Profile />
-        },
-        {
-          path: '/account/profile',
-          element: <Profile />
-        },
-        {
-          path: '/account/address',
-          element: <Adress />
-        },
-        {
-          path: '/account/order-history',
-          element: <OrderHistory />
-        },
-        {
-          path: '/account/profile/update-password',
-          element: <UpdatePassword />
-        }
-      ]
-    },
-    {
-      path: '/:slug',
-      element: (
-        <MainLayoutUser>
-          <CategoryListProduct />
-        </MainLayoutUser>
+        <div>
+          <h1>Home user</h1>
+        </div>
       )
     },
     {
