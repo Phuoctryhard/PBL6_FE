@@ -2,7 +2,6 @@ import React from 'react'
 import Nav from '../../../../../Component/Nav/Nav'
 import Search from '../../SearchHeader/Search'
 export default function Header() {
-  
   return (
     <>
       <div className='bg-[#66cffd]'>

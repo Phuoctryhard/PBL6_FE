@@ -1,8 +1,8 @@
 import React from 'react'
-import anh1 from '../../HomeUser/Slider/img/sanpham.jpg'
-import anh2 from '../../HomeUser/Slider/img/sanDeal.png'
+import anh1 from '../../HomeUser/Component/SliderUser/img/sanpham.jpg'
+import anh2 from '../../HomeUser/Component/SliderUser/img/sanDeal.png'
 import Button1 from '../../../../Component/Button/Button'
-import Category from '../../HomeUser/CategoryProduct/Category'
+import Category from '../../HomeUser/Component/CategoryProduct/Category'
 export default function ProductList() {
   return (
     <div className='bg-white'>
@@ -22,11 +22,11 @@ export default function ProductList() {
         <div className='mb-5'>
           <div className='grid grid-cols-6 gap-x-4 '>
             <div className='rounded-lg overflow-hidden border shadow-md bg-white  h-full'>
-              <div className='relative'>
+              <div className='relative '>
                 <img className='w-full object-contain h-full' src={anh1} alt='' />
                 <div className='absolute bottom-0 left-0 flex h-[26px] w-full'>
                   <img
-                    className='h-full w-auto'
+                    className='h-full w-full object-contain'
                     src='https://prod-cdn.pharmacity.io/e-com/images/ecommerce/20240225082630-0-mua-1-tang-1.png'
                     alt='label'
                     loading='lazy'
@@ -63,7 +63,7 @@ export default function ProductList() {
             <div className='rounded-lg overflow-hidden border shadow-sm bg-white  h-full'>
               <div className='relative'>
                 <img className='w-full object-contain h-full' src={anh1} alt='' />
-                <div className='absolute bottom-0 left-0 flex h-[26px] w-full'>
+                <div className='absolute bottom-0 left-0 flex h-[100px] w-full'>
                   <img
                     className='h-full w-auto'
                     src='https://prod-cdn.pharmacity.io/e-com/images/ecommerce/20240225082630-0-mua-1-tang-1.png'

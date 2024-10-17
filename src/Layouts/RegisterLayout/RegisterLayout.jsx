@@ -1,5 +1,5 @@
 import React from 'react'
-import Header from '../../Component/Header'
+import Header from '../../Component/AdminHeader'
 import Footer from '../../Component/Footer'
 export default function RegisterLayout({ children }) {
   console.log(children)
