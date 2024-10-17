@@ -1,0 +1,198 @@
+.AddProductForm__row {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 25px;
+}
+
+.AddProductForm__group {
+  display: flex;
+  flex-direction: column;
+  width: 48%;
+  position: relative;
+}
+
+.AddProductForm__input {
+  margin-top: 4px;
+  height: 38px;
+  min-width: 280px;
+  border-radius: 4px;
+  background-color: #e3ebf3;
+  border: 1px solid #bcbec1;
+  padding: 8px 10px;
+}
+
+.AddProductForm__input:focus {
+  outline: none;
+  border: 1px solid #1d242e;
+}
+
+.AddProductForm__select {
+  min-width: 280px;
+  height: 38px;
+  margin-top: 4px;
+}
+
+.error_message {
+  justify-items: flex-start;
+  color: red;
+  font-size: 12px;
+  padding: 6px 0;
+  width: 100%;
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+
+.slider__container {
+  position: relative;
+  width: 100%;
+  overflow-x: hidden;
+  height: 350px;
+}
+
+.slides {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: 100%;
+  height: 100%;
+}
+
+.slide {
+  min-width: 100%;
+  height: 100%;
+}
+
+.prev,
+.next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.prev {
+  left: 5px;
+}
+
+.next {
+  right: 5px;
+}
+
+.thumbnail__container {
+  display: flex;
+  max-width: 100%;
+  margin-top: 35px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.thumbnails {
+  overflow: auto;
+  display: flex;
+  max-width: 100%;
+}
+
+.thumbnails::-webkit-scrollbar {
+  display: none;
+}
+
+.thumbnail {
+  margin: 0 5px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.thumbnail:first-child {
+  margin: 0;
+}
+
+.thumbnail:last-child {
+  margin: 0;
+}
+
+.thumbnail:focus {
+  border-color: #000;
+}
+
+.thumbnail:hover {
+  border-color: #000;
+}
+
+.thumbnail__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 1;
+}
+
+.thumbnail__left {
+  left: 0;
+}
+
+.thumbnail__right {
+  right: 0;
+}
+
+.manufacture__info {
+  width: 100%;
+}
+
+.manufacture__info .AddProductForm__group:first-child {
+  min-width: 48.5%;
+}
+
+.AddProductForm__textarea {
+  width: 100%;
+  margin-top: 4px;
+  min-width: 280px;
+  border-radius: 4px;
+  background-color: #e3ebf3;
+  border: 1px solid #bcbec1;
+  padding: 8px 10px;
+  resize: none;
+}
+
+.button__group > button {
+  min-width: 300px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 46px;
+  padding: 16px 18px;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.AddProductForm__SubmitButton {
+  background-color: #65b5a2;
+  color: #fff;
+}
+
+.AddProductForm__SubmitButton:hover {
+  opacity: 0.8;
+}
+
+.AddProductForm__ResetButton {
+  background-color: #a80868;
+  color: yellow;
+}
+
+.AddProductForm__CancelButton {
+  background-color: rgb(255, 0, 0, 0.2);
+  color: red;
+}
+
+.AddProductForm__CancelButton:hover {
+  opacity: 0.8;
+}
