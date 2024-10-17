@@ -1,0 +1,14 @@
+.navBar::-webkit-scrollbar {
+  width: 10px;
+  overflow-x: hidden;
+}
+
+.navBar::-webkit-scrollbar-thumb {
+  background-color: rgb(255, 255, 255, 0.4);
+  border-radius: 10px;
+}
+
+.navBar::-webkit-scrollbar-track {
+  background-color: #1d242e;
+  border-radius: 10px;
+}

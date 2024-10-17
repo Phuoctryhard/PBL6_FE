@@ -1,5 +1,4 @@
 import React from 'react'
-
 export default function DetailProduct() {
   const handleQuantity = (event) => {}
   return (

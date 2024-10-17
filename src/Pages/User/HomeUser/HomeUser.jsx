@@ -6,10 +6,8 @@ export default function HomeUser() {
   return (
     <div className=''>
       <Header />
-       
+
       <Footer />
     </div>
   )
 }
-
-// <DetailProduct />

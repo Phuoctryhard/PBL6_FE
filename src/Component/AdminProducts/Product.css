@@ -1,0 +1,35 @@
+.product_table .ant-table-body {
+  scrollbar-width: thin;
+}
+
+.product_table.ant-table-wrapper .ant-table-pagination.ant-pagination {
+  display: none;
+}
+
+.ant-breadcrumb ol {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+}
+
+.ant-breadcrumb ol > li:hover {
+  cursor: pointer;
+}
+
+.ant-breadcrumb ol > li a:hover {
+  background-color: transparent;
+}
+
+.ant-breadcrumb ol > li:last-child a {
+  color: #000;
+}
+
+.searchProductBox__input:focus {
+  outline: none;
+  border: 1px solid #1d242e;
+}
+
+.table__content {
+  box-sizing: border-box;
+  padding: 25px;
+}

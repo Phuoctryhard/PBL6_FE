@@ -1,0 +1,4 @@
+.searchBox__input:focus {
+  outline: none;
+  border: 1px solid #1d242e;
+}
