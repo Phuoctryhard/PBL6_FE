@@ -37,7 +37,7 @@ const AdminProducts = () => {
   const [messageApi, contextHolder] = message.useMessage()
   const [responseState, setResponseState] = useState({ status: 0, messageResult: '', type: null })
 
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accesstoken')
   const openMessage = (type, content, duration) => {
     messageApi.open({
       type: type,
@@ -80,9 +80,11 @@ const AdminProducts = () => {
             'Content-Type': 'application/json',
             authorization: 'Bearer ' + token
           },
+
           body: JSON.stringify({ product_is_delete: 0 })
         }
       )
+      console.log('Bearer ' + token)
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Unauthorized access. Please check your credentials.')

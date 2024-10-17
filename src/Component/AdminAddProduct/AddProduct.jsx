@@ -65,7 +65,7 @@ const AddProduct = () => {
   const [errorProductUses, setErrorProductUses] = useState('')
   const [productDescription, setProductDescription] = useState('')
   const [errorProductDescription, setErrorProductDescription] = useState('')
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accesstoken')
   const [messageApi, messagecontextHolder] = message.useMessage()
   const [messageResult, setMessageResult] = useState('')
   const [status, setStatus] = useState(0)
