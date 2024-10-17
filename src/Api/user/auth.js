@@ -13,3 +13,4 @@ const authAPI = {
   logout: () => http.post('user/logout'),
   verifyEmail: (token) => http.post('user/verify-email', token)
 }
+export default authAPI
