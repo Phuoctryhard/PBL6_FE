@@ -11,6 +11,7 @@ const authAPI = {
   registerAccount: (body) => http.post('user/register', body),
   loginAccount: (body) => http.post('user/login', body),
   logout: () => http.post('user/logout'),
-  verifyEmail: (token) => http.post('user/verify-email', token)
+  verifyEmail: (token) => http.post('user/verify-email', token),
+  changePassword: (data) => http.post('user/change-password', data)
 }
 export default authAPI

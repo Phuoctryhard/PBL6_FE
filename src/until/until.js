@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getAccessToken, saveAccessToken, tokenBear } from '.'
+import { getAccessToken, saveAccessToken, saveProfile, tokenBear } from '.'
 
 class Http {
   instance
@@ -43,6 +43,10 @@ class Http {
           this.accessToken = tokenBear
           console.log(this.accessToken)
           saveAccessToken(response.data.data?.access_token)
+          console.log(response.data.data)
+          if (response.data.data) {
+            saveProfile(response.data.data)
+          }
         }
         return response
       },
