@@ -1,32 +1,37 @@
 import './Categories.css'
 import CategoriesAPI from '../../Api/admin/categories'
-import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Refresh, Eye } from 'iconsax-react'
+import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Refresh, Eye, Filter } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider, Select } from 'antd'
 import { Table, TreeSelect, Breadcrumb, Empty, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { type } from '@testing-library/user-event/dist/type'
 const Categories = () => {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [treeData, setTreeData] = useState([])
   const [selectData, setSelectData] = useState([])
+  const [typeData, setTypeData] = useState([])
   const [searchValue, setSearchValue] = useState('')
-  const [categoryID, setCategoryID] = useState('')
-  const [errorCategoryID, setErrorCategoryID] = useState('')
   const [categoryType, setCategoryType] = useState('')
   const [errorCategoryType, setErrorCategoryType] = useState('')
   const [categoryName, setCategoryName] = useState('')
   const [errorCategoryName, setErrorCategoryName] = useState('')
+  const [categoryDescription, setCategoryDescription] = useState('')
   const [openModal, setOpenModal] = useState(false)
+  const [typeModal, setTypeModal] = useState('add')
+  const [selectedCategory, setSelectedCategory] = useState(null)
   const [parentCategory, setParentCategory] = useState()
-  const [productSelected, setProductSelected] = useState([])
   const [thumbnail, setThumbnail] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [errorFileUpload, setErrorFileUpload] = useState('')
   const [dragging, setDragging] = useState(false)
   const fileInputRef = useRef(null)
+  const [status, setStatus] = useState(null)
+  const [messageResult, setMessageResult] = useState(null)
+  const token = localStorage.getItem('accesstoken')
   const columns = [
     {
       title: '#',
@@ -55,6 +60,8 @@ const Categories = () => {
       dataIndex: 'category_type',
       key: 'category_type',
       width: '20%',
+      filters: typeData,
+      onFilter: (value, record) => record.category_type.indexOf(value) === 0,
       sorter: (a, b) => a.category_type.localeCompare(b.category_type),
       ellipsis: true
     },
@@ -98,25 +105,24 @@ const Categories = () => {
           menu={{
             items: [
               {
-                key: '1',
-                label: (
-                  <Link
-                    to={`/admin/categories/${record.category_id}`}
-                    className='flex items-center gap-x-2 justify-center'
-                  >
-                    <Eye size='15' color='green' /> <span>View</span>
-                  </Link>
-                )
-              },
-              {
                 key: '2',
                 label: (
-                  <Link
-                    to={`/admin/categories/update/${record.category_id}`}
+                  <button
+                    type='button'
                     className='flex items-center gap-x-2 justify-center'
+                    onClick={() => {
+                      setOpenModal(true)
+                      setSelectedCategory(record.category_id)
+                      setTypeModal('update')
+                      setCategoryType(record.category_type)
+                      setCategoryName(record.category_name)
+                      setCategoryDescription(record.category_description)
+                      setThumbnail(record.category_thumbnail)
+                      setParentCategory(record.category_parent_id === null ? undefined : record.category_parent_id)
+                    }}
                   >
                     <Edit size='15' color='green' /> <span>Update</span>
-                  </Link>
+                  </button>
                 )
               },
               {
@@ -127,6 +133,7 @@ const Categories = () => {
                     placement='bottomRight'
                     title={`Delete record ${record.category_id}`}
                     description='Are you sure to delete this record?'
+                    onConfirm={() => handelDeleteCategory(record.category_id)}
                     okText='Delete'
                     cancelText='Cancel'
                   >
@@ -149,6 +156,7 @@ const Categories = () => {
                     title={`Restore record ${record.category_id}`}
                     description='Are you sure to restore this record?'
                     okText='Restore'
+                    onConfirm={() => handelRestoreCategory(record.category_id)}
                     cancelText='Cancel'
                   >
                     <button
@@ -175,7 +183,7 @@ const Categories = () => {
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
-      pageSize: 2
+      pageSize: 8
     }
   })
   const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
@@ -189,7 +197,7 @@ const Categories = () => {
         current={current}
         pageSize={pageSize}
         onChange={onChange}
-        pageSizeOptions={pageSizeOptions || ['3', '5', '10']}
+        pageSizeOptions={pageSizeOptions || ['8', '10', '20']}
       />
     </div>
   )
@@ -239,6 +247,12 @@ const Categories = () => {
     }))
     const treeData = convertToTreeData(data)
     const selectData = convertToSelectData(data)
+    const typeData = [...new Set(tableData.map((item) => item.category_type))]
+    const typeDataFilter = typeData.map((item) => ({
+      text: item,
+      value: item
+    }))
+    setTypeData(typeDataFilter)
     setSelectData(selectData)
     setTreeData(treeData)
     setData(tableData)
@@ -296,25 +310,14 @@ const Categories = () => {
     setSelectedFile(null)
   }
 
-  const CheckCategoryIDExist = (ID) => {
-    const check = data.find((item) => item.category_id === ID)
-    return check
-  }
-
   const CheckCategoryNameExist = (name) => {
-    const check = data.find((item) => item.category_name === name)
-    return check
-  }
-  const handleErrorCategoryID = (value) => {
-    if (value === '') {
-      setErrorCategoryID('This field cannot be empty.')
-      return false
-    }
-    if (CheckCategoryIDExist(value)) {
-      setErrorCategoryID('This ID is already exist.')
-      return false
-    }
-    return true
+    const check = data.find((item) => {
+      if (typeModal === 'update' && item.category_id === selectedCategory) {
+        return false // Exclude the current category being updated
+      }
+      return item.category_name === name
+    })
+    return check !== undefined
   }
 
   const handleErrorCategoryType = (value) => {
@@ -334,55 +337,124 @@ const Categories = () => {
       setErrorCategoryName('This name is already exist.')
       return false
     }
+
     return true
   }
 
-  const handleErrorFileUpload = (file) => {
-    if (!file || !file.type.startsWith('image/')) {
-      setErrorFileUpload("Please upload an image with extension: '.jpeg', '.jpg', '.png'")
-      return false
-    }
-    return true
-  }
   const handleCancel = () => {
     setOpenModal(false)
-    setErrorCategoryID('')
     setErrorCategoryType('')
     setErrorCategoryName('')
     setErrorFileUpload('')
+    setCategoryType('')
+    setCategoryName('')
+    setCategoryDescription('')
     setThumbnail(null)
     setSelectedFile(null)
     setParentCategory()
-    setProductSelected([])
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const form = e.target
-    const formData = new FormData()
-    const category_id = form.category_id.value
-    const category_type = form.category_type.value
-    const category_name = form.category_name.value
-    const category_description = form.category_description.value
-    const category_parent_id = parentCategory === undefined ? '' : parentCategory
-    const children = productSelected
-    const File = selectedFile
-    const isValidCategoryID = handleErrorCategoryID(category_id)
-    const isValidCategoryType = handleErrorCategoryType(category_type)
-    const isValidCategoryName = handleErrorCategoryName(category_name)
-    const isValidFileUpload = handleErrorFileUpload(File)
+  const handelDeleteCategory = async (id) => {
+    const response = await CategoriesAPI.deleteCategories(id, token)
+    setTypeModal('Delete')
+    if (response.ok) {
+      fetchCategories({
+        search: searchValue
+      })
+    } else {
+      if (response.status === 401) {
+        setStatus(401)
+        setMessageResult('Unauthorized access. Please check your credentials.')
+      } else {
+        setStatus(response.status)
+        setMessageResult('Error:', response.messages)
+      }
+    }
+    const result = await response.json()
+    const { messages, status } = result
+    setStatus(status)
+    setMessageResult(messages)
+  }
 
-    if (!isValidCategoryID || !isValidCategoryType || !isValidCategoryName || !isValidFileUpload) {
+  const handelRestoreCategory = async (id) => {
+    const response = await CategoriesAPI.restoreCategories(id, token)
+    setTypeModal('Restore')
+    if (response.ok) {
+      fetchCategories({
+        search: searchValue
+      })
+    } else {
+      if (response.status === 401) {
+        setStatus(401)
+        setMessageResult('Unauthorized access. Please check your credentials.')
+      } else {
+        setStatus(response.status)
+        setMessageResult('Error:', response.messages)
+      }
+    }
+    const result = await response.json()
+    const { messages, status } = result
+    setStatus(status)
+    setMessageResult(messages)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const formData = new FormData()
+    const category_type = categoryType
+    const category_name = categoryName
+    const category_description = categoryDescription
+    const category_parent_id = parentCategory === undefined || null ? '' : parentCategory
+    const File = selectedFile === undefined || null ? '' : selectedFile
+    const isValidCategoryType = handleErrorCategoryType(categoryType)
+    const isValidCategoryName = handleErrorCategoryName(categoryName)
+
+    if (!isValidCategoryType || !isValidCategoryName) {
       return
     }
-    formData.append('category_id', category_id)
-    formData.append('category_type', category_type)
-    formData.append('category_name', category_name)
-    formData.append('category_description', category_description)
+
+    if (category_type) {
+      formData.append('category_type', category_type)
+    }
+    if (category_name) {
+      formData.append('category_name', category_name)
+    }
+    if (category_description) {
+      formData.append('category_description', category_description)
+    }
+    if (File) {
+      formData.append('category_thumbnail', File)
+    }
     formData.append('category_parent_id', category_parent_id)
-    formData.append('category_thumbnail', File)
-    formData.append('children', children)
-    console.log('data', Object.fromEntries(formData))
+
+    console.log('data: ', Object.fromEntries(formData))
+    let response = null
+    try {
+      if (typeModal === 'add') {
+        response = await CategoriesAPI.addCategories(formData, token)
+      }
+      if (typeModal === 'update') {
+        response = await CategoriesAPI.updateCategories(selectedCategory, formData, token)
+      }
+
+      if (!response.ok) {
+        // Handle HTTP errors
+        if (response.status === 401) {
+          setStatus(401)
+          setMessageResult('Unauthorized access. Please check your credentials.')
+        } else if (response.status === 422) {
+          setStatus(422)
+          setMessageResult('Invalid data')
+        } else {
+          setStatus(response.status)
+          setMessageResult('Error:', response.messages)
+        }
+      }
+      const result = await response.json()
+      const { messages, status } = result
+      setStatus(status)
+      setMessageResult(messages)
+    } catch (error) {}
   }
 
   useEffect(() => {
@@ -402,6 +474,18 @@ const Categories = () => {
       search: searchValue
     })
   }, [])
+
+  useEffect(() => {
+    if ([200, 201, 202, 204].includes(status)) {
+      message.success(`${typeModal} category was successfully`, 3)
+      fetchCategories({
+        search: searchValue
+      })
+      handleCancel()
+    } else if (status >= 400) {
+      message.error(messageResult, 3)
+    }
+  }, [status, messageResult])
   return (
     <section className='max-w-[100%] h-full'>
       <header className='flex justify-between'>
@@ -426,7 +510,11 @@ const Categories = () => {
         </div>
         <button
           className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] animate-[slideRightToLeft_1s_ease]'
-          onClick={() => setOpenModal(true)}
+          onClick={() => {
+            setOpenModal(true)
+            setTypeModal('add')
+            setSelectedCategory(null)
+          }}
         >
           <Add size='20' />
           Add new category
@@ -446,15 +534,15 @@ const Categories = () => {
         onCancel={handleCancel}
       >
         <div className='modal__content mt-7'>
-          <form action='' method='POST' onSubmit={handleSubmit}>
+          <form action='' method='POST' onSubmit={handleSubmit} autoComplete='off'>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull relative'>
                 <label htmlFor='category_thumbnail' className='AddCategoryForm__label mb-1'>
-                  <span className='text-[red]'>* </span>Thumbnail (only *.jpeg, *.jpg, *.png)
+                  Thumbnail (only *.jpeg, *.jpg, *.png, *.gif and *.svg)
                 </label>
                 <input
                   type='file'
-                  accept='image/jpg, image/jpeg, image/png'
+                  accept='image/jpg, image/jpeg, image/png, image/gif, image/svg'
                   name='category_thumbnail'
                   id='category_thumbnail'
                   className='hidden'
@@ -505,31 +593,7 @@ const Categories = () => {
               </div>
             </div>
             <div className='AddCategoryForm__row'>
-              <div className='AddCategoryForm__group'>
-                <label htmlFor='category_id' className='AddCategoryForm__label'>
-                  <span className='text-[red]'>* </span>ID
-                </label>
-                <Tooltip
-                  title={errorCategoryID}
-                  open={errorCategoryID !== ''}
-                  placement='bottomLeft'
-                  align={{
-                    offset: [60, -8]
-                  }}
-                >
-                  <input
-                    type='text'
-                    name='category_id'
-                    id='category_id'
-                    className='AddCategoryForm__input'
-                    placeholder='123'
-                    value={categoryID}
-                    onChange={(e) => setCategoryID(e.target.value)}
-                    onFocus={() => setErrorCategoryID('')}
-                  />
-                </Tooltip>
-              </div>
-              <div className='AddCategoryForm__group'>
+              <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
                 <label htmlFor='category_type' className='AddCategoryForm__label'>
                   <span className='text-[red]'>* </span>Type
                 </label>
@@ -592,13 +656,15 @@ const Categories = () => {
                   className='AddCategoryForm__textarea'
                   rows={6}
                   placeholder='This is a category description'
+                  value={categoryDescription}
+                  onChange={(e) => setCategoryDescription(e.target.value)}
                 />
               </div>
             </div>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
                 <label htmlFor='category_parent_id' className='AddCategoryForm__label mb-1'>
-                  Parent (default value = none parent)
+                  Parent (Default value = none parent)
                 </label>
                 <ConfigProvider
                   theme={{
@@ -623,8 +689,9 @@ const Categories = () => {
                     suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                     allowClear
                     showSearch
-                    value={parentCategory}
-                    placeholder='- Choose Group -'
+                    defaultValue={undefined}
+                    value={parentCategory || undefined}
+                    placeholder='Default value'
                     placement='bottomLeft'
                     treeData={treeData}
                     treeDefaultExpandAll
@@ -632,48 +699,6 @@ const Categories = () => {
                     className='w-[100%]'
                     onChange={(value) => {
                       setParentCategory(value)
-                    }}
-                  />
-                </ConfigProvider>
-              </div>
-            </div>
-            <div className='AddCategoryForm__row'>
-              <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
-                <label htmlFor='category_parent_id' className='AddCategoryForm__label mb-1'>
-                  Add product
-                </label>
-                <ConfigProvider
-                  theme={{
-                    token: {
-                      colorTextQuaternary: '#1D242E', // Disabled text color
-                      colorTextPlaceholder: '#1D242E', // Placeholder text color
-                      fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-                      controlOutline: 'none', // outline color
-                      colorBorder: '#e8ebed', // Border color
-                      borderRadius: '4px'
-                    },
-                    components: {
-                      Select: {
-                        selectorBg: 'transparent',
-                        activeBorderColor: '#1D242E',
-                        hoverBorderColor: '#1D242E'
-                      }
-                    }
-                  }}
-                >
-                  <Select
-                    suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
-                    allowClear
-                    mode='multiple'
-                    showSearch
-                    options={selectData}
-                    placeholder='- Choose Product -'
-                    placement='bottomLeft'
-                    dropdownStyle={{ maxHeight: 200, overflow: 'auto', minWidth: '400px' }}
-                    className='w-[100%]'
-                    onClear={() => setProductSelected([])}
-                    onChange={(value) => {
-                      setProductSelected([...value])
                     }}
                   />
                 </ConfigProvider>

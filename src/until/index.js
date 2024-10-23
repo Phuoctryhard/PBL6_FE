@@ -3,7 +3,6 @@ export const getAccessToken = () => {
   return token ? `Bearer ${token}` : ''
 }
 export const saveAccessToken = (token) => {
-  // const tokenBear = token ? `Bearer ${token}` : ''
   localStorage.setItem('accesstoken', token)
 }
 export const tokenBear = (token) => {
@@ -12,7 +11,7 @@ export const tokenBear = (token) => {
 
 export const getProfile = () => {
   const result = localStorage.getItem('profile')
-  return  result ? JSON.parse(result) : null
+  return result ? JSON.parse(result) : null
 }
 
 export const saveProfile = (profile) => {

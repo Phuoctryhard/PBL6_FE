@@ -37,7 +37,7 @@ const AdminProducts = () => {
   })
   const [messageApi, contextHolder] = message.useMessage()
   const [responseState, setResponseState] = useState({ status: 0, messageResult: '', type: null })
-  const token = getAccessToken()
+  const token = localStorage.getItem('accesstoken')
   const openMessage = (type, content, duration) => {
     messageApi.open({
       type: type,
@@ -53,7 +53,7 @@ const AdminProducts = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            authorization: token
+            authorization: 'Bearer ' + token
           },
           body: JSON.stringify({ product_is_delete: 1 })
         }
@@ -78,7 +78,7 @@ const AdminProducts = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            authorization: token
+            authorization: 'Bearer ' + token
           },
 
           body: JSON.stringify({ product_is_delete: 0 })

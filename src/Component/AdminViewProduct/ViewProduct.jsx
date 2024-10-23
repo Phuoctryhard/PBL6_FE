@@ -146,16 +146,14 @@ const ViewProduct = () => {
             />
           </h1>
         </div>
-        <div className='flex gap-x-3 max-w-[50%]'>
+        <Link to={`/admin/products/update/${productID}`} tabIndex={-1}>
           <button className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#db3545] rounded-[4px] text-[#FFFFFF] flex items-center font-bold text-[14px] gap-x-2'>
             <Edit className='text-[20px]' />
-            <Link to={`/admin/products/update/${productID}`} tabIndex={-1}>
-              <span>Update Product</span>
-            </Link>
+            <span>Update Product</span>
           </button>
-        </div>
+        </Link>
       </header>
-      <div className='container mt-6 w-full flex h-max flex-col bg-[#ffffff] rounded-xl border-[2px] border-solid border-[#e7ebee] animate-[slideUp_1.5s_ease]'>
+      <div className='container mt-6 w-full flex h-max flex-col bg-[#ffffff] rounded-xl border-[2px] border-solid border-[#e7ebee] animate-[slideUp_1s_ease]'>
         <div className='flex gap-x-10 h-max border-b-[2px] border-b-solid border-b-[#e3e3e3] px-7 pt-7'>
           <div className='w-[60%] max-w-[60%]'>
             <div className='container__group'>

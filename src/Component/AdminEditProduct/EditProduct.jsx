@@ -3,6 +3,8 @@ import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message } from 'ant
 import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import './EditProduct.css'
 const customThemeSelect = {
   token: {
@@ -442,7 +444,6 @@ const EditProduct = () => {
         }
       }
       const result = await response.json()
-      console.log(result)
       const { messages, status } = result
       if (status >= 400) {
         throw new Error(messages)
@@ -500,14 +501,12 @@ const EditProduct = () => {
 
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
-      openMessage('success', 'Edit product success', 3)
-      setTimeout(() => {
-        window.history.back()
-      }, 500)
+      toast.success('Add product success', { autoClose: 2000 })
+      window.history.back()
     } else if (status >= 400) {
-      openMessage('error', messageResult, 3)
+      toast.error(messageResult, { autoClose: 3000 })
     }
-  }, [status, messageResult])
+  }, [status])
   return (
     <section className='max-w-[100%] h-full flex flex-col'>
       {contextHolder}
@@ -954,7 +953,6 @@ const EditProduct = () => {
                   className='EditProductForm__textarea'
                   onChange={(e) => {
                     setProductDescription(e.target.value)
-                    console.log('productDescription:', e.target.value)
                   }}
                   onFocus={() => setErrorProductDescription('')}
                   value={productDescription}

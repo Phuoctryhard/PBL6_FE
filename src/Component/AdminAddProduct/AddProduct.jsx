@@ -3,6 +3,8 @@ import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message } from 'ant
 import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import './AddProduct.css'
 
 const customThemeSelect = {
@@ -497,12 +499,10 @@ const AddProduct = () => {
   }, [])
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
-      openMessage('success', 'Add product success', 3) // Adjust the delay as needed
-      setTimeout(() => {
-        window.history.back()
-      }, 500)
+      toast.success('Add product success', { autoClose: 2000 })
+      window.history.back()
     } else if (status >= 400) {
-      openMessage('error', messageResult, 3) // Adjust the delay as needed
+      toast.error(messageResult, { autoClose: 3000 })
     }
   }, [status])
 
