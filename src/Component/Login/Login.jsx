@@ -40,7 +40,6 @@ export default function Login() {
         }
       },
       onError: () => {
-        console.log('Thất bại')
         toast.error('Đăng nhập thất bại!')
       }
     })
