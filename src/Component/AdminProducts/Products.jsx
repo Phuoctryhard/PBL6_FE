@@ -6,6 +6,7 @@ import { Table, TreeSelect, Breadcrumb, Empty, Dropdown, Popconfirm, message } f
 import './Product.css'
 import { Pagination } from 'antd'
 import qs from 'qs'
+import { getAccessToken } from '../../until'
 import { FilterOutlined, DashOutlined, DeleteOutlined } from '@ant-design/icons'
 const filterSelectTheme = {
   token: {
@@ -36,8 +37,7 @@ const AdminProducts = () => {
   })
   const [messageApi, contextHolder] = message.useMessage()
   const [responseState, setResponseState] = useState({ status: 0, messageResult: '', type: null })
-
-  const token = localStorage.getItem('accesstoken')
+  const token = getAccessToken()
   const openMessage = (type, content, duration) => {
     messageApi.open({
       type: type,
@@ -53,7 +53,7 @@ const AdminProducts = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            authorization: 'Bearer ' + token
+            authorization: token
           },
           body: JSON.stringify({ product_is_delete: 1 })
         }
@@ -78,13 +78,12 @@ const AdminProducts = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            authorization: 'Bearer ' + token
+            authorization: token
           },
 
           body: JSON.stringify({ product_is_delete: 0 })
         }
       )
-      console.log('Bearer ' + token)
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Unauthorized access. Please check your credentials.')
@@ -112,7 +111,7 @@ const AdminProducts = () => {
       ellipsis: true
     },
     {
-      title: 'Product Name',
+      title: 'Name',
       dataIndex: 'product_name',
       key: 'product_name',
       width: '20%',
@@ -325,7 +324,7 @@ const AdminProducts = () => {
             product_created_at: product.product_created_at,
             product_updated_at: product.product_updated_at
           }))
-          .sort((a, b) => new Date(b.product_created_at) - new Date(a.product_created_at))
+          .sort((a, b) => new Date(b.product_updated_at) - new Date(a.product_updated_at))
 
         const categories = [...new Set(tableData.map((item) => item.category_name))]
         const categoryFilters = categories.map((category) => ({
@@ -514,7 +513,10 @@ const AdminProducts = () => {
               columns={columns}
               rowKey={(record) => record.product_id}
               dataSource={data}
-              pagination={tableParams.pagination}
+              pagination={{
+                position: ['none'],
+                ...tableParams.pagination
+              }}
               loading={loading}
               locale={localeText}
               onChange={handleTableChange}
@@ -527,7 +529,6 @@ const AdminProducts = () => {
                 maxHeight: '450px',
                 backgroundColor: '#ffffff'
               }}
-              className='product_table'
             />
           </ConfigProvider>
           <CustomPagination

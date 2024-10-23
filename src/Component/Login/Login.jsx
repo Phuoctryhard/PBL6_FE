@@ -28,7 +28,7 @@ export default function Login() {
     // gửi lên api data
     mutation.mutate(data, {
       onSuccess: (dat) => {
-        /* localStorage.setItem('accesstoken', dat.data.data.access_token)*/
+        localStorage.setItem('accesstoken', dat.data.data.access_token)
         // login(dat.data.data.access_token)
         toast.success('Wow so easy !')
         setIsAuthenticated(true)

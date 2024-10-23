@@ -1,11 +1,3 @@
-.product_table .ant-table-body {
-  scrollbar-width: thin;
-}
-
-.product_table.ant-table-wrapper .ant-table-pagination.ant-pagination {
-  display: none;
-}
-
 .ant-breadcrumb ol {
   display: flex;
   align-items: center;

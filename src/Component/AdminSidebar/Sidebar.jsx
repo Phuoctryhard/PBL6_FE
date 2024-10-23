@@ -22,7 +22,7 @@ import './Sidebar.css'
 const Sidebar = () => {
   const Items = [
     { id: 'products', name: 'Danh sách sản phẩm' },
-    { id: 'catagories', name: 'Danh mục sản phẩm' }
+    { id: 'categories', name: 'Danh mục sản phẩm' }
   ]
 
   const Users = [
