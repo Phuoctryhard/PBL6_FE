@@ -31,7 +31,7 @@ export default function useRouterElement() {
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
     if (isAuthenticated) {
-      if ((isAdminRoute && userRole == 'ADMIN') || (!isAdminRoute && (userRole == 'ADMIN' || userRole == 'user'))) {
+      if ((isAdminRoute && userRole === 'ADMIN') || (!isAdminRoute && (userRole === 'ADMIN' || userRole === 'user'))) {
         return <Outlet />
       } else {
         return (
