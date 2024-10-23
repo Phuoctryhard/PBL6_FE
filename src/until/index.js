@@ -9,3 +9,15 @@ export const saveAccessToken = (token) => {
 export const tokenBear = (token) => {
   return 'Bearer ' + token
 }
+
+export const getProfile = () => {
+  const result = localStorage.getItem('profile')
+  return  result ? JSON.parse(result) : null
+}
+
+export const saveProfile = (profile) => {
+  localStorage.setItem('profile', JSON.stringify(profile))
+}
+export const clearProfile = () => {
+  localStorage.removeItem('profile')
+}

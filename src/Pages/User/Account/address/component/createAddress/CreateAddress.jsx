@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useQuery } from '@tanstack/react-query'
 import AddressApi from '../../../../../../Api/user/address'
-
+import { useMutation, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 // Schema validation với Yup
 const schema = yup
   .object({
@@ -22,10 +24,11 @@ const schema = yup
     ward: yup.string().required('Vui lòng nhập thông tin.')
   })
   .required()
-export default function AddressForm() {
+export default function AddressForm({ closeModal, queryClient }) {
   const [wards, setWards] = useState([])
   const [districts, setDistricts] = useState([])
-  const { data } = useQuery({
+  const [provinces, setProvinces] = useState([])
+  const { data: provincesData } = useQuery({
     queryKey: ['getProvince'],
     queryFn: AddressApi.getProvinces
   })
@@ -38,29 +41,64 @@ export default function AddressForm() {
     resolver: yupResolver(schema)
   })
 
-  const onSubmit = (data) => {
-    console.log(data)
-  }
+  // Mutations add diachi
+  const mutation = useMutation({
+    mutationFn: AddressApi.add_Address_receive,
+    onSuccess: () => {
+      toast.success('Thêm thành công ')
+      queryClient.invalidateQueries({ queryKey: ['getAddress'] })
+    }
+  })
 
+  const onSubmit = (data) => {
+    const NameWards = wards.find((element) => {
+      return +element.id == data.ward
+    })
+    console.log(data)
+    const addressMain = NameWards.name + ',' + data.District + ',' + data.Province
+    const address_Receive = {
+      receiver_name: data.fullName,
+      receiver_phone: data.phoneNumber, //required
+      receiver_address: addressMain
+    }
+    console.log(address_Receive)
+    mutation.mutate(address_Receive)
+    closeModal()
+  }
+  useEffect(() => {
+    if (provincesData) {
+      setProvinces(provincesData.data.data) // Cập nhật state Provice  với dữ liệu mới
+    }
+  }, [])
   const handleProviceChange = async (e) => {
     const selectedDProviceId = e.target.value
     if (selectedDProviceId) {
       const { data } = await AddressApi.getDistricts(selectedDProviceId)
+      //  lấy ra tỉnh
+      const NameProvice = provincesData.data.data.find((element) => {
+        return element.id == selectedDProviceId
+      })
+
+      setValue('Province', NameProvice.name)
       console.log(data.data)
-      setDistricts(data.data) // Cập nhật danh sách xã
+      setDistricts(data.data) // Cập nhật danh sách huyen
     }
   }
   const handleDistrictChange = async (e) => {
     const selectedDistrictId = e.target.value
     if (selectedDistrictId) {
-      const { data } = await AddressApi.getWards(selectedDistrictId)
-      console.log(data.data)
-      setWards(data.data) // Cập nhật danh sách xã
+      const { data: award } = await AddressApi.getWards(selectedDistrictId)
+      const NameDistrict = districts.find((element) => {
+        return element.id == selectedDistrictId
+      })
+      console.log(NameDistrict.name)
+      setValue('District', NameDistrict.name)
+      setWards(award.data) // Cập nhật danh sách xã
     }
   }
-
-  const handleBack = () => {}
-  console.log(data?.data?.data)
+  const handleBack = () => {
+    closeModal()
+  }
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='max-w-lg mx-auto p-1 bg-white rounded-lg shadow-md'>
       <div className='mb-4'>
@@ -94,8 +132,8 @@ export default function AddressForm() {
           <option disabled value=''>
             Chọn Tỉnh/Thành phố
           </option>
-          {data?.data?.data &&
-            data.data.data.map((element) => (
+          {provincesData?.data?.data &&
+            provincesData.data.data.map((element) => (
               <option key={element.id} value={element.id}>
                 {element.name}
               </option>

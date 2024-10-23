@@ -6,11 +6,11 @@ import { useNavigate, createSearchParams, Link } from 'react-router-dom'
 import { useState } from 'react'
 import CartAPI from '../../../../Api/user/cart.js'
 import { useQuery } from '@tanstack/react-query'
-
+import { Badge } from 'antd'
 import { Button } from 'antd'
 import { AuthContext } from '../../../../context/app.context'
 export default function Search() {
-  const { isAuthenticated, logout } = useContext(AuthContext)
+  const { isAuthenticated, logout, isProfile } = useContext(AuthContext)
   const [openCategory, setopenCategory] = useState(false)
   var handleClick = () => {
     setopenCategory(!openCategory)
@@ -24,7 +24,7 @@ export default function Search() {
       })}`
     })
   }
-  console.log(isAuthenticated)
+  console.log(isProfile)
   const { data } = useQuery({
     queryKey: ['getCart'],
     queryFn: CartAPI.getCart,
@@ -36,7 +36,7 @@ export default function Search() {
     setopenCategory(!openCategory)
   }
   var handleNavigate = () => {
-    window.location.href = 'http://localhost:3000/cart'
+    navigate('/cart')
   }
   var handleLogout = () => {
     logout()
@@ -212,7 +212,7 @@ export default function Search() {
                 strokeWidth={1.5}
                 stroke='currentColor'
                 opacity='0.6'
-                className='size-20'
+                className='size-10'
               >
                 <path
                   strokeLinecap='round'
@@ -234,7 +234,30 @@ export default function Search() {
           </div>
         </div>
       ) : (
-        <div>đã đăng nhập</div>
+        <div className='flex flex-col'>
+          <div className='flex justify-between'>
+            <div className=''>Thông báo mới </div>
+            <div className=''>Đọc tất cả</div>
+          </div>
+          <div className='flex flex-col items-center'>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              fill='none'
+              viewBox='0 0 24 24'
+              strokeWidth='1.5'
+              stroke='currentColor'
+              className='size-24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                d='M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5'
+              />
+            </svg>
+
+            <div className=''>Chưa có thông báo mới</div>
+          </div>
+        </div>
       )}
     </>
   )
@@ -347,7 +370,7 @@ export default function Search() {
               </div>
             </div>
             <div className='flex relative'>
-              <Popover content={content} placement='bottomRight'>
+              <Popover content={content} placement='bottomRight' overlayStyle={{ width: '300px' }}>
                 <button className='h-10 px-3 text-white h-10'>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
@@ -366,22 +389,24 @@ export default function Search() {
                 </button>
               </Popover>
               <Popover content={ShopingCart} placement='bottomRight' className='' overlayStyle={{ width: '450px' }}>
-                <div className='h-10 px-3'>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    strokeWidth='1.5'
-                    stroke='currentColor'
-                    class='size-7 h-10 text-white '
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z'
-                    />
-                  </svg>
-                </div>
+                <Badge count={5} offset={[-15, 7]}>
+                  <div className='h-10 px-3'>
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      strokewidth='1.5'
+                      stroke='currentColor'
+                      className='size-7 h-10 text-white '
+                    >
+                      <path
+                        strokelinecap='round'
+                        strokelinejoin='round'
+                        d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z'
+                      />
+                    </svg>
+                  </div>
+                </Badge>
               </Popover>
               <div className='border-color-white absolute bottom-[6px] right-0 top-[6px] hidden border-l-[1px] md:inline-block'></div>
             </div>
@@ -389,8 +414,8 @@ export default function Search() {
               <div className='flex items-center'>
                 <Popover content={profile} placement='bottomRight' overlayStyle={{ width: '230px' }}>
                   <div className='flex items-center cursor-pointer'>
-                    <Avatar1 />
-                    <div className='w-20 h-10 flex items-center justify-center ml-1'>Ngo Phuoc</div>
+                    <Avatar1 user_avatar={isProfile.user_avatar} />
+                    <div className='w-full h-10 flex items-center justify-center ml-1'>{isProfile.user_fullname}</div>
                   </div>
                 </Popover>
               </div>

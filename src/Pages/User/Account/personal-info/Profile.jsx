@@ -6,7 +6,7 @@ export default function Profile() {
   return (
     <div className=' px-3 py-3 '>
       <div className='border-b border-b-gray-300'>
-        <p className='text-lg capitalize text-[#333]'>Hồ sơ của tôi </p>
+        <p className='capitalize text-xl text-[#2A2A2A] font-bold'>Hồ sơ của tôi </p>
 
         <div className='mt-1 pb-3 text-sm'>
           <p>Quản lý thông tin hồ sơ để bảo mật tài khoản</p>

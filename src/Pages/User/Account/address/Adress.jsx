@@ -2,7 +2,19 @@ import React, { useState } from 'react'
 import ModalComponent from '../../../../Component/Modal/Modal'
 import { Modal } from 'antd'
 import AddressForm from './component/createAddress/CreateAddress'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import AddressApi from '../../../../Api/user/address'
+import UpdateAddress from './component/updateAddressRecieve/UpdateAddress'
 export default function Adress() {
+  const queryClient = useQueryClient()
+
+  const { data } = useQuery({
+    queryKey: ['getAddress'],
+    queryFn: AddressApi.getAddress_receive
+  })
+
+  console.log(data?.data?.data)
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const showModal = () => {
     setIsModalOpen(true)
@@ -13,6 +25,7 @@ export default function Adress() {
   const handleCancel = () => {
     setIsModalOpen(false)
   }
+
   const svgElement = (
     <svg
       xmlns='http://www.w3.org/2000/svg'
@@ -29,6 +42,7 @@ export default function Adress() {
       />
     </svg>
   )
+
   return (
     <div className='px-3 py-3 '>
       <div className=' flex items-center justify-between  border-b border-b-gray-300 pb-4'>
@@ -54,29 +68,43 @@ export default function Adress() {
           Thêm địa chỉ
         </button>
       </div>
-      <div className='flex flex-col md:flex-row mt-3'>
-        <div className='w-[80%]'>
-          <div className='my-2'>
-            <span className='font-bold'>Ngô Đình Phước</span>
-            <span className='mx-2'>|</span>
-            <span>0865446276</span>
-          </div>
-          <div className='my-2'>22, Phường Đa Kao, Quận 1, Thành phố Hồ Chí Minh</div>
-          <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>Nhà riêng</span>
-        </div>
-        <div className='w-[20%]  '>
-          <div className='flex flex-grow justify-end gap-x-5 items-center'>
-            <button className='text-blue '>Cập nhật</button>
-            <ModalComponent svgElement={svgElement} />
-          </div>
-        </div>
-      </div>
 
-      <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
-        <>
-          <AddressForm />
-        </>
-      </Modal>
+      {data?.data?.data.map((element) => {
+        {
+          return (
+            <>
+              <div className='flex flex-col md:flex-row mt-3'>
+                <div className='w-[80%]'>
+                  <div className='my-2'>
+                    <span className='font-bold'>{element.receiver_name}</span>
+                    <span className='mx-2'>|</span>
+                    <span>0865446276</span>
+                  </div>
+                  <div className='my-2'>{element.receiver_address}</div>
+                  <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
+                    Nhà riêng
+                  </span>
+                </div>
+                <div className='w-[20%]  '>
+                  <div className='flex flex-grow justify-end gap-x-5 items-center'>
+                    <UpdateAddress queryClient={queryClient} receiver_address_id={element.receiver_address_id} />
+                    <ModalComponent
+                      svgElement={svgElement}
+                      receiver_address_id={element.receiver_address_id}
+                      queryClient={queryClient}
+                    />
+                  </div>
+                </div>
+              </div>
+              <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
+                <>
+                  <AddressForm closeModal={() => setIsModalOpen(false)} queryClient={queryClient} />
+                </>
+              </Modal>
+            </>
+          )
+        }
+      })}
     </div>
   )
 }

@@ -30,9 +30,14 @@ export default function Login() {
       onSuccess: (dat) => {
         localStorage.setItem('accesstoken', dat.data.data.access_token)
         // login(dat.data.data.access_token)
-        toast.success('Wow so easy !')
-        setIsAuthenticated(true)
-        navigate('/')
+        login(data.data.data)
+        console.log(data.data.data)
+        const role = data.data.data.role
+        if (role == 'user') {
+          navigate('/')
+        } else {
+          navigate('/admin')
+        }
       },
       onError: () => {
         console.log('Thất bại')
