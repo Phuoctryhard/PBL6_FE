@@ -106,7 +106,10 @@ export default function Profile() {
           </div>
           <div className='mt-8 flex flex-wrap sm:flex-row items-center justify-between'>
             <div className='w-[40%] flex justify-center'>
-              <button type='onSubmit' className='p-4 rounded-lg border bg-blue  mt-6  text-center text-white font-semibold'>
+              <button
+                type='onSubmit'
+                className='p-4 rounded-lg border bg-blue  mt-6  text-center text-white font-semibold'
+              >
                 Lưu thay đổi
               </button>
             </div>
