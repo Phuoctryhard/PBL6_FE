@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useState } from 'react'
 import { ArrowDown2, SearchNormal, Setting4, ArrowUp2 } from 'iconsax-react'
 
@@ -23,18 +23,42 @@ const languageSelectTheme = {
 }
 export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const date = new Date()
-  const options = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
+  const [greeting, setGreeting] = useState('')
+  const [greetingColor, setGreetingColor] = useState('')
+  const optionsDate = { year: 'numeric', month: 'long', day: '2-digit' }
+  const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
+
+  const formatDate = (date) => {
+    const formattedDate = new Date(date).toLocaleDateString('en-GB', optionsDate)
+    const formattedTime = new Date(date).toLocaleTimeString('en-GB', optionsTime)
+    return `${formattedDate} at ${formattedTime}`
   }
-  const formattedTime = date.toLocaleTimeString('en-US', options)
-  const [time, setTime] = useState(formattedTime)
+
+  const [time, setTime] = useState(formatDate(new Date()))
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentTime = new Date()
+      setTime(formatDate(currentTime))
+      const hours = currentTime.getHours()
+      if (hours >= 5 && hours < 12) {
+        setGreeting('Good morning')
+        setGreetingColor('#FED600') // Yellow for morning
+      } else if (hours >= 12 && hours < 17) {
+        setGreeting('Good afternoon')
+        setGreetingColor('#FFA500') // Orange for afternoon
+      } else if (hours >= 17 && hours < 21) {
+        setGreeting('Good evening')
+        setGreetingColor('#FF4500') // Red for evening
+      } else {
+        setGreeting('Good night')
+        setGreetingColor('#1E90FF') // Blue for night
+      }
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <header className='flex w-full h-[60px] items-center z-[200]'>
       <div
@@ -68,10 +92,15 @@ export default function Header() {
           </div>
           <div className='time flex flex-col items-end text-[14px] text-[#1D242E] gap-y-[6px] justify-center content-center'>
             <div className='flex items-center justify-center'>
-              <div className='w-[18px] h-[18px] rounded-[50%] bg-[#FED600] mr-[11px]'></div>
-              <span className='font-bold'>Good morning</span>
+              <div
+                className='w-[18px] h-[18px] rounded-[50%] mr-[11px]'
+                style={{
+                  backgroundColor: greetingColor
+                }}
+              ></div>
+              <span className='font-bold'>{greeting}</span>
             </div>
-            <span>{time}</span>
+            <span className='w-[200px] text-right max-w-[200px]'>{time}</span>
           </div>
         </div>
       </div>

@@ -39,6 +39,7 @@
   width: 100%;
   overflow-x: hidden;
   height: 350px;
+  border-radius: 10px;
 }
 
 .slides {
@@ -95,6 +96,7 @@
   margin: 0 5px;
   cursor: pointer;
   border: 2px solid transparent;
+  border-radius: 10px;
 }
 
 .thumbnail:first-child {
