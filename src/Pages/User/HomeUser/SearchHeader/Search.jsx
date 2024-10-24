@@ -15,7 +15,7 @@ export default function Search(class1 = 'text-blue') {
   const [openCategory, setopenCategory] = useState(false)
   const handleClickCategory = (categoryName) => {
     // Điều hướng về trang gốc rồi thêm categoryName
-   // navigate(`/category/${categoryName}`)
+    // navigate(`/category/${categoryName}`)
     navigate({
       pathname: '/category',
       search: `?${createSearchParams({
@@ -429,13 +429,13 @@ export default function Search(class1 = 'text-blue') {
               </Popover>
               <div className='border-color-white absolute bottom-[6px] right-0 top-[6px] hidden border-l-[1px] md:inline-block'></div>
             </div>
-            {isAuthenticated ? (
+            {isAuthenticated  ? (
               <div className='flex items-center'>
                 <Popover content={profile} placement='bottomRight' overlayStyle={{ width: '230px' }}>
-                  <div className='flex items-center cursor-pointer'>
-                    {/* <Avatar1 user_avatar={isProfile.user_avatar} />
-                    <div className='w-full h-10 flex items-center justify-center ml-1'>{isProfile.user_fullname}</div> */}
-                  </div>
+                  {/*// <div className='flex items-center cursor-pointer'>
+                  //   <Avatar1 user_avatar={isProfile.user_avatar} />
+                  //   <div className='w-full h-10 flex items-center justify-center ml-1'>{isProfile.user_fullname}</div>
+                  // </div>*/}
                 </Popover>
               </div>
             ) : (

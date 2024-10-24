@@ -13,8 +13,8 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(initialAppContext.isAuthenticated)
   const [isProfile, setIsProfile] = useState(initialAppContext.profile)
 
-  const login = (user) => {
-    // localStorage.setItem('accesstoken', token) // Lưu token vào localStorage
+  const login = (user, token) => {
+    localStorage.setItem('accesstoken', token) // Lưu token vào localStorage
     setIsAuthenticated(true) // Cập nhật trạng thái xác thực
     setIsProfile(user)
   }

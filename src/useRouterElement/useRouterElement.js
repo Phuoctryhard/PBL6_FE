@@ -25,11 +25,11 @@ import { AuthContext } from '../context/app.context.jsx'
 import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
-  const userRole = 'user'
+  const userRole = 'admin'
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
     if (isAuthenticated) {
-      if ((isAdminRoute && userRole === 'ADMIN') || (!isAdminRoute && (userRole === 'ADMIN' || userRole === 'user'))) {
+      if ((isAdminRoute && userRole === 'admin') || (!isAdminRoute && (userRole === 'admin' || userRole === 'user'))) {
         return <Outlet />
       } else {
         return (

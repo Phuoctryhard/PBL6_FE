@@ -27,14 +27,16 @@ export default function Login() {
   const onSubmit = handleSubmit((data) => {
     // gửi lên api data
     mutation.mutate(data, {
-      onSuccess: (dat) => {
-        localStorage.setItem('accesstoken', dat.data.data.access_token)
-        // login(dat.data.data.access_token)
-        login(data.data.data)
+      onSuccess: (data) => {
+        // localStorage.setItem('accesstoken', dat.data.data.access_token)
+        //login(dat.data.data.access_token)
+        login(data.data.data, data.data.data.access_token)
         const role = data.data.data.role
         if (role == 'user') {
+          toast.success('Đăng nhập thành công')
           navigate('/')
         } else {
+          console.log(role)
           navigate('/admin')
         }
       },
