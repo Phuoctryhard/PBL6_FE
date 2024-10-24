@@ -31,7 +31,6 @@ export default function Login() {
         localStorage.setItem('accesstoken', dat.data.data.access_token)
         // login(dat.data.data.access_token)
         login(data.data.data)
-        console.log(data.data.data)
         const role = data.data.data.role
         if (role == 'user') {
           navigate('/')
