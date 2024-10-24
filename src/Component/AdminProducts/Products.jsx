@@ -6,7 +6,9 @@ import { Table, TreeSelect, Breadcrumb, Empty, Dropdown, Popconfirm, message } f
 import './Product.css'
 import { Pagination } from 'antd'
 import qs from 'qs'
-import { getAccessToken } from '../../until'
+import debounce from 'lodash.debounce'
+import CategoriesAPI from '../../Api/admin/categories'
+import ProductsAPI from '../../Api/admin/products'
 import { FilterOutlined, DashOutlined, DeleteOutlined } from '@ant-design/icons'
 const filterSelectTheme = {
   token: {
@@ -32,9 +34,6 @@ const AdminProducts = () => {
   const [searchValue, setSearchValue] = useState('')
   const [searchType, setSearchType] = useState('')
   const [treeData, setTreeData] = useState([])
-  const [localeText, setLocaleText] = useState({
-    emptyText: <Empty description='...loading' className='hidden'></Empty>
-  })
   const [messageApi, contextHolder] = message.useMessage()
   const [responseState, setResponseState] = useState({ status: 0, messageResult: '', type: null })
   const token = localStorage.getItem('accesstoken')
@@ -47,54 +46,27 @@ const AdminProducts = () => {
   }
   const fetchDeleteProduct = async (ProductID) => {
     try {
-      const response = await fetch(
-        `https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products/delete/${ProductID}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            authorization: 'Bearer ' + token
-          },
-          body: JSON.stringify({ product_is_delete: 1 })
-        }
-      )
+      const response = await ProductsAPI.deleteProducts(ProductID, token)
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Unauthorized access. Please check your credentials.')
+          setResponseState({
+            status: 401,
+            messageResult: 'Unauthorized access. Please check your credentials.',
+            type: 'Delete'
+          })
+        } else {
+          setResponseState({
+            status: response.status,
+            messageResult: `Delete product with status code: ${response.status}`,
+            type: 'Delete'
+          })
         }
+        return
       }
       const result = await response.json()
       const { messages, status } = result
       setResponseState({ status, messageResult: messages, type: 'Delete' })
-    } catch (e) {
-      openMessage('error', e.message, 3)
-    }
-  }
-  const fetchRestoreProduct = async (ProductID) => {
-    try {
-      const response = await fetch(
-        `https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products/delete/${ProductID}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            authorization: 'Bearer ' + token
-          },
-
-          body: JSON.stringify({ product_is_delete: 0 })
-        }
-      )
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Unauthorized access. Please check your credentials.')
-        }
-      }
-      const result = await response.json()
-      const { messages, status } = result
-      setResponseState({ status, messageResult: messages, type: 'Restore' })
-    } catch (e) {
-      openMessage('error', e.message, 3)
-    }
+    } catch (e) {}
   }
   const [firstRender, setFirstRender] = useState(true)
   const handleCancelDelete = (e) => {
@@ -240,29 +212,6 @@ const AdminProducts = () => {
                     </button>
                   </Popconfirm>
                 )
-              },
-              {
-                key: '4',
-                label: (
-                  <Popconfirm
-                    align={{ offset: [20, 20] }}
-                    placement='bottomRight'
-                    title={`Restore record ${record.product_id}`}
-                    description='Are you sure to restore this record?'
-                    okText='Restore'
-                    cancelText='Cancel'
-                    onCancel={handleCancelDelete}
-                    onConfirm={() => fetchRestoreProduct(record.product_id)}
-                  >
-                    <button
-                      type='button'
-                      className='flex items-center gap-x-2 justify-center'
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Refresh className='text-[green]' size={15} /> <span>Restore</span>
-                    </button>
-                  </Popconfirm>
-                )
               }
             ]
           }}
@@ -298,58 +247,94 @@ const AdminProducts = () => {
       />
     </div>
   )
-  const fetchProducts = (params) => {
-    if (!firstRender) {
-      setLocaleText({
-        emptyText: <Empty description='No data found'></Empty>
-      })
-    }
+  const fetchProducts = debounce((params) => {
     setLoading(true)
-    const query = qs.stringify({
-      ...params
-    })
-    fetch(`https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products?${query}`)
-      .then((res) => res.json())
-      .then(({ data }) => {
-        const tableData = data
-          .map((product) => ({
-            product_id: product.product_id,
-            product_name: product.product_name,
-            product_price: product.product_price,
-            product_quantity: product.product_quantity,
-            product_sold: product.product_sold,
-            category_name: product.category_name,
-            brand_name: product.brand_name,
-            product_is_delete: product.product_is_delete,
-            product_created_at: product.product_created_at,
-            product_updated_at: product.product_updated_at
-          }))
-          .sort((a, b) => new Date(b.product_updated_at) - new Date(a.product_updated_at))
-
-        const categories = [...new Set(tableData.map((item) => item.category_name))]
-        const categoryFilters = categories.map((category) => ({
-          text: category,
-          value: category
-        }))
-        const brands = [...new Set(tableData.map((item) => item.brand_name))]
-        const brandFilters = brands.map((brand) => ({
-          text: brand,
-          value: brand
-        }))
-        setBrand(brandFilters)
-
-        setCategory(categoryFilters)
-        setData(tableData)
-        setLoading(false)
-        setTableParams({
-          ...tableParams,
-          pagination: {
-            ...tableParams.pagination,
-            total: data.length
-          }
-        })
+    try {
+      const query = qs.stringify({
+        ...params
       })
-  }
+      ProductsAPI.searchProducts(query)
+        .then((res) => {
+          if (!res.ok) {
+            if (res.status === 401) {
+              setResponseState({
+                status: 401,
+                messageResult: 'Unauthorized access. Please check your credentials.',
+                type: 'Fetch'
+              })
+            } else if (res.status === 404) {
+              setResponseState({
+                status: 404,
+                messageResult: 'Products not found',
+                type: 'Fetch'
+              })
+            } else if (res.status === 429) {
+              setResponseState({
+                status: 429,
+                messageResult: 'Too many requests. Please try again later.',
+                type: 'Fetch'
+              })
+            } else {
+              setResponseState({
+                status: res.status,
+                messageResult: `Fetch products failed with status code: ${res.status}`,
+                type: 'Fetch'
+              })
+            }
+            return null
+          }
+          return res.json()
+        })
+        .then(({ data }) => {
+          if (!data) {
+            setLoading(false)
+            return
+          }
+          const tableData = data
+            .map((product) => ({
+              product_id: product.product_id,
+              product_name: product.product_name,
+              product_price: product.product_price,
+              product_quantity: product.product_quantity,
+              product_sold: product.product_sold,
+              category_name: product.category_name,
+              brand_name: product.brand_name,
+              product_is_delete: product.product_is_delete,
+              product_created_at: product.product_created_at,
+              product_updated_at: product.product_updated_at
+            }))
+            .sort((a, b) => new Date(b.product_updated_at) - new Date(a.product_updated_at))
+
+          const categories = [...new Set(tableData.map((item) => item.category_name))]
+          const categoryFilters = categories.map((category) => ({
+            text: category,
+            value: category
+          }))
+          const brands = [...new Set(tableData.map((item) => item.brand_name))]
+          const brandFilters = brands.map((brand) => ({
+            text: brand,
+            value: brand
+          }))
+          setBrand(brandFilters)
+          setCategory(categoryFilters)
+          setData(tableData)
+          setTableParams({
+            ...tableParams,
+            pagination: {
+              ...tableParams.pagination,
+              total: data.length
+            }
+          })
+          setLoading(false)
+        })
+        .catch((e) => {
+          setLoading(false)
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+    } catch (e) {}
+  }, 500)
 
   const convertToTreeData = (data) => {
     return data
@@ -361,10 +346,10 @@ const AdminProducts = () => {
       }))
   }
   useEffect(() => {
-    fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/categories')
+    CategoriesAPI.getCategories()
       .then((response) => response.json())
       .then(({ data }) => {
-        const categories = convertToTreeData(data)
+        const categories = convertToTreeData(data.filter((category) => category.category_is_delete === 0))
         setTreeData(categories)
       })
   }, [])
@@ -379,13 +364,9 @@ const AdminProducts = () => {
     tableParams?.sortOrder,
     tableParams?.sortField,
     JSON.stringify(tableParams.filters),
-    searchType
+    searchType,
+    searchValue
   ])
-  useEffect(() => {
-    if (firstRender) {
-      setFirstRender(false)
-    }
-  }, [firstRender])
 
   useEffect(() => {
     const { status, messageResult, type } = responseState
@@ -396,12 +377,15 @@ const AdminProducts = () => {
           search: searchValue,
           category_name: searchType
         })
+        setResponseState({ status: 0, messageResult: '', type: null })
       } else if (status >= 400) {
         openMessage('error', `${type} product failed: ${messageResult}`, 3)
+        setResponseState({ status: 0, messageResult: '', type: null })
       }
     }
   }, [responseState])
-  const handleTableChange = (pagination, filters, sorter) => {
+  const handleTableChange = debounce((pagination, filters, sorter) => {
+    setLoading(true)
     const params = {
       pagination,
       filters,
@@ -412,7 +396,7 @@ const AdminProducts = () => {
     if (pagination.pageSize !== tableParams.pagination?.pageSize) {
       setData([])
     }
-  }
+  }, 50)
   return (
     <section className='max-w-[100%] h-full'>
       {contextHolder}
@@ -445,21 +429,15 @@ const AdminProducts = () => {
       </header>
       <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md'>
         <div className='flex justify-between items-center'>
-          <div className='searchProductBox flex items-center bg-[#fafafa] w-[340px] justify-between text-[14px] border-[1px] border-solid border-[#e8ebed] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
+          <div className='searchProductBox flex items-center w-[340px] justify-between text-[14px] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
             <input
               type='text'
               placeholder='Search for product'
-              className='searchProductBox__input border-none outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
                 setSearchValue(e.target.value)
-                if (e.target.value === '') {
-                  fetchProducts({
-                    search: undefined,
-                    category_name: searchType
-                  })
-                }
               }}
             />
             <button
@@ -484,6 +462,7 @@ const AdminProducts = () => {
                 placement='bottomRight'
                 treeData={treeData}
                 treeDefaultExpandAll
+                value={searchType || undefined}
                 dropdownStyle={{ maxHeight: 400, overflow: 'auto', minWidth: 300 }}
                 className='w-[217px] border-[1px] border-solid border-[#e8ebed] rounded-[4px] h-[50px]'
                 onChange={(value) => {
@@ -518,7 +497,6 @@ const AdminProducts = () => {
                 ...tableParams.pagination
               }}
               loading={loading}
-              locale={localeText}
               onChange={handleTableChange}
               scroll={{
                 y: '300px'

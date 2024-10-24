@@ -1,7 +1,7 @@
-import http from '../../until/until'
-const rootCategories = 'https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/categories'
+import { BASE_URL } from '../../until'
+const rootCategories = `${BASE_URL}/categories`
 const CategoriesAPI = {
-  getCategories: () => http.get('categories'),
+  getCategories: async () => await fetch(rootCategories),
   addCategories: async (formData, token) =>
     await fetch(`${rootCategories}/add`, {
       method: 'POST',
@@ -40,7 +40,13 @@ const CategoriesAPI = {
         category_is_delete: 0
       })
     }),
-  searchCategories: (data) => http.get(`categories?${data}`)
+  searchCategories: async (token, data) =>
+    await fetch(`${rootCategories}/all?${data}`, {
+      method: 'GET',
+      headers: {
+        authorization: 'Bearer ' + token
+      }
+    })
 }
 
 export default CategoriesAPI

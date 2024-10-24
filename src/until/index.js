@@ -20,3 +20,5 @@ export const saveProfile = (profile) => {
 export const clearProfile = () => {
   localStorage.removeItem('profile')
 }
+
+export const BASE_URL = 'https://lucifernsz.com/PBL6_Pharmacity/BE/PBL6-BE/public/api'

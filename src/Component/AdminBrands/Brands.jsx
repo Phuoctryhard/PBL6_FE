@@ -1,12 +1,13 @@
 import './Brands.css'
 import BrandsAPI from '../../Api/admin/brands'
-import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Refresh, Eye } from 'iconsax-react'
+import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider, Select } from 'antd'
-import { Table, TreeSelect, Breadcrumb, Empty, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination } from 'antd'
+import { Table, Breadcrumb, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import debounce from 'lodash.debounce'
 const Brands = () => {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
@@ -17,6 +18,42 @@ const Brands = () => {
       pageSize: 8
     }
   })
+  const [openModal, setOpenModal] = useState(false)
+  const [typeModal, setTypeModal] = useState('add')
+  const [submitLoading, setSubmitLoading] = useState(false)
+  const fileInputRef = useRef(null)
+  const [Logo, setLogo] = useState(null)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [errorFileUpload, setErrorFileUpload] = useState('')
+  const [dragging, setDragging] = useState(false)
+  const [brandName, setBrandName] = useState('')
+  const [errorBrandName, setErrorBrandName] = useState('')
+  const [brandDescription, setBrandDescription] = useState('')
+  const [errorBrandDescription, setErrorBrandDescription] = useState('')
+  const [selectedBrand, setSelectedBrand] = useState(null)
+  const [status, setStatus] = useState(null)
+  const [messageResult, setMessageResult] = useState('')
+  const token = localStorage.getItem('accesstoken')
+
+  const [openModalView, setOpenModalView] = useState(false)
+  const [selectedBrandData, setSelectedBrandData] = useState(null)
+  const [showDescription, setShowDescription] = useState(false)
+
+  const optionsDateformat = {
+    weekday: 'long',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false // Use 24-hour format
+  }
+
+  const DateFormat = (date) => {
+    const formattedDate = new Date(date).toLocaleDateString('en-US', optionsDateformat)
+    return `${formattedDate}`
+  }
   const columns = [
     {
       title: '#',
@@ -46,7 +83,8 @@ const Brands = () => {
       key: 'brand_created_at',
       width: '20%',
       sorter: (a, b) => a.brand_created_at.localeCompare(b.brand_created_at),
-      ellipsis: true
+      ellipsis: true,
+      render: (text) => <span className='text-[14px]'>{DateFormat(text)}</span>
     },
     {
       title: 'Status',
@@ -82,23 +120,35 @@ const Brands = () => {
               {
                 key: '1',
                 label: (
-                  <Link
-                    to={`/admin/categories/${record.category_id}`}
+                  <button
+                    type='button'
                     className='flex items-center gap-x-2 justify-center'
+                    onClick={() => {
+                      setOpenModalView(true)
+                      setSelectedBrandData(record)
+                    }}
                   >
                     <Eye size='15' color='green' /> <span>View</span>
-                  </Link>
+                  </button>
                 )
               },
               {
                 key: '2',
                 label: (
-                  <Link
-                    to={`/admin/categories/update/${record.category_id}`}
+                  <button
+                    type='button'
                     className='flex items-center gap-x-2 justify-center'
+                    onClick={() => {
+                      setOpenModal(true)
+                      setSelectedBrand(record.brand_id)
+                      setBrandName(record.brand_name)
+                      setBrandDescription(record.brand_description)
+                      setLogo(record.brand_logo)
+                      setTypeModal('update')
+                    }}
                   >
                     <Edit size='15' color='green' /> <span>Update</span>
-                  </Link>
+                  </button>
                 )
               },
               {
@@ -107,8 +157,9 @@ const Brands = () => {
                   <Popconfirm
                     align={{ offset: [20, 20] }}
                     placement='bottomRight'
-                    title={`Delete record ${record.category_id}`}
+                    title={`Delete record ${record.brand_id}`}
                     description='Are you sure to delete this record?'
+                    onConfirm={() => handleDeleteBrand(record.brand_id)}
                     okText='Delete'
                     cancelText='Cancel'
                   >
@@ -118,27 +169,6 @@ const Brands = () => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <DeleteOutlined className='text-[15px] text-[red]' /> <span>Delete</span>
-                    </button>
-                  </Popconfirm>
-                )
-              },
-              {
-                key: '4',
-                label: (
-                  <Popconfirm
-                    align={{ offset: [20, 20] }}
-                    placement='bottomRight'
-                    title={`Restore record ${record.category_id}`}
-                    description='Are you sure to restore this record?'
-                    okText='Restore'
-                    cancelText='Cancel'
-                  >
-                    <button
-                      type='button'
-                      className='flex items-center gap-x-2 justify-center'
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Refresh className='text-[green]' size={15} /> <span>Restore</span>
                     </button>
                   </Popconfirm>
                 )
@@ -165,18 +195,25 @@ const Brands = () => {
         current={current}
         pageSize={pageSize}
         onChange={onChange}
-        pageSizeOptions={pageSizeOptions || ['3', '5', '10']}
+        pageSizeOptions={pageSizeOptions || ['8', '10', '20', '50']}
       />
     </div>
   )
 
-  const fetchBrands = async (params) => {
+  const fetchBrands = debounce(async (params) => {
     setLoading(true)
     const query = qs.stringify({
       ...params
     })
     const response = await BrandsAPI.searchBrands(query)
-    const { data } = response.data
+    if (!response.ok) {
+      setStatus(response.status)
+      setMessageResult(`Error fetching categories: with status ${response.status}`)
+      setLoading(false)
+      return
+    }
+    const result = await response.json()
+    const data = result.data
     const tableData = data
       .map((item) => ({
         key: item.brand_id,
@@ -190,7 +227,6 @@ const Brands = () => {
       }))
       .sort((a, b) => new Date(b.brand_updated_at) - new Date(a.brand_updated_at))
     setData(tableData)
-    setLoading(false)
     setTableParams({
       ...tableParams,
       pagination: {
@@ -198,9 +234,90 @@ const Brands = () => {
         total: data.length
       }
     })
+    setLoading(false)
+  }, 300)
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setDragging(true)
   }
 
-  const handleTableChange = (pagination, filters, sorter) => {
+  const handleDragLeave = () => {
+    setDragging(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragging(false)
+    const droppedFile = e.dataTransfer.files[0]
+    if (droppedFile && droppedFile.type.startsWith('image/')) {
+      setSelectedFile(droppedFile)
+      setLogo(URL.createObjectURL(droppedFile))
+      fileInputRef.current.value = null
+    }
+  }
+
+  const CheckBrandNameExist = (name) => {
+    const check = data.find((item) => {
+      if (typeModal === 'update' && item.brand_id === selectedBrand) {
+        return false
+      }
+      return item.category_name === name
+    })
+    return check !== undefined
+  }
+
+  const handleErrorBrandName = (name) => {
+    if (name === '') {
+      setErrorBrandName('Brand name is required')
+      return false
+    }
+    if (CheckBrandNameExist(name)) {
+      setErrorBrandName('Brand name is already exist')
+      return false
+    }
+    return true
+  }
+  const handleDeleteBrand = async (id) => {
+    const response = await BrandsAPI.deleteBrands(id, token)
+    setTypeModal('Delete')
+    if (response.ok) {
+      fetchBrands({
+        search: searchValue
+      })
+    } else {
+      if (response.status === 401) {
+        setStatus(401)
+        setMessageResult('Unauthorized access. Please check your credentials.')
+      } else {
+        setStatus(response.status)
+        setMessageResult(`Error delete brand with status: ${response.status}, message: `, response.messages)
+        console.log(await response.json())
+      }
+      return
+    }
+    const result = await response.json()
+    const { messages, status } = result
+    setStatus(status)
+    setMessageResult(messages)
+  }
+
+  const handleUploadLogo = (e) => {
+    const file = e.target.files[0]
+    if (file && file.type.startsWith('image/')) {
+      setLogo(URL.createObjectURL(file))
+      setSelectedFile(file)
+      fileInputRef.current.value = null
+    }
+  }
+
+  const handleClearLogo = (e) => {
+    e.stopPropagation()
+    setLogo(null)
+    setSelectedFile(null)
+  }
+
+  const handleTableChange = debounce((pagination, filters, sorter) => {
+    setLoading(true)
     const params = {
       pagination,
       filters,
@@ -210,6 +327,64 @@ const Brands = () => {
     setTableParams(params)
     if (pagination.pageSize !== tableParams.pagination?.pageSize) {
       setData([])
+    }
+  }, 50)
+
+  const handleCancel = () => {
+    setOpenModal(false)
+    setLogo(null)
+    setSelectedFile(null)
+    setBrandName('')
+    setBrandDescription('')
+    setErrorBrandName('')
+    setErrorBrandDescription('')
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitLoading(true)
+    const formData = new FormData()
+    const brand_name = brandName.trim()
+    const brand_description = brandDescription.trim()
+    const isValidBrandName = handleErrorBrandName(brand_name)
+    if (!isValidBrandName) {
+      setSubmitLoading(false)
+      return
+    }
+    formData.append('brand_name', brandName)
+    if (brand_description) formData.append('brand_description', brandDescription)
+    if (selectedFile) formData.append('brand_logo', selectedFile)
+    let response = null
+    try {
+      if (typeModal === 'add') {
+        response = await BrandsAPI.addBrands(formData, token)
+      }
+      if (typeModal === 'update') {
+        response = await BrandsAPI.updateBrands(selectedBrand, formData, token)
+      }
+      console.log(`data`, Object.fromEntries(formData))
+      if (!response.ok) {
+        setSubmitLoading(false)
+        const { messages } = await response.json()
+        if (response.status === 401) {
+          setStatus(401)
+          setMessageResult('Unauthorized access. Please check your credentials.')
+        } else if (response.status === 422) {
+          setStatus(422)
+          setMessageResult(`Invalid data: ${messages}`)
+        } else {
+          setStatus(response.status)
+          setMessageResult(`Error ${typeModal} brand: ${messages}`)
+        }
+        return
+      }
+      const result = await response.json()
+      const { messages, status } = result
+      setStatus(status)
+      setMessageResult(messages)
+    } catch (e) {
+    } finally {
+      setSubmitLoading(false)
     }
   }
   useEffect(() => {
@@ -221,7 +396,8 @@ const Brands = () => {
     tableParams.pagination?.pageSize,
     tableParams?.sortOrder,
     tableParams?.sortField,
-    JSON.stringify(tableParams.filters)
+    JSON.stringify(tableParams.filters),
+    searchValue
   ])
 
   useEffect(() => {
@@ -229,6 +405,22 @@ const Brands = () => {
       search: searchValue
     })
   }, [])
+
+  useEffect(() => {
+    if ([200, 201, 202, 204].includes(status)) {
+      message.success(`${typeModal} brand was successfully`, 3)
+      fetchBrands({
+        search: searchValue
+      })
+      setStatus(null)
+      setMessageResult(null)
+      handleCancel()
+    } else if (status >= 400) {
+      message.error(messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    }
+  }, [status, messageResult])
   return (
     <section className='max-w-[100%] h-full'>
       <header className='flex justify-between'>
@@ -253,28 +445,184 @@ const Brands = () => {
         </div>
         <button
           className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] animate-[slideRightToLeft_1s_ease]'
-          onClick={() => {}}
+          onClick={() => {
+            setOpenModal(true)
+            setTypeModal('add')
+          }}
         >
           <Add size='20' />
           Add new brand
         </button>
       </header>
+      <Modal
+        destroyOnClose
+        title={
+          <span>
+            {typeModal} new Brand (fields with <span className='text-[red]'>*</span> are required)
+          </span>
+        }
+        centered
+        open={openModal}
+        width={800}
+        footer={null}
+        onCancel={handleCancel}
+      >
+        <div className='modal__content mt-7 relative'>
+          <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
+          <form action='' method='POST' onSubmit={handleSubmit} autoComplete='off'>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__group AddCategoryForm__WidthFull relative'>
+                <label htmlFor='brand_logo' className='AddCategoryForm__label mb-1'>
+                  Logo (only *.jpeg, *.jpg, *.png, *.gif and *.svg)
+                </label>
+                <input
+                  type='file'
+                  accept='image/jpg, image/jpeg, image/png, image/gif, image/svg'
+                  name='brand_logo'
+                  id='brand_logo'
+                  className='hidden'
+                  placeholder='Choose file'
+                  onChange={handleUploadLogo}
+                  ref={fileInputRef}
+                  onClick={() => setErrorFileUpload('')}
+                />
+                <Tooltip
+                  title={errorFileUpload}
+                  open={errorFileUpload !== ''}
+                  placement='top'
+                  align={{
+                    offset: [0, 100]
+                  }}
+                >
+                  <div className='' onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+                    <button
+                      type='button'
+                      onClick={() => document.getElementById('brand_logo').click()}
+                      className='AddCategoryForm__uploadBtn'
+                      style={{
+                        border: Logo !== null ? 'None' : '3px dashed #e8ebed'
+                      }}
+                    >
+                      {Logo ? (
+                        <>
+                          <img src={Logo} alt='Logo' className='w-full h-[300px] object-cover' />
+                          <CloseCircleOutlined
+                            className='absolute top-0 right-0 text-red-500 text-[20px] cursor-pointer'
+                            onClick={handleClearLogo}
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <CloudUploadOutlined className='text-[green] text-[40px]' />{' '}
+                          <span>Drag or upload your image here</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </Tooltip>
+                {selectedFile && (
+                  <div>
+                    <span>{selectedFile.name}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
+                <label htmlFor='brand_name' className='AddCategoryForm__label'>
+                  <span className='text-[red]'>* </span>Name
+                </label>
+                <Tooltip
+                  title={errorBrandName}
+                  open={errorBrandName !== ''}
+                  placement='bottomLeft'
+                  align={{
+                    offset: [60, -8]
+                  }}
+                >
+                  <input
+                    type='text'
+                    name='brand_name'
+                    id='brand_name'
+                    className='AddCategoryForm__input'
+                    placeholder='This is a brand name'
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                    onFocus={() => setErrorBrandName('')}
+                  />
+                </Tooltip>
+              </div>
+            </div>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
+                <label htmlFor='brand_description' className='AddCategoryForm__label'>
+                  Description
+                </label>
+                <textarea
+                  type='text'
+                  name='brand_description'
+                  id='brand_description'
+                  className='AddCategoryForm__textarea'
+                  rows={6}
+                  placeholder='This is a category description'
+                  value={brandDescription !== null ? brandDescription : ''}
+                  onChange={(e) => setBrandDescription(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__groupButton'>
+                <button type='submit' className='AddCategoryForm__submitBtn'>
+                  Save
+                </button>
+                <button type='button' className='AddCategoryForm__cancelBtn' onClick={handleCancel}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </Modal>
+      <Modal centered open={openModalView} width={350} footer={null} onCancel={() => setOpenModalView(false)}>
+        <div className='w-[300px] flex justify-between pt-10'>
+          <Tooltip
+            title={
+              selectedBrandData !== null
+                ? selectedBrandData.brand_description !== null
+                  ? selectedBrandData.brand_description
+                  : '...'
+                : '...'
+            }
+            open={showDescription}
+            overlayStyle={{ maxWidth: '800px', whiteSpace: 'normal' }}
+            placement='bottom'
+          >
+            <figure className='w-[100%] flex justify-center items-center flex-col grow'>
+              <img
+                src={selectedBrandData !== null ? selectedBrandData.brand_logo : ''}
+                alt={selectedBrandData !== null ? selectedBrandData.brand_name : ''}
+                className='w-[200px] h-[200px] object-cover rounded-full'
+                onMouseEnter={() => setShowDescription(true)}
+                onMouseLeave={() => setShowDescription(false)}
+              />
+              <figcaption className='mt-2 text-center'>
+                {selectedBrandData !== null ? selectedBrandData.brand_name : ''}
+              </figcaption>
+            </figure>
+          </Tooltip>
+        </div>
+      </Modal>
       <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md'>
         <div className='flex justify-between items-center'>
-          <div className='flex items-center bg-[#fafafa] w-[340px] justify-between text-[14px] border-[1px] border-solid border-[#e8ebed] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
+          <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
             <input
               type='text'
               placeholder='Search for brands'
-              className='border-none outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
                 setSearchValue(e.target.value)
-                if (e.target.value === '') {
-                  fetchBrands({
-                    search: undefined
-                  })
-                }
               }}
             />
             <button

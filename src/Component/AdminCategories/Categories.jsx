@@ -1,18 +1,29 @@
 import './Categories.css'
 import CategoriesAPI from '../../Api/admin/categories'
-import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Refresh, Eye, Filter } from 'iconsax-react'
+import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Refresh, Eye } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { ConfigProvider, Select } from 'antd'
-import { Table, TreeSelect, Breadcrumb, Empty, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination } from 'antd'
+import { ConfigProvider } from 'antd'
+import {
+  Table,
+  TreeSelect,
+  Breadcrumb,
+  Empty,
+  Dropdown,
+  Popconfirm,
+  message,
+  Modal,
+  Tooltip,
+  Pagination,
+  Spin
+} from 'antd'
 import qs from 'qs'
+import debounce from 'lodash.debounce'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { type } from '@testing-library/user-event/dist/type'
 const Categories = () => {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [treeData, setTreeData] = useState([])
-  const [selectData, setSelectData] = useState([])
   const [typeData, setTypeData] = useState([])
   const [searchValue, setSearchValue] = useState('')
   const [categoryType, setCategoryType] = useState('')
@@ -32,6 +43,11 @@ const Categories = () => {
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState(null)
   const token = localStorage.getItem('accesstoken')
+  const [submitLoading, setSubmitLoading] = useState(false)
+
+  const [openModalView, setOpenModalView] = useState(false)
+  const [selectedCategoryData, setSelectedCategoryData] = useState(null)
+  const [showDescription, setShowDescription] = useState(false)
   const columns = [
     {
       title: '#',
@@ -66,7 +82,7 @@ const Categories = () => {
       ellipsis: true
     },
     {
-      title: 'Parent',
+      title: 'Parent ID',
       dataIndex: 'category_parent_id',
       key: 'category_parent_id',
       width: '10%',
@@ -101,9 +117,24 @@ const Categories = () => {
       render: (text, record) => (
         <Dropdown
           trigger={['click']}
-          placement='bottomRight'
+          placement='bottom'
           menu={{
             items: [
+              {
+                key: '1',
+                label: (
+                  <button
+                    type='button'
+                    className='flex items-center gap-x-2 justify-center'
+                    onClick={() => {
+                      setOpenModalView(true)
+                      setSelectedCategoryData(record)
+                    }}
+                  >
+                    <Eye size='15' color='green' /> <span>View</span>
+                  </button>
+                )
+              },
               {
                 key: '2',
                 label: (
@@ -146,28 +177,6 @@ const Categories = () => {
                     </button>
                   </Popconfirm>
                 )
-              },
-              {
-                key: '4',
-                label: (
-                  <Popconfirm
-                    align={{ offset: [20, 20] }}
-                    placement='bottomRight'
-                    title={`Restore record ${record.category_id}`}
-                    description='Are you sure to restore this record?'
-                    okText='Restore'
-                    onConfirm={() => handelRestoreCategory(record.category_id)}
-                    cancelText='Cancel'
-                  >
-                    <button
-                      type='button'
-                      className='flex items-center gap-x-2 justify-center'
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Refresh className='text-[green]' size={15} /> <span>Restore</span>
-                    </button>
-                  </Popconfirm>
-                )
               }
             ]
           }}
@@ -201,6 +210,26 @@ const Categories = () => {
       />
     </div>
   )
+
+  const convertDataToTree = (data) => {
+    const map = {}
+    const tree = []
+
+    data.forEach((item) => {
+      map[item.category_id] = { ...item, children: [] }
+    })
+
+    data.forEach((item) => {
+      if (item.category_parent_id !== null) {
+        map[item.category_parent_id].children.push(map[item.category_id])
+      } else {
+        tree.push(map[item.category_id])
+      }
+    })
+
+    return tree
+  }
+
   const convertToTreeData = (data) => {
     return data.map((item) => ({
       title: item.category_name,
@@ -226,46 +255,68 @@ const Categories = () => {
     return selectData
   }
 
-  const fetchCategories = async (params) => {
+  const fetchCategories = debounce(async (token, params) => {
     setLoading(true)
     const query = qs.stringify({
       ...params
     })
-    const response = await CategoriesAPI.searchCategories(query)
-
-    const { data } = response.data
-    const tableData = data.map((item) => ({
-      key: item.category_id,
-      category_name: item.category_name,
-      category_type: item.category_type,
-      category_thumbnail: item.category_thumbnail,
-      category_description: item.category_description,
-      category_parent_id: item.category_parent_id,
-      category_is_delete: item.category_is_delete,
-      children: item.children,
-      category_id: item.category_id
-    }))
-    const treeData = convertToTreeData(data)
-    const selectData = convertToSelectData(data)
-    const typeData = [...new Set(tableData.map((item) => item.category_type))]
-    const typeDataFilter = typeData.map((item) => ({
-      text: item,
-      value: item
-    }))
-    setTypeData(typeDataFilter)
-    setSelectData(selectData)
-    setTreeData(treeData)
-    setData(tableData)
-    setLoading(false)
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        total: data.length
+    try {
+      const response = await CategoriesAPI.searchCategories(token, query)
+      if (!response.ok) {
+        if (response.status === 401) {
+          setStatus(401)
+          setMessageResult('Unauthorized access. Please check your credentials.')
+        } else if (response.status === 429) {
+          setStatus(response.status)
+          setMessageResult(`Too many requests. Please try again later.`)
+        } else {
+          setStatus(response.status)
+          setMessageResult(`Error fetching categories: with status ${response.status}`)
+        }
+        return
       }
-    })
-  }
-  const handleTableChange = (pagination, filters, sorter) => {
+
+      const result = await response.json()
+      const data = result.data
+      const treeDataConvert = convertDataToTree(data)
+      const tableData = treeDataConvert.map((item) => ({
+        key: item.category_id,
+        category_name: item.category_name,
+        category_type: item.category_type,
+        category_thumbnail: item.category_thumbnail,
+        category_description: item.category_description,
+        category_parent_id: item.category_parent_id,
+        category_is_delete: item.category_is_delete,
+        category_created_at: item.category_created_at,
+        category_updated_at: item.category_updated_at,
+        children: item.children,
+        category_id: item.category_id
+      }))
+      const treeDataSelect = convertToTreeData(treeDataConvert)
+      const typeData = [...new Set(tableData.map((item) => item.category_type))]
+      const typeDataFilter = typeData.map((item) => ({
+        text: item,
+        value: item
+      }))
+      setTypeData(typeDataFilter)
+      setTreeData(treeDataSelect)
+      setData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: treeDataConvert.length
+        }
+      })
+      setLoading(false)
+    } catch (e) {
+      setLoading(false)
+    } finally {
+      setLoading(false)
+    }
+  }, 500)
+
+  const handleTableChange = debounce((pagination, filters, sorter) => {
     const params = {
       pagination,
       filters,
@@ -276,7 +327,7 @@ const Categories = () => {
     if (pagination.pageSize !== tableParams.pagination?.pageSize) {
       setData([])
     }
-  }
+  }, 50)
   const handleUploadThumbnail = (e) => {
     const file = e.target.files[0]
     if (file && file.type.startsWith('image/')) {
@@ -313,7 +364,7 @@ const Categories = () => {
   const CheckCategoryNameExist = (name) => {
     const check = data.find((item) => {
       if (typeModal === 'update' && item.category_id === selectedCategory) {
-        return false // Exclude the current category being updated
+        return false
       }
       return item.category_name === name
     })
@@ -358,7 +409,7 @@ const Categories = () => {
     const response = await CategoriesAPI.deleteCategories(id, token)
     setTypeModal('Delete')
     if (response.ok) {
-      fetchCategories({
+      fetchCategories(token, {
         search: searchValue
       })
     } else {
@@ -369,28 +420,7 @@ const Categories = () => {
         setStatus(response.status)
         setMessageResult('Error:', response.messages)
       }
-    }
-    const result = await response.json()
-    const { messages, status } = result
-    setStatus(status)
-    setMessageResult(messages)
-  }
-
-  const handelRestoreCategory = async (id) => {
-    const response = await CategoriesAPI.restoreCategories(id, token)
-    setTypeModal('Restore')
-    if (response.ok) {
-      fetchCategories({
-        search: searchValue
-      })
-    } else {
-      if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
-      } else {
-        setStatus(response.status)
-        setMessageResult('Error:', response.messages)
-      }
+      return
     }
     const result = await response.json()
     const { messages, status } = result
@@ -400,6 +430,7 @@ const Categories = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSubmitLoading(true)
     const formData = new FormData()
     const category_type = categoryType
     const category_name = categoryName
@@ -410,6 +441,7 @@ const Categories = () => {
     const isValidCategoryName = handleErrorCategoryName(categoryName)
 
     if (!isValidCategoryType || !isValidCategoryName) {
+      setSubmitLoading(false)
       return
     }
 
@@ -422,43 +454,54 @@ const Categories = () => {
     if (category_description) {
       formData.append('category_description', category_description)
     }
+
     if (File) {
       formData.append('category_thumbnail', File)
     }
     formData.append('category_parent_id', category_parent_id)
 
-    console.log('data: ', Object.fromEntries(formData))
     let response = null
     try {
       if (typeModal === 'add') {
+        const category_created_at = new Date().toISOString()
+        const category_updated_at = new Date().toISOString()
+        formData.append('category_created_at', category_created_at)
+        formData.append('category_updated_at', category_updated_at)
         response = await CategoriesAPI.addCategories(formData, token)
-      }
-      if (typeModal === 'update') {
+      } else if (typeModal === 'update') {
+        const category_updated_at = new Date().toISOString()
+        formData.append('category_updated_at', category_updated_at)
         response = await CategoriesAPI.updateCategories(selectedCategory, formData, token)
       }
-
+      console.log('data: ', Object.fromEntries(formData))
       if (!response.ok) {
-        // Handle HTTP errors
+        setSubmitLoading(false)
+        const { messages } = await response.json()
+        console.log(messages)
         if (response.status === 401) {
           setStatus(401)
           setMessageResult('Unauthorized access. Please check your credentials.')
         } else if (response.status === 422) {
           setStatus(422)
-          setMessageResult('Invalid data')
+          setMessageResult(`Invalid data: ${messages}`)
         } else {
           setStatus(response.status)
-          setMessageResult('Error:', response.messages)
+          setMessageResult('Error:', messages)
         }
+        return
       }
       const result = await response.json()
       const { messages, status } = result
       setStatus(status)
       setMessageResult(messages)
-    } catch (error) {}
+    } catch (error) {
+    } finally {
+      setSubmitLoading(false)
+    }
   }
 
   useEffect(() => {
-    fetchCategories({
+    fetchCategories(token, {
       search: searchValue
     })
   }, [
@@ -466,11 +509,12 @@ const Categories = () => {
     tableParams.pagination?.pageSize,
     tableParams?.sortOrder,
     tableParams?.sortField,
-    JSON.stringify(tableParams.filters)
+    JSON.stringify(tableParams.filters),
+    searchValue
   ])
 
   useEffect(() => {
-    fetchCategories({
+    fetchCategories(token, {
       search: searchValue
     })
   }, [])
@@ -478,14 +522,19 @@ const Categories = () => {
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
       message.success(`${typeModal} category was successfully`, 3)
-      fetchCategories({
+      fetchCategories(token, {
         search: searchValue
       })
+      setStatus(null)
+      setMessageResult(null)
       handleCancel()
     } else if (status >= 400) {
       message.error(messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
     }
   }, [status, messageResult])
+
   return (
     <section className='max-w-[100%] h-full'>
       <header className='flex justify-between'>
@@ -524,7 +573,7 @@ const Categories = () => {
         destroyOnClose
         title={
           <span>
-            Add new Category (fields with <span className='text-[red]'>*</span> are required)
+            {typeModal} Category (fields with <span className='text-[red]'>*</span> are required)
           </span>
         }
         centered
@@ -533,7 +582,8 @@ const Categories = () => {
         footer={null}
         onCancel={handleCancel}
       >
-        <div className='modal__content mt-7'>
+        <div className='modal__content mt-7 relative'>
+          <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
           <form action='' method='POST' onSubmit={handleSubmit} autoComplete='off'>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull relative'>
@@ -656,7 +706,7 @@ const Categories = () => {
                   className='AddCategoryForm__textarea'
                   rows={6}
                   placeholder='This is a category description'
-                  value={categoryDescription}
+                  value={categoryDescription !== null ? categoryDescription : ''}
                   onChange={(e) => setCategoryDescription(e.target.value)}
                 />
               </div>
@@ -717,27 +767,55 @@ const Categories = () => {
           </form>
         </div>
       </Modal>
+
+      <Modal centered open={openModalView} width={350} footer={null} onCancel={() => setOpenModalView(false)}>
+        <div className='w-[300px] flex justify-between pt-10'>
+          <Tooltip
+            title={
+              selectedCategoryData !== null
+                ? selectedCategoryData.category_description !== null
+                  ? selectedCategoryData.category_description
+                  : '...'
+                : '...'
+            }
+            open={showDescription}
+            placement='bottom'
+            align={{
+              offset: [0, 10]
+            }}
+            overlayStyle={{ maxWidth: '800px', whiteSpace: 'normal' }}
+          >
+            <figure className='w-[100%] flex justify-center items-center flex-col grow'>
+              <img
+                src={selectedCategoryData !== null ? selectedCategoryData.category_thumbnail : ''}
+                alt={selectedCategoryData !== null ? selectedCategoryData.category_name : ''}
+                className='w-[200px] h-[200px] object-cover rounded-full'
+                onMouseEnter={() => setShowDescription(true)}
+                onMouseLeave={() => setShowDescription(false)}
+              />
+              <figcaption className='mt-2 text-center'>
+                {selectedCategoryData !== null ? selectedCategoryData.category_name : ''}
+              </figcaption>
+            </figure>
+          </Tooltip>
+        </div>
+      </Modal>
       <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md'>
         <div className='flex justify-between items-center'>
-          <div className='flex items-center bg-[#fafafa] w-[340px] justify-between text-[14px] border-[1px] border-solid border-[#e8ebed] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
+          <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
             <input
               type='text'
               placeholder='Search for categories'
-              className='border-none outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
                 setSearchValue(e.target.value)
-                if (e.target.value === '') {
-                  fetchCategories({
-                    search: undefined
-                  })
-                }
               }}
             />
             <button
               onClick={() => {
-                fetchCategories({
+                fetchCategories(token, {
                   search: searchValue
                 })
               }}
