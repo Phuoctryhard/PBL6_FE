@@ -27,12 +27,10 @@ export default function Login() {
   const onSubmit = handleSubmit((data) => {
     // gửi lên api data
     mutation.mutate(data, {
-      onSuccess: (data) => {
-        console.log(data.data.data)
-        localStorage.setItem('accesstoken', data.data.data.access_token)
-        //login(dat.data.data.access_token)
+      onSuccess: (dat) => {
+        localStorage.setItem('accesstoken', dat.data.data.access_token)
+        // login(dat.data.data.access_token)
         login(data.data.data)
-        console.log(data.data.data)
         const role = data.data.data.role
         if (role == 'user') {
           navigate('/')
@@ -41,7 +39,6 @@ export default function Login() {
         }
       },
       onError: () => {
-        console.log('Thất bại')
         toast.error('Đăng nhập thất bại!')
       }
     })

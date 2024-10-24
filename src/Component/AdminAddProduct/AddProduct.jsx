@@ -3,6 +3,8 @@ import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message } from 'ant
 import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import './AddProduct.css'
 
 const customThemeSelect = {
@@ -497,12 +499,10 @@ const AddProduct = () => {
   }, [])
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
-      openMessage('success', 'Add product success', 3) // Adjust the delay as needed
-      setTimeout(() => {
-        window.history.back()
-      }, 500)
+      toast.success('Add product success', { autoClose: 2000 })
+      window.history.back()
     } else if (status >= 400) {
-      openMessage('error', messageResult, 3) // Adjust the delay as needed
+      toast.error(messageResult, { autoClose: 3000 })
     }
   }, [status])
 
@@ -571,11 +571,11 @@ const AddProduct = () => {
         </div>
       </header>
       <div className='Container'>
-        <form action='#' className='EditProductForm mt-6 w-[100%]' autoComplete='off' onSubmit={handleSubmit}>
+        <form action='#' className='AddProductForm mt-6 w-[100%]' autoComplete='off' onSubmit={handleSubmit}>
           <div className='mb-5 flex w-full justify-between gap-x-12 animate-[slideUp_1s_ease]'>
             <div className='max-w-[48%] grow'>
-              <div className='EditProductForm__row'>
-                <div className='EditProductForm__group'>
+              <div className='AddProductForm__row'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='product_id'>
                     <span className='text-[red]'>* </span>ID
                   </label>
@@ -585,13 +585,13 @@ const AddProduct = () => {
                     name='product_id'
                     value={productID}
                     placeholder='1234'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     onChange={(e) => setProductID(e.target.value)}
                     onFocus={() => setErrorProductID('')}
                   />
                   <p className='error_message'>{errorProductID}</p>
                 </div>
-                <div className='EditProductForm__group'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='product_name'>
                     <span className='text-[red]'>* </span>Name
                   </label>
@@ -600,7 +600,7 @@ const AddProduct = () => {
                     id='product_name'
                     name='product_name'
                     placeholder='Minh dep trai'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     onFocus={() => setErrorProductName('')}
                     onChange={(e) => setProductName(e.target.value)}
                     value={productName}
@@ -608,8 +608,8 @@ const AddProduct = () => {
                   <p className='error_message'>{errorProductName}</p>
                 </div>
               </div>
-              <div className='EditProductForm__row'>
-                <div className='EditProductForm__group'>
+              <div className='AddProductForm__row'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='Category'>
                     <span className='text-[red]'>* </span>Category
                   </label>
@@ -634,7 +634,7 @@ const AddProduct = () => {
                   </ConfigProvider>
                   <p className='error_message'>{errorCategory}</p>
                 </div>
-                <div className='EditProductForm__group'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='Brand'>
                     <span className='text-[red]'>* </span>Brand
                   </label>
@@ -660,8 +660,8 @@ const AddProduct = () => {
                   <p className='error_message'>{errorBrand}</p>
                 </div>
               </div>
-              <div className='EditProductForm__row'>
-                <div className='EditProductForm__group'>
+              <div className='AddProductForm__row'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='product_price'>
                     <span className='text-[red]'>* </span>Price
                   </label>
@@ -670,14 +670,14 @@ const AddProduct = () => {
                     id='product_price'
                     name='product_price'
                     placeholder='4000000'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     value={productPrice}
                     onChange={(e) => setProductPrice(e.target.value)}
                     onFocus={() => setErrorProductPrice('')}
                   />
                   <p className='error_message'>{errorProductPrice}</p>
                 </div>
-                <div className='EditProductForm__group'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='product_discount'>
                     <span className='text-[red]'>* </span>Discount
                   </label>
@@ -686,7 +686,7 @@ const AddProduct = () => {
                     id='product_discount'
                     name='product_discount'
                     placeholder='20'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     value={productDiscount}
                     onChange={(e) => setProductDiscount(e.target.value)}
                     onFocus={() => setErrorProductDiscount('')}
@@ -694,8 +694,8 @@ const AddProduct = () => {
                   <p className='error_message'>{errorProductDiscount}</p>
                 </div>
               </div>
-              <div className='EditProductForm__row'>
-                <div className='EditProductForm__group'>
+              <div className='AddProductForm__row'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='product_quantity'>
                     <span className='text-[red]'>* </span>Quantity
                   </label>
@@ -704,14 +704,14 @@ const AddProduct = () => {
                     id='product_quantity'
                     name='product_quantity'
                     placeholder='40'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     value={productQuantity}
                     onChange={(e) => setProductQuantity(e.target.value)}
                     onFocus={() => setErrorProductQuantity('')}
                   />
                   <p className='error_message'>{errorProductQuantity}</p>
                 </div>
-                <div className='EditProductForm__group'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='product_sold'>
                     <span className='text-[red]'>* </span>Sold
                   </label>
@@ -720,7 +720,7 @@ const AddProduct = () => {
                     id='product_sold'
                     name='product_sold'
                     placeholder='20'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     value={productSold}
                     onChange={(e) => setProductSold(e.target.value)}
                     onFocus={() => setErrorProductSold('')}
@@ -728,34 +728,34 @@ const AddProduct = () => {
                   <p className='error_message'>{errorProductSold}</p>
                 </div>
               </div>
-              <div className='EditProductForm__row'>
-                <div className='EditProductForm__group'>
+              <div className='AddProductForm__row'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='package'>Package</label>
                   <input
                     type='text'
                     id='package'
                     name='package'
                     placeholder='Package 1'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     value={productPackage}
                     onChange={(e) => setProductPackage(e.target.value)}
                   />
                 </div>
-                <div className='EditProductForm__group'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='ingredient'>Ingredient</label>
                   <input
                     type='text'
                     id='ingredient'
                     name='ingredient'
                     placeholder='Azithromycin 200mg'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     onChange={(e) => setProductIngredient(e.target.value)}
                     value={productIngredient}
                   />
                 </div>
               </div>
-              <div className='EditProductForm__row'>
-                <div className='EditProductForm__group'>
+              <div className='AddProductForm__row'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='dosage_form'>
                     <span className='text-[red]'>* </span>Dosage form
                   </label>
@@ -764,14 +764,14 @@ const AddProduct = () => {
                     id='dosage_form'
                     name='dosage_form'
                     placeholder='Bột pha hỗn dịch uống'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     onChange={(e) => setProductDosageForm(e.target.value)}
                     onFocus={() => setErrorProductDosageForm('')}
                     value={productDosageForm}
                   />
                   <p className='error_message'>{errorProductDosageForm}</p>
                 </div>
-                <div className='EditProductForm__group'>
+                <div className='AddProductForm__group'>
                   <label htmlFor='specification'>
                     <span className='text-[red]'>* </span>Specification
                   </label>
@@ -780,7 +780,7 @@ const AddProduct = () => {
                     id='specification'
                     name='specification'
                     placeholder='Điều trị nhiễm khuẩn'
-                    className='EditProductForm__input'
+                    className='AddProductForm__input'
                     onChange={(e) => setProductSpecification(e.target.value)}
                     onFocus={() => setErrorProductSpecification('')}
                     value={productSpecification}
@@ -874,8 +874,8 @@ const AddProduct = () => {
             </div>
           </div>
           <div className='flex gap-x-12 justify-between flex-col'>
-            <div className='EditProductForm__row manufacture__info'>
-              <div className='EditProductForm__group'>
+            <div className='AddProductForm__row manufacture__info'>
+              <div className='AddProductForm__group'>
                 <label htmlFor='manufacturer'>
                   <span className='text-[red]'>* </span>Manufacturer
                 </label>
@@ -884,14 +884,14 @@ const AddProduct = () => {
                   id='manufacturer'
                   name='manufacturer'
                   placeholder='Công ty cổ phần dược phẩm Việt Nam'
-                  className='EditProductForm__input'
+                  className='AddProductForm__input'
                   onChange={(e) => setProductManufacturer(e.target.value)}
                   onFocus={() => setErrorProductManufacturer('')}
                   value={productManufacturer}
                 />
                 <p className='error_message'>{errorProductManufacturer}</p>
               </div>
-              <div className='EditProductForm__group'>
+              <div className='AddProductForm__group'>
                 <label htmlFor='place_of_manufacture'>
                   <span className='text-[red]'>* </span>Place of manufacture
                 </label>
@@ -900,7 +900,7 @@ const AddProduct = () => {
                   id='place_of_manufacture'
                   name='place_of_manufacture'
                   placeholder='Việt Nam'
-                  className='EditProductForm__input'
+                  className='AddProductForm__input'
                   onChange={(e) => setProductPlaceOfManufacture(e.target.value)}
                   onFocus={() => setErrorProductPlaceOfManufacture('')}
                   value={productPlaceOfManufacture}
@@ -908,7 +908,7 @@ const AddProduct = () => {
                 <p className='error_message'>{errorProductPlaceOfManufacture}</p>
               </div>
             </div>
-            <div className='EditProductForm__row w-full'>
+            <div className='AddProductForm__row w-full'>
               <div className='relative w-full'>
                 <label htmlFor='product_uses'>
                   <span className='text-[red]'>* </span>Product Uses
@@ -918,7 +918,7 @@ const AddProduct = () => {
                   name='product_uses'
                   rows={6}
                   placeholder='Mọi thông tin trên đây chỉ mang tính chất tham khảo. Vui lòng đọc kĩ thông tin chi tiết ở tờ hướng dẫn sử dụng của sản phẩm.'
-                  className='EditProductForm__textarea'
+                  className='AddProductForm__textarea'
                   onChange={(e) => setProductUses(e.target.value)}
                   onFocus={() => setErrorProductUses('')}
                   value={productUses}
@@ -926,7 +926,7 @@ const AddProduct = () => {
                 <p className='error_message'>{errorProductUses}</p>
               </div>
             </div>
-            <div className='EditProductForm__row w-full'>
+            <div className='AddProductForm__row w-full'>
               <div className='relative w-full'>
                 <label htmlFor='product_description'>
                   <span className='text-[red]'>* </span>Product Description
@@ -936,7 +936,7 @@ const AddProduct = () => {
                   name='product_description'
                   rows={6}
                   placeholder='<div class="pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none"><p><strong>Thành phần </strong></p><p>ACETYLCYSTEINE 100mg Tá dược bao gồm Vitamin C, Saccharose, Natri saccharin, Kollidon K30, Mùi cam   </p><p></p><p><strong>Chỉ định (Thuốc dùng cho bệnh gì?) </strong></p><p>Thuốc Acehasan 100 làm loãng đờm trong các bệnh phế quản - phổi cấp và mãn tính kèm theo sự tăng tiết chất nhầy'
-                  className='EditProductForm__textarea'
+                  className='AddProductForm__textarea'
                   onChange={(e) => {
                     setProductDescription(e.target.value)
                     console.log('productDescription:', e.target.value)
@@ -948,11 +948,11 @@ const AddProduct = () => {
               </div>
             </div>
           </div>
-          <div className='EditProductForm__row button__group'>
-            <button type='submit' className='EditProductForm__SubmitButton'>
+          <div className='AddProductForm__row button__group'>
+            <button type='submit' className='AddProductForm__SubmitButton'>
               Submit
             </button>
-            <button type='button' className='EditProductForm__CancelButton' onClick={() => window.history.back()}>
+            <button type='button' className='AddProductForm__CancelButton' onClick={() => window.history.back()}>
               Cancel
             </button>
           </div>

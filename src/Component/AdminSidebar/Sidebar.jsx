@@ -21,12 +21,12 @@ import {
 import './Sidebar.css'
 const Sidebar = () => {
   const Items = [
-    { id: 'products', name: 'Danh sách sản phẩm' },
-    { id: 'catagories', name: 'Danh mục sản phẩm' }
+    { id: 'products', name: 'Products' },
+    { id: 'categories', name: 'Categories' }
   ]
 
   const Users = [
-    { id: 1, name: 'Khách hàng' },
+    { id: 1, name: 'Customers' },
     { id: 2, name: 'Admin' }
   ]
 
@@ -100,7 +100,7 @@ const Sidebar = () => {
           className={activeNav === 'overview' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('overview')}
         >
-          <SideBarItem name='Tổng quan' iconName={<Element className='w-6' />} />
+          <SideBarItem name='Overview' iconName={<Element className='w-6' />} />
         </NavLink>
         <NavLink
           className={activeNav === 'products' ? 'bg-[#008f99]' : ''}
@@ -110,7 +110,7 @@ const Sidebar = () => {
           }}
         >
           <SideBarItem
-            name='Sản phẩm'
+            name='Inventory'
             iconName={<ArchiveBox className='w-6' />}
             arrowIcon={
               <ArrowDown2
@@ -158,35 +158,35 @@ const Sidebar = () => {
           className={activeNav === 'orders' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('orders')}
         >
-          <SideBarItem name='Đơn hàng' iconName={<Bill className='w-6' />} />
+          <SideBarItem name='Orders' iconName={<Bill className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/reports'
           className={activeNav === 'reports' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('reports')}
         >
-          <SideBarItem name='Báo cáo' iconName={<FavoriteChart className='w-6' />} />
+          <SideBarItem name='Reports' iconName={<FavoriteChart className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/receipts'
           className={activeNav === 'receipts' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('receipts')}
         >
-          <SideBarItem name='Nhập kho' iconName={<ReceiptEdit className='w-6' />} />
+          <SideBarItem name='Receipts' iconName={<ReceiptEdit className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/suppliers'
           className={activeNav === 'suppliers' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('suppliers')}
         >
-          <SideBarItem name='Nhà cung cấp' iconName={<UserAdd className='w-6' />} />
+          <SideBarItem name='Suppliers' iconName={<UserAdd className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/brands'
           className={activeNav === 'brands' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('brands')}
         >
-          <SideBarItem name='Nhãn hàng' iconName={<MedalStar className='w-6' />} />
+          <SideBarItem name='Brands' iconName={<MedalStar className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/users'
@@ -197,7 +197,7 @@ const Sidebar = () => {
           }}
         >
           <SideBarItem
-            name='Người dùng'
+            name='Users'
             iconName={<User className='w-6' />}
             arrowIcon={
               <ArrowDown2
@@ -240,28 +240,28 @@ const Sidebar = () => {
           className={activeNav === 'posts' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('posts')}
         >
-          <SideBarItem name='Bài viết' iconName={<Blogger className='w-6' />} />
+          <SideBarItem name='Posts' iconName={<Blogger className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/comment_review'
           className={activeNav === 'comment_review' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('comment_review')}
         >
-          <SideBarItem name='Bình luận đánh giá' iconName={<Keyboard className='w-6' />} />
+          <SideBarItem name='Comments/reviews' iconName={<Keyboard className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/illness'
           className={activeNav === 'illness' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('illness')}
         >
-          <SideBarItem name='Bệnh tật' iconName={<Hospital className='w-6' />} />
+          <SideBarItem name='illness' iconName={<Hospital className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/setting'
           className={activeNav === 'setting' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('setting')}
         >
-          <SideBarItem name='Cài đặt' iconName={<Setting2 className='w-6' />} />
+          <SideBarItem name='Setting' iconName={<Setting2 className='w-6' />} />
         </NavLink>
       </div>
     </nav>

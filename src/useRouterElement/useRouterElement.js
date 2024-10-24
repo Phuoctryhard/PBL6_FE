@@ -10,6 +10,7 @@ import CategoryListProduct from '../Pages/User/CategoryListProduct/CategoryListP
 import VerifyEmail from '../Pages/User/VerifyEmail/index.jsx'
 import DetailProduct from '../Pages/User/ProductUser/DetailProduct/DetailProduct.jsx'
 import AdminProducts from '../Component/AdminProducts/Products.jsx'
+import AdminCategories from '../Component/AdminCategories'
 import Cart from '../Pages/User/Cart/index.jsx'
 import AdminAddProduct from '../Component/AdminAddProduct'
 import Profile from '../Pages/User/Account/personal-info/Profile.jsx'
@@ -17,6 +18,7 @@ import Adress from '../Pages/User/Account/address/Adress.jsx'
 import AdminEditProduct from '../Component/AdminEditProduct'
 import LayoutAccount from '../Pages/User/Account/LayoutAccount/LayoutAccount.jsx'
 import AdminViewProduct from '../Component/AdminViewProduct'
+import AdminBrands from '../Component/AdminBrands'
 import OrderHistory from '../Pages/User/Account/order_history/OrderHistory.jsx'
 import UpdatePassword from '../Pages/User/Account/personal-info/components/UpdatePassword/UpdatePassword.jsx'
 import { AuthContext } from '../context/app.context.jsx'
@@ -24,11 +26,10 @@ import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
   const userRole = 'user'
-
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
     if (isAuthenticated) {
-      if ((isAdminRoute && userRole == 'ADMIN') || (!isAdminRoute && (userRole == 'ADMIN' || userRole == 'user'))) {
+      if ((isAdminRoute && userRole === 'ADMIN') || (!isAdminRoute && (userRole === 'ADMIN' || userRole === 'user'))) {
         return <Outlet />
       } else {
         return (
@@ -187,6 +188,14 @@ export default function useRouterElement() {
       )
     },
     {
+      path: '/admin/categories',
+      element: (
+        <AdminMainLayout>
+          <AdminCategories />
+        </AdminMainLayout>
+      )
+    },
+    {
       path: '/admin/orders',
       element: (
         <AdminMainLayout>
@@ -240,13 +249,7 @@ export default function useRouterElement() {
       path: '/admin/brands',
       element: (
         <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>User brands</div>
-            </div>
-          </div>
+          <AdminBrands />
         </AdminMainLayout>
       )
     },

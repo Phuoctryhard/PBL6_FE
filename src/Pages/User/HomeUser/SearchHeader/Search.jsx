@@ -433,8 +433,8 @@ export default function Search(class1 = 'text-blue') {
               <div className='flex items-center'>
                 <Popover content={profile} placement='bottomRight' overlayStyle={{ width: '230px' }}>
                   <div className='flex items-center cursor-pointer'>
-                    <Avatar1 user_avatar={isProfile.user_avatar} />
-                    <div className='w-full h-10 flex items-center justify-center ml-1'>{isProfile.user_fullname}</div>
+                    {/* <Avatar1 user_avatar={isProfile.user_avatar} />
+                    <div className='w-full h-10 flex items-center justify-center ml-1'>{isProfile.user_fullname}</div> */}
                   </div>
                 </Popover>
               </div>
