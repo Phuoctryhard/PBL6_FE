@@ -28,3 +28,13 @@ export const schemaChangePassword = yup
     // .matches(/[A-Z]/, 'Mật khẩu phải chứa ít nhất một ký tự viết hoa.')
   })
   .required()
+export const schemaPrice = yup
+  .object({
+    price_min: yup.number().required('Vui lòng nhập giá trị nhỏ nhất').typeError('Giá trị phải là một số'),
+    price_max: yup
+      .number()
+      .required('Vui lòng nhập giá trị lớn nhất')
+      .typeError('Giá trị phải là một số')
+      .min(yup.ref('price_min'), 'Giá trị lớn nhất phải lớn hơn hoặc bằng giá trị nhỏ nhất')
+  })
+  .required()

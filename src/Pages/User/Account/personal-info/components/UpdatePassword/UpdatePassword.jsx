@@ -27,7 +27,6 @@ export default function UpdatePassword() {
     }
   })
   const onSubmit = (data) => {
-    console.log(data)
     mutate.mutate(data)
   }
   return (

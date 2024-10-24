@@ -118,11 +118,13 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
       setValue('district', district)
       setValue('ward', ward)
       console.log('display ')
-      setProvinces(provincesData.data.data)
-      console.log(provincesData.data.data)
+      if (provincesData) {
+        setProvinces(provincesData.data.data)
+      }
+      // console.log(provincesData.data.data)
       // console.log(data.data)
     }
-  }, [data, setValue])
+  }, [data, setValue, provincesData])
   // if (isLoading) return <div>Loading...</div>
 
   const handleProviceChange = async (value) => {
@@ -169,6 +171,22 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
       const { data } = await AddressApi.getDistricts(id)
       setDistricts(data.data) // Cập nhật danh sách huyen
     }
+  }
+
+  // Focus vao xa hiện data lay id huyen
+  const handleFocusWard = async () => {
+    // lay id tinh
+    const currentDistrict = getValues('district')
+
+    // const {id} = districts.find((element) => {
+    //   return element.name == currentDistrict
+    // })
+    // console.log(data)
+    // // tìm kiem huyen theo id tinh
+    // if (id) {
+    //   const { data: award } = await AddressApi.getWards(id)
+    //   setWards(award.data) // Cập nhật danh sách huyen
+    // }
   }
   return (
     <>
@@ -274,6 +292,7 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
                     filterOption={(input, option) =>
                       (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                     }
+                    onFocus={handleFocusWard}
                   >
                     {wards.map((ward, index) => (
                       <Option key={index} value={ward.name}>

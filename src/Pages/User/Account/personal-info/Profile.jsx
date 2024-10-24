@@ -1,7 +1,26 @@
-import React, { useState } from 'react'
+import React, { useContext, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { AuthContext } from '../../../../context/app.context'
 
+//
 export default function Profile() {
+  const { isProfile } = useContext(AuthContext)
+  console.log(isProfile)
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [avatar, setAvatar] = useState('')
+  const [birthday, setBirthday] = useState('')
+  // Gán dữ liệu khi component mount
+  useEffect(() => {
+    if (isProfile) {
+      setName(isProfile.user_fullname)
+      setPhone(isProfile.user_phone)
+      setEmail(isProfile.email)
+      setBirthday(isProfile.user_birthday)
+      setAvatar(isProfile.user_avatar)
+    }
+  }, [isProfile])
   const [date, setDate] = useState('2002-02-12')
   return (
     <div className=' px-3 py-3 '>
@@ -21,21 +40,23 @@ export default function Profile() {
               <input
                 type='text'
                 className='w-full rounded-sm border border-gray-300 px-3 py-2 outline-none focus:border-gray-500 focus:shadow-sm'
+                value={name}
               />
             </div>
           </div>
           <div className=' mt-8 flex flex-wrap sm:flex-row items-center'>
             <div className='sm:w-[20%] sm:pl-4 truncate capitalize text-right'>Email</div>
             <div className='sm:w-[80%] sm:pl-5 '>
-              <div className='text-gray-700 w-full px-3 py-2'>ngo***@gmail.com</div>
+              <div className='text-gray-700 w-full px-3 py-2'>{email}</div>
             </div>
           </div>
           <div className='mt-8 flex flex-wrap sm:flex-row items-center'>
-            <div className='sm:w-[20%] sm:pl-4  capitalize text-right'>Số điện thoại</div>
+            <div className='sm:w-[20%] sm:pl-4  capitalize text-right'>Điện thoại</div>
             <div className='sm:w-[80%] sm:pl-5 '>
               <input
                 type='text'
                 className='w-full rounded-sm border border-gray-300 px-3 py-2 outline-none focus:border-gray-500 focus:shadow-sm'
+                value={phone}
               />
             </div>
           </div>
@@ -48,7 +69,7 @@ export default function Profile() {
                 onChange={(event) => {
                   setDate(event.target.value)
                 }}
-                value={date}
+                value={birthday}
                 className='w-full rounded-sm border border-gray-300 px-3 py-2 outline-none focus:border-gray-500 focus:shadow-sm'
               />
             </div>
@@ -82,6 +103,14 @@ export default function Profile() {
                 <path strokeLinecap='round' strokeLinejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' />
               </svg>
             </div>
+          </div>
+          <div className='mt-8 flex flex-wrap sm:flex-row items-center justify-between'>
+            <div className='w-[40%] flex justify-center'>
+              <button type='onSubmit' className='p-4 rounded-lg border bg-blue  mt-6  text-center text-white font-semibold'>
+                Lưu thay đổi
+              </button>
+            </div>
+            <div className='w-[60%] flex justify-center'></div>
           </div>
         </form>
 

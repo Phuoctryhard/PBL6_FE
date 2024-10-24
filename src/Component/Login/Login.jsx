@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import anh from './Green Creative Pharmacy Concept Logo Design.png'
+import anh from './_480f2c92-d896-48ef-978c-6c37301968f7.png'
 import { schemaLogin } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -11,7 +11,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/app.context'
 export default function Login() {
-  const { setIsAuthenticated, login } = useContext(AuthContext)
+  const { login } = useContext(AuthContext)
   const navigate = useNavigate()
   const {
     register,
@@ -44,7 +44,6 @@ export default function Login() {
       }
     })
   })
-
   return (
     <div className=' '>
       <div className=' lg:grid-cols-6 bg-blue grid h-full'>

@@ -27,6 +27,9 @@ class Http {
 
           return config
         }
+        if (config.data instanceof FormData) {
+          config.headers['Content-Type'] = 'multipart/form-data' // Nếu là form-data thì đổi header
+        }
         return config
       },
       (error) => {

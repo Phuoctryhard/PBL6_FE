@@ -20,4 +20,9 @@ https://ant.design/components/popover
       element: <CategoryPage />
 
 
++ giá 
+https://www.npmjs.com/package/react-currency-input-field
+Destructuring cho phép bạn lấy ra các phần tử từ một mảng hoặc thuộc tính từ một đối tượng và gán chúng vào các biến riêng biệt. Trong trường hợp này, split('-') trả về một mảng, 
+và bạn sử dụng destructuring để gán phần tử đầu tiên của mảng cho price_min và phần tử thứ hai cho price_max.
 
+Spread (toán tử ...) được sử dụng để sao chép hoặc trải rộng các phần tử của một mảng hoặc đối tượng. Ví dụ:
