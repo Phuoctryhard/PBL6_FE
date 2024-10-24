@@ -25,6 +25,9 @@ class Http {
 
           return config
         }
+        if (config.data instanceof FormData) {
+          config.headers['Content-Type'] = 'multipart/form-data' // Nếu là form-data thì đổi header
+        }
         return config
       },
       (error) => {
@@ -36,14 +39,14 @@ class Http {
       (response) => {
         // Any status code that lie within the range of 2xx cause this function to trigger
         // Do something with response data
-        console.log(response)
+
         const { url } = response.config
         if (url == 'user/login') {
           const tokenBear = 'Bearer ' + response.data.data?.access_token
           this.accessToken = tokenBear
           console.log(this.accessToken)
           saveAccessToken(response.data.data?.access_token)
-          console.log(response.data.data)
+
           if (response.data.data) {
             saveProfile(response.data.data)
           }

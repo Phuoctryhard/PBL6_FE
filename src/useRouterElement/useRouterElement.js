@@ -25,7 +25,6 @@ export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
   const userRole = 'user'
 
-  console.log(isAdminRoute)
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
     if (isAuthenticated) {
@@ -64,6 +63,14 @@ export default function useRouterElement() {
         {
           path: '/auth/verify-email/:user',
           element: <VerifyEmail />
+        },
+        {
+          path: '/category',
+          element: (
+            <MainLayoutUser>
+              <CategoryListProduct />
+            </MainLayoutUser>
+          )
         },
         {
           path: '/detail',
@@ -132,33 +139,7 @@ export default function useRouterElement() {
         }
       ]
     },
-    // {
-    //   path: '/admin',
-    //   element: (
-    //     <AdminMainLayout>
-    //       <div className='col-span-3 bg-gray-light  '>
-    //         {/* Scrollable content */}
-    //         //{' '}
-    //         <div className=''>
-    //           {/* Adjust the height according to your header's height */}
-    //           <div className=' flex items-center justify-center'>Content overview </div>
-    //         </div>
-    //       </div>
-    //     </AdminMainLayout>
-    //   )
-    // },
-    // {
-    //   path: '/admin/overview',
-    //   element: (
-    //     <AdminMainLayout>
-    //       <div className='col-span-3 bg-gray-light  '>
-    //         <div className=''>
-    //           <div className=' flex items-center justify-center'></div>
-    //         </div>
-    //       </div>
-    //     </AdminMainLayout>
-    //   )
-    // },
+
     {
       path: '/admin/post',
       element: (
@@ -361,10 +342,10 @@ export default function useRouterElement() {
       ]
     },
     {
-      path: '/:slug',
+      path: '/:idproduct',
       element: (
         <MainLayoutUser>
-          <CategoryListProduct />
+          <DetailProduct />
         </MainLayoutUser>
       )
     },
