@@ -1,3 +1,4 @@
+/* ant breadcrumb css */
 .ant-breadcrumb ol {
   display: flex;
   align-items: center;
@@ -24,4 +25,67 @@
 .table__content {
   box-sizing: border-box;
   padding: 25px;
+}
+
+/* ant Tree select css */
+.ant-select-tree-treenode.ant-select-tree-treenode-switcher-open.ant-select-tree-treenode-selected
+  > .ant-select-tree-node-selected
+  > span,
+.ant-select-tree-treenode.ant-select-tree-treenode-switcher-close.ant-select-tree-treenode-selected
+  > .ant-select-tree-node-selected
+  > span {
+  color: #1d242e;
+  font-weight: 600;
+}
+
+/* ant picker css */
+.ant-picker-content .ant-picker-cell-inner:hover {
+  color: #ffffff;
+  background-color: #008f99 !important;
+}
+
+/* ant pagination css */
+/* ant pagination item css */
+.ant-pagination-item.ant-pagination-item-active {
+  color: #008f99;
+  border: 1px solid #008f99;
+}
+
+.ant-pagination-item.ant-pagination-item-active {
+  color: #008f99;
+  border: 1px solid #008f99;
+}
+
+.ant-pagination-item.ant-pagination-item-active:focus,
+.ant-pagination-item.ant-pagination-item-active:hover,
+.ant-pagination-item.ant-pagination-item-active:active {
+  color: #008f99;
+  border: 1px solid #008f99;
+}
+
+.ant-pagination-item.ant-pagination-item-active > a,
+.ant-pagination-item.ant-pagination-item-active:hover > a {
+  color: #008f99;
+}
+
+/* ant pagination option css */
+.ant-pagination-options
+  .ant-select-outlined:not(.ant-select-disabled):not(.ant-select-customize-input):not(
+    .ant-pagination-size-changer
+  ):hover
+  .ant-select-selector {
+  border: 1px solid #008f99;
+}
+
+.ant-pagination-options
+  .ant-select-outlined:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer)
+  .ant-select-selector {
+  border: 1px solid #008f99;
+}
+
+.ant-select-item.ant-select-item-option:hover,
+.ant-select-item.ant-select-item-option:active,
+.ant-select-item.ant-select-item-option:focus,
+.ant-select-item.ant-select-item-option.ant-select-item-option-selected {
+  background-color: rgb(0, 143, 153, 0.3);
 }

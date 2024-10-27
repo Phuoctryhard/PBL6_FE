@@ -22,7 +22,8 @@ import debounce from 'lodash.debounce'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const Categories = () => {
   const [data, setData] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [filterData, setFilterData] = useState([])
+  const [loading, setLoading] = useState(true)
   const [treeData, setTreeData] = useState([])
   const [typeData, setTypeData] = useState([])
   const [searchValue, setSearchValue] = useState('')
@@ -94,17 +95,6 @@ const Categories = () => {
       dataIndex: 'category_is_delete',
       key: 'category_is_delete',
       width: '10%',
-      filters: [
-        {
-          text: 'Active',
-          value: 0
-        },
-        {
-          text: 'Deleted',
-          value: 1
-        }
-      ],
-      onFilter: (value, record) => record.category_is_delete === value,
       render: (text) => (
         <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
       )
@@ -255,7 +245,33 @@ const Categories = () => {
     return selectData
   }
 
-  const fetchCategories = debounce(async (token, params) => {
+  const searchCategories = () => {
+    setLoading(true)
+    const results = data.filter((item) => {
+      const matchesProductName = item.category_name.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesType = item.category_type.toLowerCase().includes(searchValue.toLowerCase())
+
+      return matchesProductName || matchesType
+    })
+    const tableData = results
+    const typeData = [...new Set(tableData.map((item) => item.category_type))]
+    const typeDataFilter = typeData.map((item) => ({
+      text: item,
+      value: item
+    }))
+    setTypeData(typeDataFilter)
+    setFilterData(tableData)
+    setTableParams({
+      ...tableParams,
+      pagination: {
+        ...tableParams.pagination,
+        total: results.length
+      }
+    })
+    setLoading(false)
+  }
+
+  const fetchCategories = async (token, params) => {
     setLoading(true)
     const query = qs.stringify({
       ...params
@@ -266,13 +282,11 @@ const Categories = () => {
         if (response.status === 401) {
           setStatus(401)
           setMessageResult('Unauthorized access. Please check your credentials.')
-        } else if (response.status === 429) {
-          setStatus(response.status)
-          setMessageResult(`Too many requests. Please try again later.`)
         } else {
           setStatus(response.status)
           setMessageResult(`Error fetching categories: with status ${response.status}`)
         }
+        setLoading(false)
         return
       }
 
@@ -300,6 +314,7 @@ const Categories = () => {
       }))
       setTypeData(typeDataFilter)
       setTreeData(treeDataSelect)
+      setFilterData(tableData)
       setData(tableData)
       setTableParams({
         ...tableParams,
@@ -310,13 +325,13 @@ const Categories = () => {
       })
       setLoading(false)
     } catch (e) {
-      setLoading(false)
     } finally {
       setLoading(false)
     }
-  }, 500)
+  }
 
-  const handleTableChange = debounce((pagination, filters, sorter) => {
+  const handleTableChange = (pagination, filters, sorter) => {
+    setLoading(true)
     const params = {
       pagination,
       filters,
@@ -327,7 +342,8 @@ const Categories = () => {
     if (pagination.pageSize !== tableParams.pagination?.pageSize) {
       setData([])
     }
-  }, 50)
+    setLoading(false)
+  }
   const handleUploadThumbnail = (e) => {
     const file = e.target.files[0]
     if (file && file.type.startsWith('image/')) {
@@ -473,11 +489,9 @@ const Categories = () => {
         formData.append('category_updated_at', category_updated_at)
         response = await CategoriesAPI.updateCategories(selectedCategory, formData, token)
       }
-      console.log('data: ', Object.fromEntries(formData))
       if (!response.ok) {
         setSubmitLoading(false)
         const { messages } = await response.json()
-        console.log(messages)
         if (response.status === 401) {
           setStatus(401)
           setMessageResult('Unauthorized access. Please check your credentials.')
@@ -504,20 +518,24 @@ const Categories = () => {
     fetchCategories(token, {
       search: searchValue
     })
-  }, [
-    tableParams.pagination?.current,
-    tableParams.pagination?.pageSize,
-    tableParams?.sortOrder,
-    tableParams?.sortField,
-    JSON.stringify(tableParams.filters),
-    searchValue
-  ])
+  }, [])
 
   useEffect(() => {
     fetchCategories(token, {
       search: searchValue
     })
-  }, [])
+  }, [
+    tableParams.pagination?.pageSize,
+    tableParams?.sortOrder,
+    tableParams?.sortField,
+    JSON.stringify(tableParams.filters)
+  ])
+
+  useEffect(() => {
+    if (data) {
+      searchCategories()
+    }
+  }, [searchValue, tableParams.pagination?.current])
 
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
@@ -728,9 +746,12 @@ const Categories = () => {
                     },
                     components: {
                       Select: {
-                        selectorBg: 'transparent',
                         activeBorderColor: '#1D242E',
                         hoverBorderColor: '#1D242E'
+                      },
+                      TreeSelect: {
+                        nodeHoverBg: 'rgb(0, 143, 153, 0.3)',
+                        nodeSelectedBg: 'rgb(0, 143, 153, 0.3)'
                       }
                     }
                   }}
@@ -829,11 +850,11 @@ const Categories = () => {
             theme={{
               components: {
                 Table: {
-                  rowHoverBg: '#f4f5f7',
-                  headerSplitColor: 'none',
-                  headerBg: '#fafafa',
-                  sortField: '#fafafa',
-                  sortOrder: '#fafafa',
+                  rowHoverBg: '#f5f5f5',
+                  headerSplitColor: 'transparent',
+                  headerBg: '#f5f5f5',
+                  sortField: '#f5f5f5',
+                  sortOrder: '#f5f5f5',
                   borderColor: '#e8ebed'
                 }
               }
@@ -843,7 +864,7 @@ const Categories = () => {
               size='small'
               columns={columns}
               rowKey={(record) => record.category_id}
-              dataSource={data}
+              dataSource={filterData}
               pagination={{
                 position: ['none'],
                 ...tableParams.pagination

@@ -1,17 +1,17 @@
-.AddProductForm__row {
+.AddForm__row {
   display: flex;
   justify-content: space-between;
   padding-bottom: 25px;
 }
 
-.AddProductForm__group {
+.AddForm__group {
   display: flex;
   flex-direction: column;
   width: 48%;
   position: relative;
 }
 
-.AddProductForm__input {
+.AddForm__input {
   margin-top: 4px;
   height: 38px;
   min-width: 280px;
@@ -21,12 +21,12 @@
   padding: 8px 10px;
 }
 
-.AddProductForm__input:focus {
+.AddForm__input:focus {
   outline: none;
   border: 1px solid #1d242e;
 }
 
-.AddProductForm__select {
+.AddForm__select {
   min-width: 280px;
   height: 38px;
   margin-top: 4px;
@@ -146,11 +146,11 @@
   width: 100%;
 }
 
-.manufacture__info .AddProductForm__group:first-child {
+.manufacture__info .AddForm__group:first-child {
   min-width: 48.5%;
 }
 
-.AddProductForm__textarea {
+.AddForm__textarea {
   width: 100%;
   margin-top: 4px;
   min-width: 280px;
@@ -161,7 +161,7 @@
   resize: none;
 }
 
-.AddProductForm__textarea:focus {
+.AddForm__textarea:focus {
   outline: none;
   border: 1px solid #1d242e;
 }
@@ -179,25 +179,20 @@
   cursor: pointer;
 }
 
-.AddProductForm__SubmitButton {
+.AddForm__SubmitButton {
   background-color: #65b5a2;
   color: #fff;
 }
 
-.AddProductForm__SubmitButton:hover {
+.AddForm__SubmitButton:hover {
   opacity: 0.8;
 }
 
-.AddProductForm__ResetButton {
-  background-color: #a80868;
-  color: yellow;
-}
-
-.AddProductForm__CancelButton {
+.AddForm__CancelButton {
   background-color: rgb(255, 0, 0, 0.2);
   color: red;
 }
 
-.AddProductForm__CancelButton:hover {
+.AddForm__CancelButton:hover {
   opacity: 0.8;
 }

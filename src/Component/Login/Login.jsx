@@ -36,7 +36,6 @@ export default function Login() {
           toast.success('Đăng nhập thành công')
           navigate('/')
         } else {
-          console.log(role)
           navigate('/admin')
         }
       },
