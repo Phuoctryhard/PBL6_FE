@@ -1,14 +1,53 @@
-import './Brands.css'
-import BrandsAPI from '../../Api/admin/brands'
-import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye } from 'iconsax-react'
-import { useEffect, useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import './Admin.css'
+import { AdminAPI } from '../../Api/admin'
+import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye, ArrowDown2 } from 'iconsax-react'
 import { Link } from 'react-router-dom'
-import { ConfigProvider, Select } from 'antd'
-import { Table, Breadcrumb, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin, DatePicker } from 'antd'
-import qs from 'qs'
+import {
+  Table,
+  Breadcrumb,
+  Dropdown,
+  Popconfirm,
+  message,
+  Modal,
+  Tooltip,
+  Pagination,
+  Spin,
+  DatePicker,
+  ConfigProvider,
+  Select
+} from 'antd'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { RangePicker } = DatePicker
-const Brands = () => {
+const filterTheme = {
+  token: {
+    colorTextQuaternary: '#1D242E', // Disabled text color
+    colorTextPlaceholder: '#1D242E', // Placeholder text color
+    fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+    controlOutline: 'none',
+    colorBorder: '#e8ebed',
+    borderRadius: '4px',
+    colorPrimary: '#008f99'
+  },
+  components: {
+    Select: {
+      activeBorderColor: '#1D242E',
+      hoverBorderColor: '#1D242E',
+      optionActiveBg: 'rgb(0, 143, 153, 0.3)',
+      optionSelectedBg: 'rgb(0, 143, 153, 0.3)',
+      optionSelectedColor: '#1D242E'
+    },
+    TreeSelect: {
+      nodeHoverBg: 'rgb(0, 143, 153, 0.3)',
+      nodeSelectedBg: 'rgb(0, 143, 153, 0.3)'
+    },
+    DatePicker: {
+      activeBorderColor: '#1D242E',
+      hoverBorderColor: '#1D242E'
+    }
+  }
+}
+const Admin = () => {
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
@@ -17,6 +56,11 @@ const Brands = () => {
   const [searchValue, setSearchValue] = useState('')
   const [selectedFrom, setSelectedFrom] = useState(null)
   const [selectedTo, setSelectedTo] = useState(null)
+  const [selectedAdmin, setSelectedAdmin] = useState(null)
+  const [roles, setRoles] = useState([])
+  const [selectedRoles, setSelectedRoles] = useState()
+  const [adminStatus, setAdminStatus] = useState([])
+  const [selectedAdminStatus, setSelectedAdminStatus] = useState()
   //#endregion
 
   //#region Table data and custom pagination
@@ -31,7 +75,6 @@ const Brands = () => {
     second: '2-digit',
     hour12: false
   }
-
   // Date format
   const DateFormat = (date) => {
     const formattedDate = new Date(date).toLocaleDateString('en-US', optionsDateformat)
@@ -42,39 +85,88 @@ const Brands = () => {
   const columns = [
     {
       title: '#',
-      dataIndex: 'brand_id',
-      key: 'brand_id',
+      dataIndex: 'admin_id',
+      key: 'admin_id',
       width: '10%',
-      sorter: (a, b) => a.brand_id - b.brand_id,
+      sorter: (a, b) => a.admin_id - b.admin_id,
       ellipsis: true
     },
     {
-      title: 'Name',
-      dataIndex: 'brand_name',
-      key: 'brand_name',
-      width: '30%',
-      sorter: (a, b) => a.brand_name.localeCompare(b.brand_name),
+      title: 'Full name',
+      dataIndex: 'admin_fullname',
+      key: 'admin_fullname',
+      width: '20%',
+      sorter: (a, b) => a.admin_fullname.localeCompare(b.admin_fullname),
       ellipsis: true,
       render: (text, record) => (
         <div className='flex items-center gap-x-2 justify-start'>
-          <img src={record.brand_logo} alt={text} className='w-[48px] h-[48px] object-cover rounded-full' />
+          <img
+            src={record.admin_avatar !== null ? record.admin_avatar : ''}
+            alt={text}
+            className='w-[48px] h-[48px] object-cover rounded-full'
+          />
           <span>{text}</span>
         </div>
       )
     },
     {
-      title: 'Create at',
-      dataIndex: 'brand_created_at',
-      key: 'brand_created_at',
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
       width: '20%',
-      sorter: (a, b) => new Date(a.brand_created_at) - new Date(b.brand_created_at),
+      sorter: (a, b) => a.email.localeCompare(b.email),
+      ellipsis: true
+    },
+    {
+      title: 'Create at',
+      dataIndex: 'admin_created_at',
+      key: 'admin_created_at',
+      width: '25%',
+      sorter: (a, b) => new Date(a.admin_created_at) - new Date(b.admin_created_at),
       ellipsis: true,
       render: (text) => <span className='text-[14px]'>{DateFormat(text)}</span>
     },
     {
+      title: 'Role',
+      dataIndex: 'admin_is_admin',
+      key: 'admin_is_admin',
+      width: '15%',
+      render: (text, record) => {
+        let color
+        let backgroundColor
+        let role = record.admin_is_admin
+        let statusText
+        switch (role) {
+          case 0:
+            color = 'green'
+            backgroundColor = 'rgba(0, 255, 0, 0.1)'
+            statusText = 'User'
+            break
+          case 1:
+            color = 'red'
+            backgroundColor = 'rgba(255, 0, 0, 0.1)'
+            statusText = 'Admin'
+            break
+          case 2:
+            color = 'rgb(249, 115, 22)'
+            backgroundColor = 'rgba(255, 165, 0, 0.1)'
+            statusText = 'Super Admin'
+            break
+        }
+        return (
+          <span
+            style={{ color, backgroundColor }}
+            className='inline-block py-1 px-4 rounded-xl whitespace-nowrap text-xs'
+          >
+            {statusText}
+          </span>
+        )
+      }
+    },
+    {
       title: 'Status',
-      dataIndex: 'brand_is_delete',
-      key: 'brand_is_delete',
+      dataIndex: 'admin_is_delete',
+      key: 'admin_is_delete',
       width: '10%',
       render: (text) => (
         <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
@@ -94,14 +186,7 @@ const Brands = () => {
               {
                 key: '1',
                 label: (
-                  <button
-                    type='button'
-                    className='flex items-center gap-x-2 justify-center'
-                    onClick={() => {
-                      setOpenModalView(true)
-                      setSelectedBrandData(record)
-                    }}
-                  >
+                  <button type='button' className='flex items-center gap-x-2 justify-center' onClick={() => {}}>
                     <Eye size='15' color='green' /> <span>View</span>
                   </button>
                 )
@@ -114,11 +199,11 @@ const Brands = () => {
                     className='flex items-center gap-x-2 justify-center'
                     onClick={() => {
                       setOpenModal(true)
-                      setSelectedBrand(record.brand_id)
-                      setBrandName(record.brand_name)
-                      setBrandDescription(record.brand_description)
-                      setLogo(record.brand_logo)
                       setTypeModal('update')
+                      setAdminFullName(record.admin_fullname)
+                      setEmail(record.email)
+                      setAvatar(record.admin_avatar)
+                      setSelectedAdmin(record)
                     }}
                   >
                     <Edit size='15' color='green' /> <span>Update</span>
@@ -131,9 +216,9 @@ const Brands = () => {
                   <Popconfirm
                     align={{ offset: [20, 20] }}
                     placement='bottomRight'
-                    title={`Delete record ${record.brand_id}`}
+                    title={`Delete record ${record.admin_id}`}
                     description='Are you sure to delete this record?'
-                    onConfirm={() => handleDeleteBrand(record.brand_id)}
+                    onConfirm={() => handleDeleteAdmin(record)}
                     okText='Delete'
                     cancelText='Cancel'
                   >
@@ -143,6 +228,28 @@ const Brands = () => {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <DeleteOutlined className='text-[15px] text-[red]' /> <span>Delete</span>
+                    </button>
+                  </Popconfirm>
+                )
+              },
+              {
+                key: '4',
+                label: (
+                  <Popconfirm
+                    align={{ offset: [20, 20] }}
+                    placement='bottomRight'
+                    title={`Restore record ${record.admin_id}`}
+                    description='Are you sure to store this record?'
+                    onConfirm={() => handleRestoreAdmin(record)}
+                    okText='Restore'
+                    cancelText='Cancel'
+                  >
+                    <button
+                      type='button'
+                      className='flex items-center gap-x-2 justify-center'
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Refresh className='text-[green]' size={15} /> <span>Restore</span>
                     </button>
                   </Popconfirm>
                 )
@@ -160,9 +267,9 @@ const Brands = () => {
   ]
 
   //Table data
-  const [data, setData] = useState([])
+  const [data, setData] = useState()
   const [filterData, setFilterData] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState()
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
@@ -181,7 +288,7 @@ const Brands = () => {
         current={current}
         pageSize={pageSize}
         onChange={onChange}
-        pageSizeOptions={pageSizeOptions || ['8', '10', '20', '50']}
+        pageSizeOptions={pageSizeOptions || ['8', '10', '20']}
       />
     </div>
   )
@@ -197,11 +304,13 @@ const Brands = () => {
     setTableParams(params)
     if (pagination.pageSize !== tableParams.pagination?.pageSize) {
       setData([])
+      setFilterData([])
     }
     setLoading(false)
   }
 
-  const searchBrand = () => {
+  const searchAdmins = () => {
+    setLoading(true)
     const formatDate = (date) => {
       if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
         const [day, month, year] = date.split('/')
@@ -228,15 +337,18 @@ const Brands = () => {
       return ''
     }
     const result = data.filter((item) => {
-      const matchesBrandName = item.brand_name.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesAdminFullName = item.admin_fullname.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesAdminEmail = item.email.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesRole = selectedRoles !== undefined ? item.admin_is_admin === selectedRoles : true
+      const matchesStatus = selectedAdminStatus !== undefined ? item.admin_is_delete === selectedAdminStatus : true
       const matchesDateRange =
         selectedFrom && selectedTo
-          ? formatDate(item.brand_created_at) >= formatDate(selectedFrom) &&
-            formatDate(item.brand_created_at) <= formatDate(selectedTo)
+          ? formatDate(item.admin_created_at) >= formatDate(selectedFrom) &&
+            formatDate(item.admin_created_at) <= formatDate(selectedTo)
           : true
-      return matchesBrandName && matchesDateRange
+      return (matchesAdminFullName || matchesAdminEmail) && matchesDateRange && matchesRole && matchesStatus
     })
-    const tableData = result.sort((a, b) => new Date(b.brand_created_at) - new Date(a.brand_created_at))
+    const tableData = result
     setFilterData(tableData)
     setTableParams({
       ...tableParams,
@@ -245,35 +357,52 @@ const Brands = () => {
         total: result.length
       }
     })
+    setLoading(false)
   }
 
-  const fetchBrands = async (params) => {
+  const fetchAdmins = async () => {
     setLoading(true)
-    const query = qs.stringify({
-      ...params
-    })
     try {
-      const response = await BrandsAPI.searchBrands(query)
+      const response = await AdminAPI.getAllAdmin(token)
       if (!response.ok) {
         setStatus(response.status)
-        setMessageResult(`Error fetching categories: with status ${response.status}`)
+        setMessageResult(`Error fetching admin: with status ${response.status}`)
         setLoading(false)
         return
       }
       const result = await response.json()
-      const data = result.data
+      const data = result.data.data
       const tableData = data
         .map((item) => ({
-          key: item.brand_id,
-          brand_name: item.brand_name,
-          brand_logo: item.brand_logo,
-          brand_description: item.brand_description,
-          brand_is_delete: item.brand_is_delete,
-          brand_created_at: item.brand_created_at,
-          brand_updated_at: item.brand_updated_at,
-          brand_id: item.brand_id
+          key: item.admin_id,
+          admin_id: item.admin_id,
+          admin_fullname: item.admin_fullname,
+          email: item.email,
+          admin_avatar: item.admin_avatar,
+          admin_is_admin: item.admin_is_admin,
+          admin_is_delete: item.admin_is_delete,
+          email_verified_at: item.email_verified_at,
+          admin_created_at: item.admin_created_at,
+          admin_updated_at: item.admin_updated_at
         }))
-        .sort((a, b) => new Date(b.brand_updated_at) - new Date(a.brand_updated_at))
+        .sort((a, b) => new Date(b.admin_created_at) - new Date(a.admin_created_at))
+      const roles = Array.from(
+        new Set(
+          data.map((item) => {
+            switch (item.admin_is_admin) {
+              case 0:
+                return 'User'
+              case 1:
+                return 'Admin'
+              case 2:
+                return 'Super Admin'
+            }
+          })
+        )
+      )
+      const adminStatus = Array.from(new Set(data.map((item) => (item.admin_is_delete === 0 ? 'Active' : 'Deleted'))))
+      setAdminStatus(adminStatus)
+      setRoles(roles)
       setFilterData(tableData)
       setData(tableData)
       setTableParams({
@@ -285,6 +414,8 @@ const Brands = () => {
       })
       setLoading(false)
     } catch (e) {
+      setStatus(400)
+      setMessageResult('Error fetching admin: ' + e.message)
       setLoading(false)
     } finally {
       setLoading(false)
@@ -292,14 +423,12 @@ const Brands = () => {
   }
 
   useEffect(() => {
-    fetchBrands({
-      search: searchValue
-    })
+    fetchAdmins()
   }, [tableParams.pagination?.pageSize])
 
   useEffect(() => {
     if (data) {
-      searchBrand()
+      searchAdmins()
     }
   }, [
     searchValue,
@@ -308,7 +437,9 @@ const Brands = () => {
     tableParams?.sortField,
     JSON.stringify(tableParams.filters),
     selectedFrom,
-    selectedTo
+    selectedTo,
+    selectedRoles,
+    selectedAdminStatus
   ])
   //#endregion
 
@@ -318,12 +449,11 @@ const Brands = () => {
   const [typeModal, setTypeModal] = useState('add')
 
   //#region Form data
-  const [brandName, setBrandName] = useState('')
-  const [errorBrandName, setErrorBrandName] = useState('')
-  const [brandDescription, setBrandDescription] = useState('')
-  const [selectedBrand, setSelectedBrand] = useState(null) // brand ID
-  const [selectedBrandData, setSelectedBrandData] = useState(null) // brand record data
-  const [Logo, setLogo] = useState(null)
+  const [adminFullName, setAdminFullName] = useState('')
+  const [errorAdminFullName, setErrorAdminFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [errorEmail, setErrorEmail] = useState('')
+  const [Avatar, setAvatar] = useState(null)
   const fileInputRef = useRef(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [errorFileUpload, setErrorFileUpload] = useState('')
@@ -345,112 +475,133 @@ const Brands = () => {
     const droppedFile = e.dataTransfer.files[0]
     if (droppedFile && droppedFile.type.startsWith('image/')) {
       setSelectedFile(droppedFile)
-      setLogo(URL.createObjectURL(droppedFile))
+      setAvatar(URL.createObjectURL(droppedFile))
       fileInputRef.current.value = null
     }
   }
 
-  //handle upload logo
-  const handleUploadLogo = (e) => {
+  //handle upload Avatar
+  const handleUploadAvatar = (e) => {
     const file = e.target.files[0]
     if (file && file.type.startsWith('image/')) {
-      setLogo(URL.createObjectURL(file))
+      setAvatar(URL.createObjectURL(file))
       setSelectedFile(file)
       fileInputRef.current.value = null
     }
   }
 
-  //handle clear logo
-  const handleClearLogo = (e) => {
+  //handle clear Avatar
+  const handleClearAvatar = (e) => {
     e.stopPropagation()
-    setLogo(null)
+    setAvatar(null)
     setSelectedFile(null)
   }
 
-  //handle error brand name
-  const CheckBrandNameExist = (name) => {
-    const check = data.find((item) => {
-      if (typeModal === 'update' && item.brand_id === selectedBrand) {
-        return false
-      }
-      return item.category_name === name
-    })
-    return check !== undefined
-  }
-
-  const handleErrorBrandName = (name) => {
-    if (name === '') {
-      setErrorBrandName('Brand name is required')
-      return false
-    }
-    if (CheckBrandNameExist(name)) {
-      setErrorBrandName('Brand name is already exist')
+  const handleErrorFullName = (admin_fullname) => {
+    if (admin_fullname === '') {
+      setErrorAdminFullName('Full name is required')
       return false
     }
     return true
   }
 
-  // handle delete brand record
-  const handleDeleteBrand = async (id) => {
-    const response = await BrandsAPI.deleteBrands(id, token)
+  const handleErrorEmail = (email) => {
+    if (email === '') {
+      setErrorEmail('Email is required')
+      return false
+    }
+    return true
+  }
+
+  // handle delete admin record
+  const handleDeleteAdmin = async (record) => {
+    if (record.admin_is_delete === 1) {
+      setStatus(400)
+      setMessageResult("This record has been deleted. Can't delete again")
+      return
+    }
+    let response = await AdminAPI.deleteAdmin(record.admin_id, token)
     setTypeModal('Delete')
     if (response.ok) {
-      fetchBrands({
-        search: searchValue
-      })
+      const result = await response.json()
+      const { messages, status } = result
+      setStatus(status)
+      setMessageResult(messages)
     } else {
       if (response.status === 401) {
         setStatus(401)
         setMessageResult('Unauthorized access. Please check your credentials.')
       } else {
         setStatus(response.status)
-        setMessageResult(`Error delete brand with status: ${response.status}, message: `, response.messages)
-        console.log(await response.json())
+        setMessageResult(`Error delete admin with status: ${response.status}, message: `, response.messages)
       }
       return
     }
-    const result = await response.json()
-    const { messages, status } = result
-    setStatus(status)
-    setMessageResult(messages)
   }
 
-  // handle submit and or update brand
+  const handleRestoreAdmin = async (record) => {
+    if (record.admin_is_delete === 0) {
+      setStatus(400)
+      setMessageResult("This record has been restored. Can't restore again")
+      return
+    }
+    let response = await AdminAPI.deleteAdmin(record.admin_id, token)
+    setTypeModal('Restore')
+    if (response.ok) {
+      const result = await response.json()
+      const { messages, status } = result
+      setStatus(status)
+      setMessageResult(messages)
+    } else {
+      if (response.status === 401) {
+        setStatus(401)
+        setMessageResult('Unauthorized access. Please check your credentials.')
+      } else {
+        setStatus(response.status)
+        setMessageResult(`Error restore admin with status: ${response.status}, message: `, response.messages)
+      }
+      return
+    }
+  }
+
+  // handle submit and or update admin
   const [submitLoading, setSubmitLoading] = useState(false) // loading submit state
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitLoading(true)
     const formData = new FormData()
-    const brand_name = brandName
-    const brand_description = brandDescription
-    const isValidBrandName = handleErrorBrandName(brand_name)
-    if (!isValidBrandName) {
+    const admin_fullname = adminFullName
+    const adminEmail = email
+    const isValidEmail = handleErrorEmail(adminEmail)
+    const isValidFullName = handleErrorFullName(admin_fullname)
+    if (!isValidEmail || !isValidFullName) {
       setSubmitLoading(false)
       return
     }
-    formData.append('brand_name', brandName)
-    if (brand_description) formData.append('brand_description', brandDescription)
-    if (selectedFile) formData.append('brand_logo', selectedFile)
+    formData.append('admin_fullname', adminFullName)
+    formData.append('email', adminEmail)
+    if (selectedFile) formData.append('admin_avatar', selectedFile)
+    console.log('data', Object.fromEntries(formData))
     let response = null
     try {
       if (typeModal === 'add') {
-        response = await BrandsAPI.addBrands(formData, token)
+        response = await AdminAPI.addAdmin(formData, token)
       }
       if (typeModal === 'update') {
-        response = await BrandsAPI.updateBrands(selectedBrand, formData, token)
+        response = await AdminAPI.updateAdmin(formData, token)
       }
       if (!response.ok) {
         setSubmitLoading(false)
-        const { messages } = await response.json()
+        const { message, data } = await response.json()
         if (response.status === 401) {
           setStatus(401)
           setMessageResult('Unauthorized access. Please check your credentials.')
         } else if (response.status === 422) {
           setStatus(422)
-          setMessageResult(`Invalid data: ${messages}`)
+          setMessageResult(`Invalid data: ${data} with message: ${message}`)
         } else {
           setStatus(response.status)
-          setMessageResult(`Error ${typeModal} brand: ${messages}`)
+          setMessageResult(`Error ${typeModal} admin: ${data} with message: ${message}`)
         }
         return
       }
@@ -467,33 +618,27 @@ const Brands = () => {
   }
 
   //handle cancel modal
-  const handleCancel = () => {
-    setLogo(null)
+  const handleCancelModal = () => {
+    setAdminFullName('')
+    setEmail('')
+    setErrorAdminFullName('')
+    setErrorEmail('')
+    setAvatar(null)
     setSelectedFile(null)
-    setBrandName('')
-    setBrandDescription('')
-    setErrorBrandName('')
     setOpenModal(false)
   }
   //#endregion
 
   //#endregion
 
-  //#region Modal view
-  const [openModalView, setOpenModalView] = useState(false)
-  const [showDescription, setShowDescription] = useState(false)
-  //#endregion
-
   //#region status and message result of fetch api call
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
-      message.success(`${typeModal} brand was successfully`, 3)
-      fetchBrands({
-        search: searchValue
-      })
+      message.success(`${typeModal} admin was successfully`, 3)
+      fetchAdmins()
       setStatus(null)
       setMessageResult(null)
-      handleCancel()
+      handleCancelModal()
     } else if (status >= 400) {
       message.error(messageResult, 3)
       setStatus(null)
@@ -511,18 +656,18 @@ const Brands = () => {
               separator={<ArrowRight2 size='15' color='#1D242E' />}
               className='font-bold text-[#848A91]'
               items={[
-                { title: 'Brands' },
+                { title: 'Users' },
                 {
                   title: (
-                    <Link to='/admin/brands' tabIndex='-1'>
-                      List of brands ({filterData?.length})
+                    <Link to='/admin/manage-admins' tabIndex='-1'>
+                      List of admin ({data?.length})
                     </Link>
                   )
                 }
               ]}
             ></Breadcrumb>
           </h1>
-          <p className='mt-[11px]'>List of brands available</p>
+          <p className='mt-[11px]'>List of admin available</p>
         </div>
         <button
           className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] animate-[slideRightToLeft_1s_ease]'
@@ -532,38 +677,38 @@ const Brands = () => {
           }}
         >
           <Add size='20' />
-          Add new brand
+          Add new admin
         </button>
       </header>
       <Modal
         destroyOnClose
         title={
           <span>
-            {typeModal} new Brand (fields with <span className='text-[red]'>*</span> are required)
+            {typeModal} new Admin (fields with <span className='text-[red]'>*</span> are required)
           </span>
         }
         centered
         open={openModal}
         width={800}
         footer={null}
-        onCancel={handleCancel}
+        onCancel={handleCancelModal}
       >
         <div className='modal__content mt-7 relative'>
           <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
           <form action='' method='POST' onSubmit={handleSubmit} autoComplete='off'>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull relative'>
-                <label htmlFor='brand_logo' className='AddCategoryForm__label mb-1'>
-                  Logo (only *.jpeg, *.jpg, *.png, *.gif and *.svg)
+                <label htmlFor='admin_avatar' className='AddCategoryForm__label mb-1'>
+                  Avatar (only *.jpeg, *.jpg, *.png, *.gif and *.svg)
                 </label>
                 <input
                   type='file'
                   accept='image/jpg, image/jpeg, image/png, image/gif, image/svg'
-                  name='brand_logo'
-                  id='brand_logo'
+                  name='admin_avatar'
+                  id='admin_avatar'
                   className='hidden'
                   placeholder='Choose file'
-                  onChange={handleUploadLogo}
+                  onChange={handleUploadAvatar}
                   ref={fileInputRef}
                   onClick={() => setErrorFileUpload('')}
                 />
@@ -578,18 +723,18 @@ const Brands = () => {
                   <div className='' onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
                     <button
                       type='button'
-                      onClick={() => document.getElementById('brand_logo').click()}
+                      onClick={() => document.getElementById('admin_avatar').click()}
                       className='AddCategoryForm__uploadBtn'
                       style={{
-                        border: Logo !== null ? 'None' : '3px dashed #e8ebed'
+                        border: Avatar !== null ? 'None' : '3px dashed #e8ebed'
                       }}
                     >
-                      {Logo ? (
+                      {Avatar ? (
                         <>
-                          <img src={Logo} alt='Logo' className='w-full h-[300px] object-cover' />
+                          <img src={Avatar} alt='Avatar' className='w-full h-[300px] object-cover' />
                           <CloseCircleOutlined
                             className='absolute top-0 right-0 text-red-500 text-[20px] cursor-pointer'
-                            onClick={handleClearLogo}
+                            onClick={handleClearAvatar}
                           />
                         </>
                       ) : (
@@ -610,12 +755,12 @@ const Brands = () => {
             </div>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
-                <label htmlFor='brand_name' className='AddCategoryForm__label'>
-                  <span className='text-[red]'>* </span>Name
+                <label htmlFor='admin_fullname' className='AddCategoryForm__label'>
+                  <span className='text-[red]'>* </span>Full Name
                 </label>
                 <Tooltip
-                  title={errorBrandName}
-                  open={errorBrandName !== ''}
+                  title={errorAdminFullName}
+                  open={errorAdminFullName !== ''}
                   placement='bottomLeft'
                   align={{
                     offset: [60, -8]
@@ -623,32 +768,41 @@ const Brands = () => {
                 >
                   <input
                     type='text'
-                    name='brand_name'
-                    id='brand_name'
+                    name='admin_fullname'
+                    id='admin_fullname'
                     className='AddCategoryForm__input'
-                    placeholder='This is a brand name'
-                    value={brandName}
-                    onChange={(e) => setBrandName(e.target.value)}
-                    onFocus={() => setErrorBrandName('')}
+                    placeholder='Lam Nhat Minh'
+                    value={adminFullName}
+                    onChange={(e) => setAdminFullName(e.target.value)}
+                    onFocus={() => setErrorAdminFullName('')}
                   />
                 </Tooltip>
               </div>
             </div>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
-                <label htmlFor='brand_description' className='AddCategoryForm__label'>
-                  Description
+                <label htmlFor='email' className='AddCategoryForm__label'>
+                  <span className='text-[red]'>* </span>Email
                 </label>
-                <textarea
-                  type='text'
-                  name='brand_description'
-                  id='brand_description'
-                  className='AddCategoryForm__textarea'
-                  rows={6}
-                  placeholder='This is a category description'
-                  value={brandDescription !== null ? brandDescription : ''}
-                  onChange={(e) => setBrandDescription(e.target.value)}
-                />
+                <Tooltip
+                  title={errorEmail}
+                  open={errorEmail !== ''}
+                  placement='bottomLeft'
+                  align={{
+                    offset: [60, -8]
+                  }}
+                >
+                  <input
+                    type='email'
+                    name='email'
+                    id='email'
+                    className='AddCategoryForm__input'
+                    placeholder='minh32405@gmail.com'
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setErrorEmail('')}
+                  />
+                </Tooltip>
               </div>
             </div>
             <div className='AddCategoryForm__row'>
@@ -656,7 +810,7 @@ const Brands = () => {
                 <button type='submit' className='AddCategoryForm__submitBtn'>
                   Save
                 </button>
-                <button type='button' className='AddCategoryForm__cancelBtn' onClick={handleCancel}>
+                <button type='button' className='AddCategoryForm__cancelBtn' onClick={handleCancelModal}>
                   Cancel
                 </button>
               </div>
@@ -664,41 +818,12 @@ const Brands = () => {
           </form>
         </div>
       </Modal>
-      <Modal centered open={openModalView} width={350} footer={null} onCancel={() => setOpenModalView(false)}>
-        <div className='w-[300px] flex justify-between pt-10'>
-          <Tooltip
-            title={
-              selectedBrandData !== null
-                ? selectedBrandData.brand_description !== null
-                  ? selectedBrandData.brand_description
-                  : '...'
-                : '...'
-            }
-            open={showDescription}
-            overlayStyle={{ maxWidth: '800px', whiteSpace: 'normal' }}
-            placement='bottom'
-          >
-            <figure className='w-[100%] flex justify-center items-center flex-col grow'>
-              <img
-                src={selectedBrandData !== null ? selectedBrandData.brand_logo : ''}
-                alt={selectedBrandData !== null ? selectedBrandData.brand_name : ''}
-                className='w-[200px] h-[200px] object-cover rounded-full'
-                onMouseEnter={() => setShowDescription(true)}
-                onMouseLeave={() => setShowDescription(false)}
-              />
-              <figcaption className='mt-2 text-center'>
-                {selectedBrandData !== null ? selectedBrandData.brand_name : ''}
-              </figcaption>
-            </figure>
-          </Tooltip>
-        </div>
-      </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md'>
+      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-[slideUp_1s_ease]'>
         <div className='flex justify-between items-center'>
-          <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
+          <div className='flex items-center w-[250px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
-              placeholder='Search for brands'
+              placeholder='Search for admins'
               className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
@@ -708,47 +833,74 @@ const Brands = () => {
             />
             <button
               onClick={() => {
-                fetchBrands({
-                  search: searchValue
-                })
+                fetchAdmins()
               }}
             >
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
-          <div className='flex gap-x-[12px] items-center animate-[slideRightToLeft_1s_ease]'>
-            <ConfigProvider
-              theme={{
-                token: {
-                  colorTextQuaternary: '#1D242E', // Disabled text color
-                  colorTextPlaceholder: '#1D242E', // Placeholder text color
-                  fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-                  controlOutline: 'none',
-                  colorBorder: '#e8ebed',
-                  borderRadius: '4px',
-                  colorPrimary: '#008f99'
-                },
-                components: {
-                  Select: {
-                    activeBorderColor: '#1D242E',
-                    hoverBorderColor: '#1D242E',
-                    optionActiveBg: '#bde0fe',
-                    optionSelectedBg: '#bde0fe',
-                    optionSelectedColor: '#1D242E'
-                  },
-                  TreeSelect: {
-                    nodeHoverBg: '#bde0fe',
-                    nodeSelectedBg: '#bde0fe'
-                  },
-                  DatePicker: {
-                    activeBorderColor: '#1D242E',
-                    hoverBorderColor: '#1D242E'
+          <div className='flex gap-x-[12px] items-center'>
+            <ConfigProvider theme={filterTheme}>
+              <Select
+                suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+                allowClear
+                placeholder='- Choose role -'
+                placement='bottomLeft'
+                options={roles.map((item) => {
+                  switch (item) {
+                    case 'User':
+                      return { label: 'User', value: 0 }
+                    case 'Admin':
+                      return { label: 'Admin', value: 1 }
+                    case 'Super Admin':
+                      return { label: 'Super Admin', value: 2 }
                   }
-                }
-              }}
-            >
+                })}
+                value={selectedRoles}
+                dropdownStyle={{
+                  maxHeight: 400,
+                  overflow: 'auto',
+                  minWidth: '300px'
+                }}
+                className='w-[250px] h-[50px]'
+                onChange={(value) => {
+                  setSelectedRoles(value)
+                }}
+              />
+            </ConfigProvider>
+          </div>
+          <div className='flex gap-x-[12px] items-center'>
+            <ConfigProvider theme={filterTheme}>
+              <Select
+                suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+                allowClear
+                placeholder='- Choose status -'
+                placement='bottomLeft'
+                options={adminStatus.map((item) => {
+                  switch (item) {
+                    case 'Active':
+                      return { label: 'Active', value: 0 }
+                    case 'Deleted':
+                      return { label: 'Deleted', value: 1 }
+                  }
+                })}
+                value={selectedAdminStatus}
+                dropdownStyle={{
+                  maxHeight: 400,
+                  overflow: 'auto',
+                  minWidth: '300px'
+                }}
+                className='w-[250px] h-[50px]'
+                onChange={(value) => {
+                  setSelectedAdminStatus(value)
+                }}
+              />
+            </ConfigProvider>
+          </div>
+          <div className='flex gap-x-[12px] items-center '>
+            <ConfigProvider theme={filterTheme}>
               <RangePicker
-                className='w-[340px] h-[50px]'
+                className='w-[250px] h-[50px]'
                 format={'DD/MM/YYYY'}
                 onChange={(date, dateString) => {
                   setSelectedFrom(dateString[0])
@@ -758,7 +910,7 @@ const Brands = () => {
             </ConfigProvider>
           </div>
         </div>
-        <div className='pt-[15px] animate-[slideUp_1s_ease]'>
+        <div className='pt-[15px]'>
           <ConfigProvider
             theme={{
               components: {
@@ -776,7 +928,7 @@ const Brands = () => {
             <Table
               size='small'
               columns={columns}
-              rowKey={(record) => record.brand_id}
+              rowKey={(record) => record.admin_id}
               dataSource={filterData}
               pagination={{
                 position: ['none'],
@@ -793,7 +945,6 @@ const Brands = () => {
                 maxHeight: '450px',
                 backgroundColor: '#ffffff'
               }}
-              className='Brands__table'
             />
           </ConfigProvider>
           <CustomPagination
@@ -817,4 +968,5 @@ const Brands = () => {
     </section>
   )
 }
-export default Brands
+
+export default Admin

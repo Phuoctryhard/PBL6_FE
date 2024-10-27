@@ -295,7 +295,6 @@ const AdminProducts = () => {
 
   //search and filter products
   const searchProducts = () => {
-    setLoading(true)
     const formatDate = (date) => {
       if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
         const [day, month, year] = date.split('/')
@@ -347,7 +346,6 @@ const AdminProducts = () => {
         total: results.length
       }
     })
-    setLoading(false)
   }
 
   //Fetch all products
@@ -477,7 +475,7 @@ const AdminProducts = () => {
                 {
                   title: (
                     <Link to='/admin/products' tabIndex='-1'>
-                      List of products ({data?.length})
+                      List of products ({filterData?.length})
                     </Link>
                   )
                 }
@@ -612,7 +610,6 @@ const AdminProducts = () => {
               total={tableParams.pagination.total}
               current={tableParams.pagination.current}
               pageSize={tableParams.pagination.pageSize}
-              className='text-[#ffffff]'
               onChange={(page, pageSize) =>
                 handleTableChange(
                   {

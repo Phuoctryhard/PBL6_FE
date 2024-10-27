@@ -1,24 +1,25 @@
-import { Navigate, Outlet, useRoutes, useNavigate } from 'react-router-dom'
-import React, { useContext, useEffect } from 'react'
+import { Navigate, Outlet, useRoutes } from 'react-router-dom'
+import React, { useContext } from 'react'
+import AdminMainLayout from '../Layouts/Admin/MainLayout/MainLayout.jsx'
+import AdminProducts from '../Component/AdminProducts/Products.jsx'
+import AdminCategories from '../Component/AdminCategories'
+import AdminAddProduct from '../Component/AdminAddProduct'
+import AdminEditProduct from '../Component/AdminEditProduct'
+import AdminViewProduct from '../Component/AdminViewProduct'
+import AdminBrands from '../Component/AdminBrands'
+import AdminManagement from '../Component/AdminManagement'
 import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
 import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
 import Login from '../Component/Login/Login.jsx'
 import Register from '../Component/Register/index.js'
-import AdminMainLayout from '../Layouts/Admin/MainLayout/MainLayout.jsx'
 import MainLayoutUser from '../Layouts/User/MainLayout/index.js'
 import CategoryListProduct from '../Pages/User/CategoryListProduct/CategoryListProduct.jsx'
 import VerifyEmail from '../Pages/User/VerifyEmail/index.jsx'
 import DetailProduct from '../Pages/User/ProductUser/DetailProduct/DetailProduct.jsx'
-import AdminProducts from '../Component/AdminProducts/Products.jsx'
-import AdminCategories from '../Component/AdminCategories'
 import Cart from '../Pages/User/Cart/index.jsx'
-import AdminAddProduct from '../Component/AdminAddProduct'
 import Profile from '../Pages/User/Account/personal-info/Profile.jsx'
 import Adress from '../Pages/User/Account/address/Adress.jsx'
-import AdminEditProduct from '../Component/AdminEditProduct'
 import LayoutAccount from '../Pages/User/Account/LayoutAccount/LayoutAccount.jsx'
-import AdminViewProduct from '../Component/AdminViewProduct'
-import AdminBrands from '../Component/AdminBrands'
 import OrderHistory from '../Pages/User/Account/order_history/OrderHistory.jsx'
 import UpdatePassword from '../Pages/User/Account/personal-info/components/UpdatePassword/UpdatePassword.jsx'
 import { AuthContext } from '../context/app.context.jsx'
@@ -26,16 +27,6 @@ import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
   const userRole = 'admin'
-  const { isAuthenticated } = useContext(AuthContext)
-  const navigate = useNavigate()
-  const CheckAuthenticate = () => {
-    if (!isAuthenticated) {
-      navigate('/login')
-    }
-  }
-  useEffect(() => {
-    CheckAuthenticate()
-  }, [isAuthenticated, navigate])
 
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
@@ -217,6 +208,14 @@ export default function useRouterElement() {
       element: (
         <AdminMainLayout>
           <AdminCategories />
+        </AdminMainLayout>
+      )
+    },
+    {
+      path: '/admin/manage-admins',
+      element: (
+        <AdminMainLayout>
+          <AdminManagement />
         </AdminMainLayout>
       )
     },

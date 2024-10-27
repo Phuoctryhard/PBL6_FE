@@ -246,7 +246,6 @@ const Categories = () => {
   }
 
   const searchCategories = () => {
-    setLoading(true)
     const results = data.filter((item) => {
       const matchesProductName = item.category_name.toLowerCase().includes(searchValue.toLowerCase())
       const matchesType = item.category_type.toLowerCase().includes(searchValue.toLowerCase())
@@ -268,7 +267,6 @@ const Categories = () => {
         total: results.length
       }
     })
-    setLoading(false)
   }
 
   const fetchCategories = async (token, params) => {
@@ -514,28 +512,29 @@ const Categories = () => {
     }
   }
 
-  useEffect(() => {
-    fetchCategories(token, {
-      search: searchValue
-    })
-  }, [])
+  // useEffect(() => {
+  //   fetchCategories(token, {
+  //     search: searchValue
+  //   })
+  // }, [])
 
   useEffect(() => {
     fetchCategories(token, {
       search: searchValue
     })
-  }, [
-    tableParams.pagination?.pageSize,
-    tableParams?.sortOrder,
-    tableParams?.sortField,
-    JSON.stringify(tableParams.filters)
-  ])
+  }, [tableParams.pagination?.pageSize])
 
   useEffect(() => {
     if (data) {
       searchCategories()
     }
-  }, [searchValue, tableParams.pagination?.current])
+  }, [
+    searchValue,
+    tableParams.pagination?.current,
+    tableParams?.sortOrder,
+    tableParams?.sortField,
+    JSON.stringify(tableParams.filters)
+  ])
 
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
@@ -566,7 +565,7 @@ const Categories = () => {
                 {
                   title: (
                     <Link to='/admin/categories' tabIndex='-1'>
-                      List of categories ({data?.length})
+                      List of categories ({filterData?.length})
                     </Link>
                   )
                 }

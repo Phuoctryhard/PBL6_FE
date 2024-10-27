@@ -27,7 +27,7 @@ const Sidebar = () => {
 
   const Users = [
     { id: 'customers', name: 'Customers' },
-    { id: 'admins', name: 'Admin' }
+    { id: 'manage-admins', name: 'Admin' }
   ]
 
   const location = useLocation()
@@ -56,28 +56,20 @@ const Sidebar = () => {
     }
   }, [showUser])
 
-  // useEffect(() => {
-  //   const path = location.pathname
-  //   const navID = path.split('/')[2]
-  //   const subNavID = ['products', 'categories', 'customers', 'admins']
-  //   if (subNavID.includes(navID)) {
-  //     handleSubNavClick(navID)
-  //   } else {
-  //     handleNavClick(navID)
-  //   }
-  // }, [location.pathname])
-
   useEffect(() => {
     const path = location.pathname
     const navID = path.split('/')[2]
-    const subNavID = ['products', 'categories', 'customers', 'admins']
+    const subNavID = ['products', 'categories', 'customers', 'manage-admins']
     if (subNavID.includes(navID)) {
       if (navID === 'products' || navID === 'categories') {
         setActiveNav(null)
         setShowInventory(true)
         setSelectedId(navID)
+      } else if (navID === 'manage-admins') {
+        setActiveNav(null)
+        setShowUser(true)
+        setSelectedId(navID)
       }
-      // handleSubNavClick(navID)
     } else {
       handleNavClick(navID)
     }
@@ -94,7 +86,7 @@ const Sidebar = () => {
     setActiveNav(null)
   }
   return (
-    <nav className='navBar min-w-[256px] bg-[#283342] text-[#ffffff] h-[100vh] overflow-y-auto overflow-x-hidden'>
+    <nav className='navBar w-[256px] bg-[#283342] text-[#ffffff] h-[100vh] overflow-y-auto overflow-x-hidden'>
       <div className='navBar__header sticky top-0 left-0 w-[100%]'>
         <div className='navBar__logo bg-[#1D242E] py-[9px] px-[24px] flex items-center min-w-[256px] h-[60px] z-[1]'>
           <img
@@ -252,13 +244,17 @@ const Sidebar = () => {
               {Users.map((item) => (
                 <li
                   key={item.id}
-                  className='pl-[62px] px-[24px] h-[46px] margin-auto flex items-center justify-start cursor-pointer'
                   onClick={() => {
                     handleSubNavClick(item.id)
                   }}
                   style={{ backgroundColor: item.id === selectedId ? '#008f99' : '' }}
                 >
-                  {item.name}
+                  <NavLink
+                    to={`/admin/${item.id}`}
+                    className='pl-[62px] px-[24px] h-[46px] flex items-center justify-start cursor-pointer'
+                  >
+                    {item.name}
+                  </NavLink>
                 </li>
               ))}
             </ul>
