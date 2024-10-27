@@ -187,12 +187,6 @@
 .AddForm__SubmitButton:hover {
   opacity: 0.8;
 }
-
-.AddForm__ResetButton {
-  background-color: #a80868;
-  color: yellow;
-}
-
 .AddForm__CancelButton {
   background-color: rgb(255, 0, 0, 0.2);
   color: red;
