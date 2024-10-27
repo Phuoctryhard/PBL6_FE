@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { SideBarItem } from './Component/SideBarItem'
 import {
   ArchiveBox,
@@ -20,32 +20,33 @@ import {
 } from 'iconsax-react'
 import './Sidebar.css'
 const Sidebar = () => {
-  const Items = [
+  const Inventory = [
     { id: 'products', name: 'Products' },
     { id: 'categories', name: 'Categories' }
   ]
 
   const Users = [
-    { id: 1, name: 'Customers' },
-    { id: 2, name: 'Admin' }
+    { id: 'customers', name: 'Customers' },
+    { id: 'admins', name: 'Admin' }
   ]
 
+  const location = useLocation()
   const [selectedId, setSelectedId] = useState(null)
-  const [showProduct, setShowProduct] = useState(false)
+  const [showInventory, setShowInventory] = useState(false)
   const [showUser, setShowUser] = useState(false)
   const [activeNav, setActiveNav] = useState(null)
   const [maxHeightProduct, setMaxHeightProduct] = useState('0px')
   const [maxHeightUser, setMaxHeightUser] = useState('0px')
   const productRef = useRef(null)
   const userRef = useRef(null)
-  const [showSidebar, setShowSidebar] = useState(true)
+
   useEffect(() => {
-    if (showProduct) {
+    if (showInventory) {
       setMaxHeightProduct(`${productRef.current.scrollHeight}px`)
     } else {
       setMaxHeightProduct('0px')
     }
-  }, [showProduct])
+  }, [showInventory])
 
   useEffect(() => {
     if (showUser) {
@@ -55,9 +56,36 @@ const Sidebar = () => {
     }
   }, [showUser])
 
+  // useEffect(() => {
+  //   const path = location.pathname
+  //   const navID = path.split('/')[2]
+  //   const subNavID = ['products', 'categories', 'customers', 'admins']
+  //   if (subNavID.includes(navID)) {
+  //     handleSubNavClick(navID)
+  //   } else {
+  //     handleNavClick(navID)
+  //   }
+  // }, [location.pathname])
+
+  useEffect(() => {
+    const path = location.pathname
+    const navID = path.split('/')[2]
+    const subNavID = ['products', 'categories', 'customers', 'admins']
+    if (subNavID.includes(navID)) {
+      if (navID === 'products' || navID === 'categories') {
+        setActiveNav(null)
+        setShowInventory(true)
+        setSelectedId(navID)
+      }
+      // handleSubNavClick(navID)
+    } else {
+      handleNavClick(navID)
+    }
+  }, [])
+
   const handleNavClick = (navId) => {
     setActiveNav(navId)
-    setShowProduct(navId === 'products' ? !showProduct : false)
+    setShowInventory(navId === 'inventory' ? !showInventory : false)
     setShowUser(navId === 'users' ? !showUser : false)
   }
 
@@ -103,9 +131,10 @@ const Sidebar = () => {
           <SideBarItem name='Overview' iconName={<Element className='w-6' />} />
         </NavLink>
         <NavLink
-          className={activeNav === 'products' ? 'bg-[#008f99]' : ''}
+          to='/admin/inventory'
+          className={activeNav === 'inventory' ? 'bg-[#008f99]' : ''}
           onClick={() => {
-            handleNavClick('products')
+            handleNavClick('inventory')
             setSelectedId(null)
           }}
         >
@@ -133,7 +162,7 @@ const Sidebar = () => {
             }}
           >
             <ul>
-              {Items.map((item) => (
+              {Inventory.map((item) => (
                 <li
                   key={item.id}
                   className=''
@@ -204,7 +233,7 @@ const Sidebar = () => {
                 size={16}
                 color='#ffffff'
                 onClick={() => {
-                  handleNavClick('products')
+                  handleNavClick('users')
                   setSelectedId(null)
                 }}
               />

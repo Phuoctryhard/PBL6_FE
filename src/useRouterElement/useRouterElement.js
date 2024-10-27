@@ -27,15 +27,15 @@ export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
   const userRole = 'admin'
   const { isAuthenticated } = useContext(AuthContext)
-  // const navigate = useNavigate()
-  // const CheckAuthenticate = () => {
-  //   if (!isAuthenticated) {
-  //     navigate('/login')
-  //   }
-  // }
-  // useEffect(() => {
-  //   CheckAuthenticate()
-  // }, [isAuthenticated, navigate])
+  const navigate = useNavigate()
+  const CheckAuthenticate = () => {
+    if (!isAuthenticated) {
+      navigate('/login')
+    }
+  }
+  useEffect(() => {
+    CheckAuthenticate()
+  }, [isAuthenticated, navigate])
 
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
@@ -166,6 +166,16 @@ export default function useRouterElement() {
               {/* Adjust the height according to your header's height */}
               <div className='h-[1000px] flex items-center justify-center'>Content post </div>
             </div>
+          </div>
+        </AdminMainLayout>
+      )
+    },
+    {
+      path: '/admin/inventory',
+      element: (
+        <AdminMainLayout>
+          <div>
+            <h1>This is inventory</h1>
           </div>
         </AdminMainLayout>
       )

@@ -746,9 +746,12 @@ const Categories = () => {
                     },
                     components: {
                       Select: {
-                        selectorBg: 'transparent',
                         activeBorderColor: '#1D242E',
                         hoverBorderColor: '#1D242E'
+                      },
+                      TreeSelect: {
+                        nodeHoverBg: 'rgb(0, 143, 153, 0.3)',
+                        nodeSelectedBg: 'rgb(0, 143, 153, 0.3)'
                       }
                     }
                   }}
@@ -847,11 +850,11 @@ const Categories = () => {
             theme={{
               components: {
                 Table: {
-                  rowHoverBg: '#f4f5f7',
-                  headerSplitColor: 'none',
-                  headerBg: '#fafafa',
-                  sortField: '#fafafa',
-                  sortOrder: '#fafafa',
+                  rowHoverBg: '#f5f5f5',
+                  headerSplitColor: 'transparent',
+                  headerBg: '#f5f5f5',
+                  sortField: '#f5f5f5',
+                  sortOrder: '#f5f5f5',
                   borderColor: '#e8ebed'
                 }
               }

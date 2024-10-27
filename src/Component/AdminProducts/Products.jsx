@@ -1,8 +1,7 @@
-import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Refresh, Eye } from 'iconsax-react'
+import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Eye } from 'iconsax-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
-import dayjs from 'dayjs'
 import { Table, TreeSelect, Breadcrumb, Dropdown, Popconfirm, message, Select, DatePicker } from 'antd'
 import './Product.css'
 import { Pagination } from 'antd'
@@ -10,7 +9,9 @@ import qs from 'qs'
 import { ProductsAPI, BrandsAPi, CategoriesAPi } from '../../Api/admin'
 import { DashOutlined, DeleteOutlined } from '@ant-design/icons'
 const { RangePicker } = DatePicker
-const filterSelectTheme = {
+
+//#region theme for ant design components
+const filterTheme = {
   token: {
     colorTextPlaceholder: '#1D242E',
     colorTextDisabled: '#1D242E',
@@ -38,20 +39,54 @@ const filterSelectTheme = {
     }
   }
 }
+//#endregion
 
 const AdminProducts = () => {
-  const [category, setCategory] = useState([])
-  const [brand, setBrand] = useState([])
-  const [selectedBrand, setSelectedBrand] = useState('')
-  const [selectedFrom, setSelectedFrom] = useState('')
-  const [selectedTo, setSelectedTo] = useState('')
-  const [searchValue, setSearchValue] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [treeData, setTreeData] = useState([])
-  const [messageApi, contextHolder] = message.useMessage()
-  const [responseState, setResponseState] = useState({ status: 0, messageResult: '', type: null })
+  //access token
   const token = localStorage.getItem('accesstoken')
 
+  //#region filter data
+  //brand data
+  const [brand, setBrand] = useState([])
+  const [selectedBrand, setSelectedBrand] = useState('')
+
+  //Date picker data
+  const [selectedFrom, setSelectedFrom] = useState('')
+  const [selectedTo, setSelectedTo] = useState('')
+
+  //Search data
+  const [searchValue, setSearchValue] = useState('')
+
+  //Category data
+  const [treeData, setTreeData] = useState([])
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const convertToTreeData = (data) => {
+    return data.map((item) => ({
+      title: item.category_name,
+      label: item.category_name,
+      value: item.category_name,
+      children: item.children ? convertToTreeData(item.children) : []
+    }))
+  }
+
+  //Fetch categories and brands data
+  useEffect(() => {
+    CategoriesAPi.getCategories()
+      .then((response) => response.json())
+      .then(({ data }) => {
+        const categories = convertToTreeData(data.filter((category) => category.category_is_delete === 0))
+        setTreeData(categories)
+      })
+    BrandsAPi.getBrands()
+      .then((response) => response.json())
+      .then(({ data }) => {
+        setBrand(data)
+      })
+  }, [])
+  //#endregion
+
+  //#region  Table Data and Custom pagination
+  //Table columns
   const columns = [
     {
       title: '#',
@@ -164,7 +199,6 @@ const AdminProducts = () => {
                     description='Are you sure to delete this record?'
                     okText='Delete'
                     cancelText='Cancel'
-                    onCancel={handleCancelDelete}
                     onConfirm={() => fetchDeleteProduct(record.product_id)}
                   >
                     <button
@@ -188,23 +222,52 @@ const AdminProducts = () => {
       )
     }
   ]
-  const [data, setData] = useState()
-  const [filterData, setFilterData] = useState([])
-  const [loading, setLoading] = useState()
+
+  //Table Data
+  const [data, setData] = useState() // all data from fetch API
+  const [filterData, setFilterData] = useState([]) // data source after filter from all data
+  const [loading, setLoading] = useState() // table loading state
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
       pageSize: 8
     }
   })
-  const openMessage = (type, content, duration) => {
-    messageApi.open({
-      type: type,
-      content: content,
-      duration: duration
-    })
+
+  // Custom Pagination
+  const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
+    <div className='flex justify-between items-center mt-3'>
+      <span className='inline-block text-[14px]'>
+        Showing {current - 1 < 1 ? 1 : (current - 1) * pageSize + 1} to{' '}
+        {current * pageSize <= total ? current * pageSize : total} of {total} entries
+      </span>
+      <Pagination
+        total={total}
+        current={current}
+        pageSize={pageSize}
+        onChange={onChange}
+        pageSizeOptions={pageSizeOptions || ['8', '10', '20', '30', '40', '50', '100']}
+      />
+    </div>
+  )
+
+  // Handle table change
+  const handleTableChange = (pagination, filters, sorter) => {
+    setLoading(true)
+    const params = {
+      pagination,
+      filters,
+      sortOrder: sorter ? sorter.order : undefined,
+      sortField: sorter ? sorter.field : undefined
+    }
+    setTableParams(params)
+    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
+      setData([])
+    }
+    setLoading(false)
   }
 
+  //Fetch delete product
   const fetchDeleteProduct = async (ProductID) => {
     try {
       const response = await ProductsAPI.deleteProducts(ProductID, token)
@@ -229,35 +292,8 @@ const AdminProducts = () => {
       setResponseState({ status, messageResult: messages, type: 'Delete' })
     } catch (e) {}
   }
-  const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
-    <div className='flex justify-between items-center mt-3'>
-      <span className='inline-block text-[14px]'>
-        Showing {current - 1 < 1 ? 1 : (current - 1) * pageSize + 1} to{' '}
-        {current * pageSize <= total ? current * pageSize : total} of {total} entries
-      </span>
-      <Pagination
-        total={total}
-        current={current}
-        pageSize={pageSize}
-        onChange={onChange}
-        pageSizeOptions={pageSizeOptions || ['8', '10', '20', '30', '40', '50', '100']}
-      />
-    </div>
-  )
 
-  const handleCancelDelete = (e) => {
-    return
-  }
-
-  const convertToTreeData = (data) => {
-    return data.map((item) => ({
-      title: item.category_name,
-      label: item.category_name,
-      value: item.category_name,
-      children: item.children ? convertToTreeData(item.children) : []
-    }))
-  }
-
+  //search and filter products
   const searchProducts = () => {
     setLoading(true)
     const formatDate = (date) => {
@@ -314,6 +350,7 @@ const AdminProducts = () => {
     setLoading(false)
   }
 
+  //Fetch all products
   const fetchProducts = (params) => {
     setLoading(true)
     try {
@@ -371,27 +408,14 @@ const AdminProducts = () => {
     } catch (e) {}
   }
 
-  useEffect(() => {
-    CategoriesAPi.getCategories()
-      .then((response) => response.json())
-      .then(({ data }) => {
-        setCategory(data)
-        const categories = convertToTreeData(data.filter((category) => category.category_is_delete === 0))
-        setTreeData(categories)
-      })
-    BrandsAPi.getBrands()
-      .then((response) => response.json())
-      .then(({ data }) => {
-        setBrand(data)
-      })
-  }, [])
-
+  //page size change
   useEffect(() => {
     fetchProducts({
       search: searchValue
     })
   }, [tableParams.pagination?.pageSize])
 
+  //filter table change
   useEffect(() => {
     if (data) {
       searchProducts()
@@ -407,7 +431,21 @@ const AdminProducts = () => {
     selectedFrom,
     selectedTo
   ])
+  //#endregion
 
+  //#region Message API and response state(status, message result) of fetch API
+  //Message API
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
+
+  //Response state
+  const [responseState, setResponseState] = useState({ status: 0, messageResult: '', type: null })
   useEffect(() => {
     const { status, messageResult, type } = responseState
     if (type) {
@@ -423,25 +461,13 @@ const AdminProducts = () => {
       }
     }
   }, [responseState])
-  const handleTableChange = (pagination, filters, sorter) => {
-    setLoading(true)
-    const params = {
-      pagination,
-      filters,
-      sortOrder: sorter ? sorter.order : undefined,
-      sortField: sorter ? sorter.field : undefined
-    }
-    setTableParams(params)
-    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setData([])
-    }
-    setLoading(false)
-  }
+  //#endregion
+
   return (
     <section className='max-w-[100%] h-full'>
       {contextHolder}
-      <header className='flex justify-between'>
-        <div className='Breadcrumb animate-[slideLeftToRight_1s_ease]'>
+      <header className='flex justify-between animate-[slideDown_1s_ease]'>
+        <div className='Breadcrumb'>
           <h1>
             <Breadcrumb
               separator={<ArrowRight2 size='15' color='#1D242E' />}
@@ -460,16 +486,16 @@ const AdminProducts = () => {
           </h1>
           <p className='mt-[11px]'>List of products available for sales</p>
         </div>
-        <Link to='/admin/products/add-product' tabIndex={-1} className='animate-[slideRightToLeft_1s_ease]'>
+        <Link to='/admin/products/add-product' tabIndex={-1}>
           <button className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'>
             <Add size='20' />
             Add new item
           </button>
         </Link>
       </header>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md'>
+      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-[slideUp_1s_ease]'>
         <div className='flex justify-between items-center gap-x-3'>
-          <div className='flex items-center w-[300px] justify-between text-[14px] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
+          <div className='flex items-center w-[300px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for product'
@@ -490,8 +516,8 @@ const AdminProducts = () => {
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
-          <div className='flex gap-x-[12px] items-center animate-[slideLeftToRight_1s_ease]'>
-            <ConfigProvider theme={filterSelectTheme}>
+          <div className='flex gap-x-[12px] items-center'>
+            <ConfigProvider theme={filterTheme}>
               <Select
                 suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                 allowClear
@@ -512,8 +538,8 @@ const AdminProducts = () => {
               />
             </ConfigProvider>
           </div>
-          <div className='flex gap-x-[12px] items-center animate-[slideLeftToRight_1s_ease]'>
-            <ConfigProvider theme={filterSelectTheme}>
+          <div className='flex gap-x-[12px] items-center'>
+            <ConfigProvider theme={filterTheme}>
               <TreeSelect
                 suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                 allowClear
@@ -531,8 +557,8 @@ const AdminProducts = () => {
               />
             </ConfigProvider>
           </div>
-          <div className='flex gap-x-[12px] items-center animate-[slideLeftToRight_1s_ease]'>
-            <ConfigProvider theme={filterSelectTheme}>
+          <div className='flex gap-x-[12px] items-center'>
+            <ConfigProvider theme={filterTheme}>
               <RangePicker
                 className='w-[250px] h-[50px]'
                 format={'DD/MM/YYYY'}
@@ -544,16 +570,16 @@ const AdminProducts = () => {
             </ConfigProvider>
           </div>
         </div>
-        <div className='pt-[15px] animate-[slideUp_1s_ease]'>
+        <div className='pt-[15px]'>
           <ConfigProvider
             theme={{
               components: {
                 Table: {
-                  rowHoverBg: '#f4f5f7',
-                  headerSplitColor: 'none',
-                  headerBg: '#fafafa',
-                  sortField: '#fafafa',
-                  sortOrder: '#fafafa',
+                  rowHoverBg: '#f5f5f5',
+                  headerSplitColor: 'transparent',
+                  headerBg: '#f5f5f5',
+                  sortField: '#f5f5f5',
+                  sortOrder: '#f5f5f5',
                   borderColor: '#e8ebed'
                 }
               }

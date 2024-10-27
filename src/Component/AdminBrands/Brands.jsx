@@ -9,39 +9,18 @@ import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { RangePicker } = DatePicker
 const Brands = () => {
-  const [data, setData] = useState([])
-  const [filterData, setFilterData] = useState([])
-  const [loading, setLoading] = useState(true)
+  const token = localStorage.getItem('accesstoken')
+  const [status, setStatus] = useState(null)
+  const [messageResult, setMessageResult] = useState('')
+
+  //#region filter data
   const [searchValue, setSearchValue] = useState('')
   const [selectedFrom, setSelectedFrom] = useState(null)
   const [selectedTo, setSelectedTo] = useState(null)
-  const [tableParams, setTableParams] = useState({
-    pagination: {
-      current: 1,
-      pageSize: 8
-    }
-  })
-  const [openModal, setOpenModal] = useState(false)
-  const [typeModal, setTypeModal] = useState('add')
-  const [submitLoading, setSubmitLoading] = useState(false)
-  const fileInputRef = useRef(null)
-  const [Logo, setLogo] = useState(null)
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [errorFileUpload, setErrorFileUpload] = useState('')
-  const [dragging, setDragging] = useState(false)
-  const [brandName, setBrandName] = useState('')
-  const [errorBrandName, setErrorBrandName] = useState('')
-  const [brandDescription, setBrandDescription] = useState('')
-  const [errorBrandDescription, setErrorBrandDescription] = useState('')
-  const [selectedBrand, setSelectedBrand] = useState(null)
-  const [status, setStatus] = useState(null)
-  const [messageResult, setMessageResult] = useState('')
-  const token = localStorage.getItem('accesstoken')
+  //#endregion
 
-  const [openModalView, setOpenModalView] = useState(false)
-  const [selectedBrandData, setSelectedBrandData] = useState(null)
-  const [showDescription, setShowDescription] = useState(false)
-
+  //#region Table data and custom pagination
+  // Date format options
   const optionsDateformat = {
     weekday: 'long',
     year: 'numeric',
@@ -50,13 +29,16 @@ const Brands = () => {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    hour12: false // Use 24-hour format
+    hour12: false
   }
 
+  // Date format
   const DateFormat = (date) => {
     const formattedDate = new Date(date).toLocaleDateString('en-US', optionsDateformat)
     return `${formattedDate}`
   }
+
+  //Table columns
   const columns = [
     {
       title: '#',
@@ -176,6 +158,18 @@ const Brands = () => {
       )
     }
   ]
+
+  //Table data
+  const [data, setData] = useState([])
+  const [filterData, setFilterData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [tableParams, setTableParams] = useState({
+    pagination: {
+      current: 1,
+      pageSize: 8
+    }
+  })
+
   const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
     <div className='flex justify-between items-center mt-3'>
       <span className='inline-block text-[14px]'>
@@ -191,6 +185,21 @@ const Brands = () => {
       />
     </div>
   )
+
+  const handleTableChange = (pagination, filters, sorter) => {
+    setLoading(true)
+    const params = {
+      pagination,
+      filters,
+      sortOrder: sorter ? sorter.order : undefined,
+      sortField: sorter ? sorter.field : undefined
+    }
+    setTableParams(params)
+    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
+      setData([])
+    }
+    setLoading(false)
+  }
 
   const searchBrand = () => {
     setLoading(true)
@@ -277,6 +286,46 @@ const Brands = () => {
     })
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchBrands({
+      search: searchValue
+    })
+  }, [tableParams.pagination?.pageSize])
+
+  useEffect(() => {
+    if (data) {
+      searchBrand()
+    }
+  }, [
+    searchValue,
+    tableParams.pagination?.current,
+    tableParams?.sortOrder,
+    tableParams?.sortField,
+    JSON.stringify(tableParams.filters),
+    selectedFrom,
+    selectedTo
+  ])
+  //#endregion
+
+  //#region Modal add or update
+  //Modal setting
+  const [openModal, setOpenModal] = useState(false)
+  const [typeModal, setTypeModal] = useState('add')
+
+  //#region Form data
+  const [brandName, setBrandName] = useState('')
+  const [errorBrandName, setErrorBrandName] = useState('')
+  const [brandDescription, setBrandDescription] = useState('')
+  const [selectedBrand, setSelectedBrand] = useState(null) // brand ID
+  const [selectedBrandData, setSelectedBrandData] = useState(null) // brand record data
+  const [Logo, setLogo] = useState(null)
+  const fileInputRef = useRef(null)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [errorFileUpload, setErrorFileUpload] = useState('')
+
+  //handle drag and drop image file
+  const [dragging, setDragging] = useState(false)
   const handleDragOver = (e) => {
     e.preventDefault()
     setDragging(true)
@@ -297,6 +346,24 @@ const Brands = () => {
     }
   }
 
+  //handle upload logo
+  const handleUploadLogo = (e) => {
+    const file = e.target.files[0]
+    if (file && file.type.startsWith('image/')) {
+      setLogo(URL.createObjectURL(file))
+      setSelectedFile(file)
+      fileInputRef.current.value = null
+    }
+  }
+
+  //handle clear logo
+  const handleClearLogo = (e) => {
+    e.stopPropagation()
+    setLogo(null)
+    setSelectedFile(null)
+  }
+
+  //handle error brand name
   const CheckBrandNameExist = (name) => {
     const check = data.find((item) => {
       if (typeModal === 'update' && item.brand_id === selectedBrand) {
@@ -318,6 +385,8 @@ const Brands = () => {
     }
     return true
   }
+
+  // handle delete brand record
   const handleDeleteBrand = async (id) => {
     const response = await BrandsAPI.deleteBrands(id, token)
     setTypeModal('Delete')
@@ -342,52 +411,14 @@ const Brands = () => {
     setMessageResult(messages)
   }
 
-  const handleUploadLogo = (e) => {
-    const file = e.target.files[0]
-    if (file && file.type.startsWith('image/')) {
-      setLogo(URL.createObjectURL(file))
-      setSelectedFile(file)
-      fileInputRef.current.value = null
-    }
-  }
-
-  const handleClearLogo = (e) => {
-    e.stopPropagation()
-    setLogo(null)
-    setSelectedFile(null)
-  }
-
-  const handleTableChange = (pagination, filters, sorter) => {
-    setLoading(true)
-    const params = {
-      pagination,
-      filters,
-      sortOrder: sorter ? sorter.order : undefined,
-      sortField: sorter ? sorter.field : undefined
-    }
-    setTableParams(params)
-    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setData([])
-    }
-    setLoading(false)
-  }
-
-  const handleCancel = () => {
-    setOpenModal(false)
-    setLogo(null)
-    setSelectedFile(null)
-    setBrandName('')
-    setBrandDescription('')
-    setErrorBrandName('')
-    setErrorBrandDescription('')
-  }
-
+  // handle submit and or update brand
+  const [submitLoading, setSubmitLoading] = useState(false) // loading submit state
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitLoading(true)
     const formData = new FormData()
-    const brand_name = brandName.trim()
-    const brand_description = brandDescription.trim()
+    const brand_name = brandName
+    const brand_description = brandDescription
     const isValidBrandName = handleErrorBrandName(brand_name)
     if (!isValidBrandName) {
       setSubmitLoading(false)
@@ -404,7 +435,6 @@ const Brands = () => {
       if (typeModal === 'update') {
         response = await BrandsAPI.updateBrands(selectedBrand, formData, token)
       }
-      console.log(`data`, Object.fromEntries(formData))
       if (!response.ok) {
         setSubmitLoading(false)
         const { messages } = await response.json()
@@ -424,29 +454,33 @@ const Brands = () => {
       const { messages, status } = result
       setStatus(status)
       setMessageResult(messages)
+      setSubmitLoading(false)
     } catch (e) {
+      setSubmitLoading(false)
     } finally {
       setSubmitLoading(false)
     }
   }
 
-  useEffect(() => {
-    fetchBrands({
-      search: searchValue
-    })
-  }, [
-    tableParams.pagination?.pageSize,
-    tableParams?.sortOrder,
-    tableParams?.sortField,
-    JSON.stringify(tableParams.filters)
-  ])
+  //handle cancel modal
+  const handleCancel = () => {
+    setOpenModal(false)
+    setLogo(null)
+    setSelectedFile(null)
+    setBrandName('')
+    setBrandDescription('')
+    setErrorBrandName('')
+  }
+  //#endregion
 
-  useEffect(() => {
-    if (data) {
-      searchBrand()
-    }
-  }, [searchValue, tableParams.pagination?.current, selectedFrom, selectedTo])
+  //#endregion
 
+  //#region Modal view
+  const [openModalView, setOpenModalView] = useState(false)
+  const [showDescription, setShowDescription] = useState(false)
+  //#endregion
+
+  //#region status and message result of fetch api call
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
       message.success(`${typeModal} brand was successfully`, 3)
@@ -462,6 +496,8 @@ const Brands = () => {
       setMessageResult(null)
     }
   }, [status, messageResult])
+  //#endregion
+
   return (
     <section className='max-w-[100%] h-full'>
       <header className='flex justify-between'>
@@ -723,11 +759,11 @@ const Brands = () => {
             theme={{
               components: {
                 Table: {
-                  rowHoverBg: '#f4f5f7',
-                  headerSplitColor: 'none',
-                  headerBg: '#fafafa',
-                  sortField: '#fafafa',
-                  sortOrder: '#fafafa',
+                  rowHoverBg: '#f5f5f5',
+                  headerSplitColor: 'transparent',
+                  headerBg: '#f5f5f5',
+                  sortField: '#f5f5f5',
+                  sortOrder: '#f5f5f5',
                   borderColor: '#e8ebed'
                 }
               }

@@ -651,7 +651,7 @@ const AddProduct = () => {
                       treeDefaultExpandAll
                       value={category || undefined}
                       dropdownStyle={{ overflow: 'auto' }}
-                      className='AddProductForm__select'
+                      className='AddForm__select'
                       onChange={(value) => {
                         setCategory(value)
                       }}
