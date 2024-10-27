@@ -1,29 +1,36 @@
 import { Link } from 'react-router-dom'
-import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message } from 'antd'
-import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
+import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message, Spin, TreeSelect } from 'antd'
+import { ArrowRight2, DocumentUpload, ProgrammingArrows, ArrowDown2 } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import './AddProduct.css'
+import ProductsAPI from '../../Api/admin/products'
+import CategoriesAPI from '../../Api/admin/categories'
+import BrandsAPI from '../../Api/admin/brands'
 
-const customThemeSelect = {
+const filterTheme = {
   token: {
-    colorTextQuaternary: '#1D242E', // Disabled text color
-    colorTextPlaceholder: '#1D242E', // Placeholder text color
+    colorTextQuaternary: '#1D242E',
+    colorTextPlaceholder: '#1D242E',
     fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-    controlOutline: 'rgba(0, 0, 0, 0.4)', // outline color
-    controlOutlineWidth: '1px', // outline width
-    colorBorder: '#bcbec1', // Border color
-    borderRadius: '4px' // Border radius
+    controlOutline: 'rgba(0, 0, 0, 0.4)',
+    controlOutlineWidth: '1px',
+    colorBorder: '#bcbec1',
+    borderRadius: '4px'
   },
   components: {
     Select: {
-      selectorBg: '#e3ebf3', // Selector background color
-      activeBorderColor: '#1D242E', // Active border color
-      hoverBorderColor: '#1D242E', // Hover border color
-      optionActiveBg: '#bde0fe', // Option active
-      optionSelectedBg: '#bde0fe' // Option selected
+      selectorBg: '#e3ebf3',
+      activeBorderColor: '#1D242E',
+      hoverBorderColor: '#1D242E',
+      optionActiveBg: 'rgb(0, 143, 153, 0.3)',
+      optionSelectedBg: 'rgb(0, 143, 153, 0.3)'
+    },
+    TreeSelect: {
+      nodeHoverBg: 'rgb(0, 143, 153, 0.3)',
+      nodeSelectedBg: 'rgb(0, 143, 153, 0.3)'
     }
   }
 }
@@ -67,10 +74,12 @@ const AddProduct = () => {
   const [errorProductUses, setErrorProductUses] = useState('')
   const [productDescription, setProductDescription] = useState('')
   const [errorProductDescription, setErrorProductDescription] = useState('')
+
   const token = localStorage.getItem('accesstoken')
   const [messageApi, messagecontextHolder] = message.useMessage()
   const [messageResult, setMessageResult] = useState('')
   const [status, setStatus] = useState(0)
+  const [submitLoading, setSubmitLoading] = useState(false)
 
   const openMessage = (type, content, duration) => {
     messageApi.open({
@@ -362,6 +371,7 @@ const AddProduct = () => {
   }
 
   const handleSubmit = async (e) => {
+    setSubmitLoading(true)
     e.preventDefault()
     const isValidProductID = await handleErrorProductID(productID)
     const isValidProductName = await handleErrorProductName(productName)
@@ -395,6 +405,9 @@ const AddProduct = () => {
       !isValidProductUses ||
       !isValidProductDescription
     ) {
+      setSubmitLoading(false)
+      setStatus(422)
+      setMessageResult('Invalid data. Please check your input.')
       return
     }
     const form = e.target
@@ -431,55 +444,69 @@ const AddProduct = () => {
     })
 
     try {
-      const response = await fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products/add', {
-        method: 'POST',
-        headers: {
-          authorization: 'Bearer ' + token
-        },
-        body: formData
-      })
+      const response = await ProductsAPI.addProducts(formData, token)
       if (!response.ok) {
+        setSubmitLoading(false)
+        const { messages } = await response.json()
         if (response.status === 401) {
-          throw new Error('Unauthorized access. Please check your credentials.')
+          setStatus(401)
+          setMessageResult('Unauthorized access. Please check your credentials.')
+        } else if (response.status === 422) {
+          setStatus(422)
+          setMessageResult(`Invalid data: ${messages}`)
+        } else {
+          setStatus(response.status)
+          setMessageResult('Error:', messages)
         }
+        return
       }
       const result = await response.json()
       const { messages, status } = result
-      if (status >= 400) {
-        throw new Error(messages)
-      }
       setStatus(status)
       setMessageResult(messages)
     } catch (e) {
-      console.error('error: ', e.message)
+    } finally {
+      setSubmitLoading(false)
     }
   }
 
-  const getDeepestCategories = (data) => {
-    let deepestCategories = []
-    const extractDeepest = (node) => {
-      if (!node.children || node.children.length === 0) {
-        deepestCategories.push({
-          title: node.category_id,
-          value: node.category_name
-        })
-      } else {
-        node.children.forEach((child) => extractDeepest(child))
-      }
-    }
+  const convertDataToTree = (data) => {
+    const map = {}
+    const tree = []
 
-    data.forEach((item) => extractDeepest(item))
-    return deepestCategories
+    data.forEach((item) => {
+      map[item.category_id] = { ...item, children: [] }
+    })
+
+    data.forEach((item) => {
+      if (item.category_parent_id !== null) {
+        map[item.category_parent_id].children.push(map[item.category_id])
+      } else {
+        tree.push(map[item.category_id])
+      }
+    })
+
+    return tree
+  }
+
+  const convertToTreeData = (data) => {
+    return data.map((item) => ({
+      title: item.category_name,
+      value: item.category_id,
+      children: item.children ? convertToTreeData(item.children) : []
+    }))
   }
 
   useEffect(() => {
-    fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/categories')
+    CategoriesAPI.getAllCategories(token)
       .then((response) => response.json())
       .then(({ data }) => {
-        let categories = getDeepestCategories(data)
+        let categories = convertToTreeData(
+          convertDataToTree(data.filter((category) => category.category_is_delete === 0))
+        )
         setCategories(categories)
       })
-    fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/brands')
+    BrandsAPI.getBrands()
       .then((response) => response.json())
       .then(({ data }) => {
         let brands = data.map((brand) => ({
@@ -504,7 +531,7 @@ const AddProduct = () => {
     } else if (status >= 400) {
       toast.error(messageResult, { autoClose: 3000 })
     }
-  }, [status])
+  }, [status, messageResult])
 
   return (
     <section className='max-w-[100%] h-full flex flex-col'>
@@ -571,11 +598,12 @@ const AddProduct = () => {
         </div>
       </header>
       <div className='Container'>
-        <form action='#' className='AddProductForm mt-6 w-[100%]' autoComplete='off' onSubmit={handleSubmit}>
+        <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
+        <form action='#' className='AddForm mt-6 w-[100%]' autoComplete='off' onSubmit={handleSubmit}>
           <div className='mb-5 flex w-full justify-between gap-x-12 animate-[slideUp_1s_ease]'>
             <div className='max-w-[48%] grow'>
-              <div className='AddProductForm__row'>
-                <div className='AddProductForm__group'>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
                   <label htmlFor='product_id'>
                     <span className='text-[red]'>* </span>ID
                   </label>
@@ -585,13 +613,13 @@ const AddProduct = () => {
                     name='product_id'
                     value={productID}
                     placeholder='1234'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     onChange={(e) => setProductID(e.target.value)}
                     onFocus={() => setErrorProductID('')}
                   />
                   <p className='error_message'>{errorProductID}</p>
                 </div>
-                <div className='AddProductForm__group'>
+                <div className='AddForm__group'>
                   <label htmlFor='product_name'>
                     <span className='text-[red]'>* </span>Name
                   </label>
@@ -600,7 +628,7 @@ const AddProduct = () => {
                     id='product_name'
                     name='product_name'
                     placeholder='Minh dep trai'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     onFocus={() => setErrorProductName('')}
                     onChange={(e) => setProductName(e.target.value)}
                     value={productName}
@@ -608,42 +636,40 @@ const AddProduct = () => {
                   <p className='error_message'>{errorProductName}</p>
                 </div>
               </div>
-              <div className='AddProductForm__row'>
-                <div className='AddProductForm__group'>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
                   <label htmlFor='Category'>
                     <span className='text-[red]'>* </span>Category
                   </label>
-                  <ConfigProvider theme={customThemeSelect}>
-                    <Select
-                      id='Category'
-                      options={categories}
-                      placeholder='-Choose category-'
-                      className='AddProductForm__select'
+                  <ConfigProvider theme={filterTheme}>
+                    <TreeSelect
                       allowClear
-                      onDropdownVisibleChange={() => setErrorCategory('')}
+                      showSearch
+                      placeholder='- Choose Group -'
+                      placement='bottomLeft'
+                      treeData={categories}
+                      treeDefaultExpandAll
+                      value={category || undefined}
+                      dropdownStyle={{ overflow: 'auto' }}
+                      className='AddForm__select'
                       onChange={(value) => {
-                        const selectedCategory = categories.find((category) => category.value === value)
-                        if (selectedCategory) {
-                          setCategory(selectedCategory.title)
-                        } else {
-                          setCategory('')
-                        }
+                        setCategory(value)
                       }}
                     />
                     <input type='hidden' name='category_id' value={category || ''} />
                   </ConfigProvider>
                   <p className='error_message'>{errorCategory}</p>
                 </div>
-                <div className='AddProductForm__group'>
+                <div className='AddForm__group'>
                   <label htmlFor='Brand'>
                     <span className='text-[red]'>* </span>Brand
                   </label>
-                  <ConfigProvider theme={customThemeSelect}>
+                  <ConfigProvider theme={filterTheme}>
                     <Select
                       id='Brand'
                       options={brands}
                       placeholder='-Choose brand-'
-                      className='AddProductForm__select'
+                      className='AddForm__select'
                       allowClear
                       onDropdownVisibleChange={() => setErrorBrand('')}
                       onChange={(value) => {
@@ -660,8 +686,8 @@ const AddProduct = () => {
                   <p className='error_message'>{errorBrand}</p>
                 </div>
               </div>
-              <div className='AddProductForm__row'>
-                <div className='AddProductForm__group'>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
                   <label htmlFor='product_price'>
                     <span className='text-[red]'>* </span>Price
                   </label>
@@ -670,14 +696,14 @@ const AddProduct = () => {
                     id='product_price'
                     name='product_price'
                     placeholder='4000000'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     value={productPrice}
                     onChange={(e) => setProductPrice(e.target.value)}
                     onFocus={() => setErrorProductPrice('')}
                   />
                   <p className='error_message'>{errorProductPrice}</p>
                 </div>
-                <div className='AddProductForm__group'>
+                <div className='AddForm__group'>
                   <label htmlFor='product_discount'>
                     <span className='text-[red]'>* </span>Discount
                   </label>
@@ -686,7 +712,7 @@ const AddProduct = () => {
                     id='product_discount'
                     name='product_discount'
                     placeholder='20'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     value={productDiscount}
                     onChange={(e) => setProductDiscount(e.target.value)}
                     onFocus={() => setErrorProductDiscount('')}
@@ -694,8 +720,8 @@ const AddProduct = () => {
                   <p className='error_message'>{errorProductDiscount}</p>
                 </div>
               </div>
-              <div className='AddProductForm__row'>
-                <div className='AddProductForm__group'>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
                   <label htmlFor='product_quantity'>
                     <span className='text-[red]'>* </span>Quantity
                   </label>
@@ -704,14 +730,14 @@ const AddProduct = () => {
                     id='product_quantity'
                     name='product_quantity'
                     placeholder='40'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     value={productQuantity}
                     onChange={(e) => setProductQuantity(e.target.value)}
                     onFocus={() => setErrorProductQuantity('')}
                   />
                   <p className='error_message'>{errorProductQuantity}</p>
                 </div>
-                <div className='AddProductForm__group'>
+                <div className='AddForm__group'>
                   <label htmlFor='product_sold'>
                     <span className='text-[red]'>* </span>Sold
                   </label>
@@ -720,7 +746,7 @@ const AddProduct = () => {
                     id='product_sold'
                     name='product_sold'
                     placeholder='20'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     value={productSold}
                     onChange={(e) => setProductSold(e.target.value)}
                     onFocus={() => setErrorProductSold('')}
@@ -728,34 +754,34 @@ const AddProduct = () => {
                   <p className='error_message'>{errorProductSold}</p>
                 </div>
               </div>
-              <div className='AddProductForm__row'>
-                <div className='AddProductForm__group'>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
                   <label htmlFor='package'>Package</label>
                   <input
                     type='text'
                     id='package'
                     name='package'
                     placeholder='Package 1'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     value={productPackage}
                     onChange={(e) => setProductPackage(e.target.value)}
                   />
                 </div>
-                <div className='AddProductForm__group'>
+                <div className='AddForm__group'>
                   <label htmlFor='ingredient'>Ingredient</label>
                   <input
                     type='text'
                     id='ingredient'
                     name='ingredient'
                     placeholder='Azithromycin 200mg'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     onChange={(e) => setProductIngredient(e.target.value)}
                     value={productIngredient}
                   />
                 </div>
               </div>
-              <div className='AddProductForm__row'>
-                <div className='AddProductForm__group'>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
                   <label htmlFor='dosage_form'>
                     <span className='text-[red]'>* </span>Dosage form
                   </label>
@@ -764,14 +790,14 @@ const AddProduct = () => {
                     id='dosage_form'
                     name='dosage_form'
                     placeholder='Bột pha hỗn dịch uống'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     onChange={(e) => setProductDosageForm(e.target.value)}
                     onFocus={() => setErrorProductDosageForm('')}
                     value={productDosageForm}
                   />
                   <p className='error_message'>{errorProductDosageForm}</p>
                 </div>
-                <div className='AddProductForm__group'>
+                <div className='AddForm__group'>
                   <label htmlFor='specification'>
                     <span className='text-[red]'>* </span>Specification
                   </label>
@@ -780,7 +806,7 @@ const AddProduct = () => {
                     id='specification'
                     name='specification'
                     placeholder='Điều trị nhiễm khuẩn'
-                    className='AddProductForm__input'
+                    className='AddForm__input'
                     onChange={(e) => setProductSpecification(e.target.value)}
                     onFocus={() => setErrorProductSpecification('')}
                     value={productSpecification}
@@ -874,8 +900,8 @@ const AddProduct = () => {
             </div>
           </div>
           <div className='flex gap-x-12 justify-between flex-col'>
-            <div className='AddProductForm__row manufacture__info'>
-              <div className='AddProductForm__group'>
+            <div className='AddForm__row manufacture__info'>
+              <div className='AddForm__group'>
                 <label htmlFor='manufacturer'>
                   <span className='text-[red]'>* </span>Manufacturer
                 </label>
@@ -884,14 +910,14 @@ const AddProduct = () => {
                   id='manufacturer'
                   name='manufacturer'
                   placeholder='Công ty cổ phần dược phẩm Việt Nam'
-                  className='AddProductForm__input'
+                  className='AddForm__input'
                   onChange={(e) => setProductManufacturer(e.target.value)}
                   onFocus={() => setErrorProductManufacturer('')}
                   value={productManufacturer}
                 />
                 <p className='error_message'>{errorProductManufacturer}</p>
               </div>
-              <div className='AddProductForm__group'>
+              <div className='AddForm__group'>
                 <label htmlFor='place_of_manufacture'>
                   <span className='text-[red]'>* </span>Place of manufacture
                 </label>
@@ -900,7 +926,7 @@ const AddProduct = () => {
                   id='place_of_manufacture'
                   name='place_of_manufacture'
                   placeholder='Việt Nam'
-                  className='AddProductForm__input'
+                  className='AddForm__input'
                   onChange={(e) => setProductPlaceOfManufacture(e.target.value)}
                   onFocus={() => setErrorProductPlaceOfManufacture('')}
                   value={productPlaceOfManufacture}
@@ -908,7 +934,7 @@ const AddProduct = () => {
                 <p className='error_message'>{errorProductPlaceOfManufacture}</p>
               </div>
             </div>
-            <div className='AddProductForm__row w-full'>
+            <div className='AddForm__row w-full'>
               <div className='relative w-full'>
                 <label htmlFor='product_uses'>
                   <span className='text-[red]'>* </span>Product Uses
@@ -918,7 +944,7 @@ const AddProduct = () => {
                   name='product_uses'
                   rows={6}
                   placeholder='Mọi thông tin trên đây chỉ mang tính chất tham khảo. Vui lòng đọc kĩ thông tin chi tiết ở tờ hướng dẫn sử dụng của sản phẩm.'
-                  className='AddProductForm__textarea'
+                  className='AddForm__textarea'
                   onChange={(e) => setProductUses(e.target.value)}
                   onFocus={() => setErrorProductUses('')}
                   value={productUses}
@@ -926,7 +952,7 @@ const AddProduct = () => {
                 <p className='error_message'>{errorProductUses}</p>
               </div>
             </div>
-            <div className='AddProductForm__row w-full'>
+            <div className='AddForm__row w-full'>
               <div className='relative w-full'>
                 <label htmlFor='product_description'>
                   <span className='text-[red]'>* </span>Product Description
@@ -936,10 +962,9 @@ const AddProduct = () => {
                   name='product_description'
                   rows={6}
                   placeholder='<div class="pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none"><p><strong>Thành phần </strong></p><p>ACETYLCYSTEINE 100mg Tá dược bao gồm Vitamin C, Saccharose, Natri saccharin, Kollidon K30, Mùi cam   </p><p></p><p><strong>Chỉ định (Thuốc dùng cho bệnh gì?) </strong></p><p>Thuốc Acehasan 100 làm loãng đờm trong các bệnh phế quản - phổi cấp và mãn tính kèm theo sự tăng tiết chất nhầy'
-                  className='AddProductForm__textarea'
+                  className='AddForm__textarea'
                   onChange={(e) => {
                     setProductDescription(e.target.value)
-                    console.log('productDescription:', e.target.value)
                   }}
                   onFocus={() => setErrorProductDescription('')}
                   value={productDescription}
@@ -948,11 +973,11 @@ const AddProduct = () => {
               </div>
             </div>
           </div>
-          <div className='AddProductForm__row button__group'>
-            <button type='submit' className='AddProductForm__SubmitButton'>
+          <div className='AddForm__row button__group'>
+            <button type='submit' className='AddForm__SubmitButton'>
               Submit
             </button>
-            <button type='button' className='AddProductForm__CancelButton' onClick={() => window.history.back()}>
+            <button type='button' className='AddForm__CancelButton' onClick={() => window.history.back()}>
               Cancel
             </button>
           </div>
