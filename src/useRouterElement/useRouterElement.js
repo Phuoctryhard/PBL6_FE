@@ -1,5 +1,5 @@
-import { Navigate, Outlet, useRoutes } from 'react-router-dom'
-import React, { useContext } from 'react'
+import { Navigate, Outlet, useRoutes, useNavigate } from 'react-router-dom'
+import React, { useContext, useEffect } from 'react'
 import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
 import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
 import Login from '../Component/Login/Login.jsx'
@@ -26,6 +26,17 @@ import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
   const userRole = 'admin'
+  const { isAuthenticated } = useContext(AuthContext)
+  const navigate = useNavigate()
+  const CheckAuthenticate = () => {
+    if (!isAuthenticated) {
+      navigate('/login')
+    }
+  }
+  useEffect(() => {
+    CheckAuthenticate()
+  }, [isAuthenticated, navigate])
+
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
     if (isAuthenticated) {
@@ -41,8 +52,16 @@ export default function useRouterElement() {
         )
       }
     }
-    return <Navigate to='/login' replace />
-    // return isAuthenticated ? <Outlet /> : <Navigate to='/login' />
+
+    if (!isAuthenticated) {
+      return <Navigate to='/login' />
+    }
+
+    if (userRole === 'admin') {
+      return <Navigate to='/admin' />
+    }
+
+    return <Outlet />
   }
   const RejectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
@@ -110,37 +129,33 @@ export default function useRouterElement() {
               element: <UpdatePassword />
             }
           ]
-        },
-        {
-          path: '/admin',
-          element: (
-            <AdminMainLayout>
-              <div className='col-span-3 bg-gray-light  '>
-                {/* Scrollable content */}
-                //{' '}
-                <div className=''>
-                  {/* Adjust the height according to your header's height */}
-                  <div className=' flex items-center justify-center'>Content overview </div>
-                </div>
-              </div>
-            </AdminMainLayout>
-          )
-        },
-        {
-          path: '/admin/overview',
-          element: (
-            <AdminMainLayout>
-              <div className='col-span-3 bg-gray-light  '>
-                <div className=''>
-                  <div className=' flex items-center justify-center'></div>
-                </div>
-              </div>
-            </AdminMainLayout>
-          )
         }
       ]
     },
-
+    {
+      path: '/admin',
+      element: (
+        <AdminMainLayout>
+          <div className='col-span-3 bg-gray-light  '>
+            <div className=''>
+              <div className=' flex items-center justify-center'>Content overview </div>
+            </div>
+          </div>
+        </AdminMainLayout>
+      )
+    },
+    {
+      path: '/admin/overview',
+      element: (
+        <AdminMainLayout>
+          <div className='col-span-3 bg-gray-light  '>
+            <div className=''>
+              <div className=' flex items-center justify-center'></div>
+            </div>
+          </div>
+        </AdminMainLayout>
+      )
+    },
     {
       path: '/admin/post',
       element: (

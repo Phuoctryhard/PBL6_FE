@@ -1,11 +1,14 @@
 import { Link } from 'react-router-dom'
-import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message } from 'antd'
-import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
+import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message, Spin, TreeSelect } from 'antd'
+import { ArrowRight2, DocumentUpload, ProgrammingArrows, ArrowDown2 } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import './AddProduct.css'
+import ProductsAPI from '../../Api/admin/products'
+import CategoriesAPI from '../../Api/admin/categories'
+import BrandsAPI from '../../Api/admin/brands'
 
 const customThemeSelect = {
   token: {
@@ -24,6 +27,10 @@ const customThemeSelect = {
       hoverBorderColor: '#1D242E', // Hover border color
       optionActiveBg: '#bde0fe', // Option active
       optionSelectedBg: '#bde0fe' // Option selected
+    },
+    TreeSelect: {
+      nodeHoverBg: '#bde0fe', // Node hover background color
+      nodeSelectedBg: '#bde0fe' // Node selected background color
     }
   }
 }
@@ -67,10 +74,12 @@ const AddProduct = () => {
   const [errorProductUses, setErrorProductUses] = useState('')
   const [productDescription, setProductDescription] = useState('')
   const [errorProductDescription, setErrorProductDescription] = useState('')
+
   const token = localStorage.getItem('accesstoken')
   const [messageApi, messagecontextHolder] = message.useMessage()
   const [messageResult, setMessageResult] = useState('')
   const [status, setStatus] = useState(0)
+  const [submitLoading, setSubmitLoading] = useState(false)
 
   const openMessage = (type, content, duration) => {
     messageApi.open({
@@ -362,6 +371,7 @@ const AddProduct = () => {
   }
 
   const handleSubmit = async (e) => {
+    setSubmitLoading(true)
     e.preventDefault()
     const isValidProductID = await handleErrorProductID(productID)
     const isValidProductName = await handleErrorProductName(productName)
@@ -395,6 +405,9 @@ const AddProduct = () => {
       !isValidProductUses ||
       !isValidProductDescription
     ) {
+      setSubmitLoading(false)
+      setStatus(422)
+      setMessageResult('Invalid data. Please check your input.')
       return
     }
     const form = e.target
@@ -431,55 +444,69 @@ const AddProduct = () => {
     })
 
     try {
-      const response = await fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products/add', {
-        method: 'POST',
-        headers: {
-          authorization: 'Bearer ' + token
-        },
-        body: formData
-      })
+      const response = await ProductsAPI.addProducts(formData, token)
       if (!response.ok) {
+        setSubmitLoading(false)
+        const { messages } = await response.json()
         if (response.status === 401) {
-          throw new Error('Unauthorized access. Please check your credentials.')
+          setStatus(401)
+          setMessageResult('Unauthorized access. Please check your credentials.')
+        } else if (response.status === 422) {
+          setStatus(422)
+          setMessageResult(`Invalid data: ${messages}`)
+        } else {
+          setStatus(response.status)
+          setMessageResult('Error:', messages)
         }
+        return
       }
       const result = await response.json()
       const { messages, status } = result
-      if (status >= 400) {
-        throw new Error(messages)
-      }
       setStatus(status)
       setMessageResult(messages)
     } catch (e) {
-      console.error('error: ', e.message)
+    } finally {
+      setSubmitLoading(false)
     }
   }
 
-  const getDeepestCategories = (data) => {
-    let deepestCategories = []
-    const extractDeepest = (node) => {
-      if (!node.children || node.children.length === 0) {
-        deepestCategories.push({
-          title: node.category_id,
-          value: node.category_name
-        })
-      } else {
-        node.children.forEach((child) => extractDeepest(child))
-      }
-    }
+  const convertDataToTree = (data) => {
+    const map = {}
+    const tree = []
 
-    data.forEach((item) => extractDeepest(item))
-    return deepestCategories
+    data.forEach((item) => {
+      map[item.category_id] = { ...item, children: [] }
+    })
+
+    data.forEach((item) => {
+      if (item.category_parent_id !== null) {
+        map[item.category_parent_id].children.push(map[item.category_id])
+      } else {
+        tree.push(map[item.category_id])
+      }
+    })
+
+    return tree
+  }
+
+  const convertToTreeData = (data) => {
+    return data.map((item) => ({
+      title: item.category_name,
+      value: item.category_id,
+      children: item.children ? convertToTreeData(item.children) : []
+    }))
   }
 
   useEffect(() => {
-    fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/categories')
+    CategoriesAPI.getAllCategories(token)
       .then((response) => response.json())
       .then(({ data }) => {
-        let categories = getDeepestCategories(data)
+        let categories = convertToTreeData(
+          convertDataToTree(data.filter((category) => category.category_is_delete === 0))
+        )
         setCategories(categories)
       })
-    fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/brands')
+    BrandsAPI.getBrands()
       .then((response) => response.json())
       .then(({ data }) => {
         let brands = data.map((brand) => ({
@@ -504,7 +531,7 @@ const AddProduct = () => {
     } else if (status >= 400) {
       toast.error(messageResult, { autoClose: 3000 })
     }
-  }, [status])
+  }, [status, messageResult])
 
   return (
     <section className='max-w-[100%] h-full flex flex-col'>
@@ -571,6 +598,7 @@ const AddProduct = () => {
         </div>
       </header>
       <div className='Container'>
+        <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
         <form action='#' className='AddProductForm mt-6 w-[100%]' autoComplete='off' onSubmit={handleSubmit}>
           <div className='mb-5 flex w-full justify-between gap-x-12 animate-[slideUp_1s_ease]'>
             <div className='max-w-[48%] grow'>
@@ -614,7 +642,7 @@ const AddProduct = () => {
                     <span className='text-[red]'>* </span>Category
                   </label>
                   <ConfigProvider theme={customThemeSelect}>
-                    <Select
+                    {/* <Select
                       id='Category'
                       options={categories}
                       placeholder='-Choose category-'
@@ -628,6 +656,20 @@ const AddProduct = () => {
                         } else {
                           setCategory('')
                         }
+                      }}
+                    /> */}
+                    <TreeSelect
+                      allowClear
+                      showSearch
+                      placeholder='- Choose Group -'
+                      placement='bottomLeft'
+                      treeData={categories}
+                      treeDefaultExpandAll
+                      value={category || undefined}
+                      dropdownStyle={{ overflow: 'auto' }}
+                      className='AddProductForm__select'
+                      onChange={(value) => {
+                        setCategory(value)
                       }}
                     />
                     <input type='hidden' name='category_id' value={category || ''} />
@@ -939,7 +981,6 @@ const AddProduct = () => {
                   className='AddProductForm__textarea'
                   onChange={(e) => {
                     setProductDescription(e.target.value)
-                    console.log('productDescription:', e.target.value)
                   }}
                   onFocus={() => setErrorProductDescription('')}
                   value={productDescription}

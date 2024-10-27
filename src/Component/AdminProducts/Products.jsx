@@ -2,26 +2,37 @@ import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Refresh, Eye } from '
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
-import { Table, TreeSelect, Breadcrumb, Empty, Dropdown, Popconfirm, message } from 'antd'
+import dayjs from 'dayjs'
+import { Table, TreeSelect, Breadcrumb, Dropdown, Popconfirm, message, Select, DatePicker } from 'antd'
 import './Product.css'
 import { Pagination } from 'antd'
 import qs from 'qs'
-import debounce from 'lodash.debounce'
-import CategoriesAPI from '../../Api/admin/categories'
-import ProductsAPI from '../../Api/admin/products'
-import { FilterOutlined, DashOutlined, DeleteOutlined } from '@ant-design/icons'
+import { ProductsAPI, BrandsAPi, CategoriesAPi } from '../../Api/admin'
+import { DashOutlined, DeleteOutlined } from '@ant-design/icons'
+const { RangePicker } = DatePicker
 const filterSelectTheme = {
   token: {
-    colorTextQuaternary: '#1D242E', // Disabled text color
-    colorTextPlaceholder: '#1D242E', // Placeholder text color
+    colorTextPlaceholder: '#1D242E',
+    colorTextDisabled: '#1D242E',
     fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-    controlOutline: 'none', // outline color
-    colorBorder: '#e8ebed', // Border color
-    borderRadius: '4px'
+    controlOutline: 'none',
+    colorBorder: '#e8ebed',
+    borderRadius: '4px',
+    colorPrimary: '#008f99'
   },
   components: {
     Select: {
-      selectorBg: '#fafafa',
+      activeBorderColor: '#1D242E',
+      hoverBorderColor: '#1D242E',
+      optionActiveBg: 'rgb(0, 143, 153, 0.3)',
+      optionSelectedBg: 'rgb(0, 143, 153, 0.3)',
+      optionSelectedColor: '#1D242E'
+    },
+    TreeSelect: {
+      nodeHoverBg: 'rgb(0, 143, 153, 0.3)',
+      nodeSelectedBg: 'rgb(0, 143, 153, 0.3)'
+    },
+    DatePicker: {
       activeBorderColor: '#1D242E',
       hoverBorderColor: '#1D242E'
     }
@@ -31,47 +42,15 @@ const filterSelectTheme = {
 const AdminProducts = () => {
   const [category, setCategory] = useState([])
   const [brand, setBrand] = useState([])
+  const [selectedBrand, setSelectedBrand] = useState('')
+  const [selectedFrom, setSelectedFrom] = useState('')
+  const [selectedTo, setSelectedTo] = useState('')
   const [searchValue, setSearchValue] = useState('')
-  const [searchType, setSearchType] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [treeData, setTreeData] = useState([])
   const [messageApi, contextHolder] = message.useMessage()
   const [responseState, setResponseState] = useState({ status: 0, messageResult: '', type: null })
   const token = localStorage.getItem('accesstoken')
-  const openMessage = (type, content, duration) => {
-    messageApi.open({
-      type: type,
-      content: content,
-      duration: duration
-    })
-  }
-  const fetchDeleteProduct = async (ProductID) => {
-    try {
-      const response = await ProductsAPI.deleteProducts(ProductID, token)
-      if (!response.ok) {
-        if (response.status === 401) {
-          setResponseState({
-            status: 401,
-            messageResult: 'Unauthorized access. Please check your credentials.',
-            type: 'Delete'
-          })
-        } else {
-          setResponseState({
-            status: response.status,
-            messageResult: `Delete product with status code: ${response.status}`,
-            type: 'Delete'
-          })
-        }
-        return
-      }
-      const result = await response.json()
-      const { messages, status } = result
-      setResponseState({ status, messageResult: messages, type: 'Delete' })
-    } catch (e) {}
-  }
-  const [firstRender, setFirstRender] = useState(true)
-  const handleCancelDelete = (e) => {
-    return
-  }
 
   const columns = [
     {
@@ -121,8 +100,6 @@ const AdminProducts = () => {
       key: 'category_name',
       width: '20%',
       sorter: (a, b) => a.category_name.localeCompare(b.category_name),
-      filters: category,
-      onFilter: (value, record) => record.category_name.includes(value),
       ellipsis: true,
       filterSearch: true
     },
@@ -132,8 +109,6 @@ const AdminProducts = () => {
       key: 'brand_name',
       width: '20%',
       sorter: (a, b) => a.brand_name.localeCompare(b.brand_name),
-      filters: brand,
-      onFilter: (value, record) => record.brand_name.includes(value),
       ellipsis: true,
       filterSearch: true
     },
@@ -142,17 +117,6 @@ const AdminProducts = () => {
       dataIndex: 'product_is_delete',
       key: 'product_is_delete',
       width: '10%',
-      filters: [
-        {
-          text: 'Active',
-          value: 0
-        },
-        {
-          text: 'Deleted',
-          value: 1
-        }
-      ],
-      onFilter: (value, record) => record.product_is_delete === value,
       render: (text) => (
         <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
       )
@@ -225,6 +189,7 @@ const AdminProducts = () => {
     }
   ]
   const [data, setData] = useState()
+  const [filterData, setFilterData] = useState([])
   const [loading, setLoading] = useState()
   const [tableParams, setTableParams] = useState({
     pagination: {
@@ -232,6 +197,38 @@ const AdminProducts = () => {
       pageSize: 8
     }
   })
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
+
+  const fetchDeleteProduct = async (ProductID) => {
+    try {
+      const response = await ProductsAPI.deleteProducts(ProductID, token)
+      if (!response.ok) {
+        if (response.status === 401) {
+          setResponseState({
+            status: 401,
+            messageResult: 'Unauthorized access. Please check your credentials.',
+            type: 'Delete'
+          })
+        } else {
+          setResponseState({
+            status: response.status,
+            messageResult: `Delete product with status code: ${response.status}`,
+            type: 'Delete'
+          })
+        }
+        return
+      }
+      const result = await response.json()
+      const { messages, status } = result
+      setResponseState({ status, messageResult: messages, type: 'Delete' })
+    } catch (e) {}
+  }
   const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
     <div className='flex justify-between items-center mt-3'>
       <span className='inline-block text-[14px]'>
@@ -247,7 +244,77 @@ const AdminProducts = () => {
       />
     </div>
   )
-  const fetchProducts = debounce((params) => {
+
+  const handleCancelDelete = (e) => {
+    return
+  }
+
+  const convertToTreeData = (data) => {
+    return data.map((item) => ({
+      title: item.category_name,
+      label: item.category_name,
+      value: item.category_name,
+      children: item.children ? convertToTreeData(item.children) : []
+    }))
+  }
+
+  const searchProducts = () => {
+    setLoading(true)
+    const formatDate = (date) => {
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+        const [day, month, year] = date.split('/')
+        return `${year}-${month}-${day}`
+      }
+
+      // Check if the date is in ISO 8601 format
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
+        const parsedDate = new Date(date)
+        const day = String(parsedDate.getDate()).padStart(2, '0')
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+        const year = parsedDate.getFullYear()
+        return `${year}-${month}-${day}`
+      }
+
+      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+      if (Date.parse(date)) {
+        const parsedDate = new Date(date)
+        const day = String(parsedDate.getDate()).padStart(2, '0')
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+        const year = parsedDate.getFullYear()
+        return `${year}-${month}-${day}`
+      }
+      return ''
+    }
+    const results = data.filter((item) => {
+      const matchesProductName = item.product_name.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesCategoryName = selectedCategory
+        ? item.category_name.toLowerCase().includes(selectedCategory.toLowerCase())
+        : true
+      const matchesBrandName = selectedBrand
+        ? item.brand_name.toLowerCase().includes(selectedBrand.toLowerCase())
+        : true
+      const matchesDateRange =
+        selectedFrom && selectedTo
+          ? formatDate(item.product_created_at) >= formatDate(selectedFrom) &&
+            formatDate(item.product_created_at) <= formatDate(selectedTo)
+          : true
+
+      return matchesProductName && matchesCategoryName && matchesBrandName && matchesDateRange
+    })
+
+    const tableData = results.sort((a, b) => new Date(b.product_created_at) - new Date(a.product_created_at))
+    setFilterData(tableData)
+    setTableParams({
+      ...tableParams,
+      pagination: {
+        ...tableParams.pagination,
+        total: results.length
+      }
+    })
+    setLoading(false)
+  }
+
+  const fetchProducts = (params) => {
     setLoading(true)
     try {
       const query = qs.stringify({
@@ -256,31 +323,11 @@ const AdminProducts = () => {
       ProductsAPI.searchProducts(query)
         .then((res) => {
           if (!res.ok) {
-            if (res.status === 401) {
-              setResponseState({
-                status: 401,
-                messageResult: 'Unauthorized access. Please check your credentials.',
-                type: 'Fetch'
-              })
-            } else if (res.status === 404) {
-              setResponseState({
-                status: 404,
-                messageResult: 'Products not found',
-                type: 'Fetch'
-              })
-            } else if (res.status === 429) {
-              setResponseState({
-                status: 429,
-                messageResult: 'Too many requests. Please try again later.',
-                type: 'Fetch'
-              })
-            } else {
-              setResponseState({
-                status: res.status,
-                messageResult: `Fetch products failed with status code: ${res.status}`,
-                type: 'Fetch'
-              })
-            }
+            setResponseState({
+              status: res.status,
+              messageResult: `Fetch products failed with status code: ${res.status}`,
+              type: 'Fetch'
+            })
             return null
           }
           return res.json()
@@ -303,20 +350,8 @@ const AdminProducts = () => {
               product_created_at: product.product_created_at,
               product_updated_at: product.product_updated_at
             }))
-            .sort((a, b) => new Date(b.product_updated_at) - new Date(a.product_updated_at))
-
-          const categories = [...new Set(tableData.map((item) => item.category_name))]
-          const categoryFilters = categories.map((category) => ({
-            text: category,
-            value: category
-          }))
-          const brands = [...new Set(tableData.map((item) => item.brand_name))]
-          const brandFilters = brands.map((brand) => ({
-            text: brand,
-            value: brand
-          }))
-          setBrand(brandFilters)
-          setCategory(categoryFilters)
+            .sort((a, b) => new Date(b.product_created_at) - new Date(a.product_created_at))
+          setFilterData(tableData)
           setData(tableData)
           setTableParams({
             ...tableParams,
@@ -334,38 +369,43 @@ const AdminProducts = () => {
           setLoading(false)
         })
     } catch (e) {}
-  }, 500)
-
-  const convertToTreeData = (data) => {
-    return data
-      .filter((item) => item.category_type !== 'disease')
-      .map((item) => ({
-        title: item.category_name,
-        value: item.category_name,
-        children: item.children ? convertToTreeData(item.children) : []
-      }))
   }
+
   useEffect(() => {
-    CategoriesAPI.getCategories()
+    CategoriesAPi.getCategories()
       .then((response) => response.json())
       .then(({ data }) => {
+        setCategory(data)
         const categories = convertToTreeData(data.filter((category) => category.category_is_delete === 0))
         setTreeData(categories)
       })
+    BrandsAPi.getBrands()
+      .then((response) => response.json())
+      .then(({ data }) => {
+        setBrand(data)
+      })
   }, [])
+
   useEffect(() => {
     fetchProducts({
-      search: searchValue,
-      category_name: searchType
+      search: searchValue
     })
+  }, [tableParams.pagination?.pageSize])
+
+  useEffect(() => {
+    if (data) {
+      searchProducts()
+    }
   }, [
+    selectedCategory,
+    searchValue,
+    selectedBrand,
     tableParams.pagination?.current,
-    tableParams.pagination?.pageSize,
     tableParams?.sortOrder,
     tableParams?.sortField,
     JSON.stringify(tableParams.filters),
-    searchType,
-    searchValue
+    selectedFrom,
+    selectedTo
   ])
 
   useEffect(() => {
@@ -374,8 +414,7 @@ const AdminProducts = () => {
       if ([200, 201, 202, 204].includes(status)) {
         openMessage('success', `${type} product success`, 3)
         fetchProducts({
-          search: searchValue,
-          category_name: searchType
+          search: searchValue
         })
         setResponseState({ status: 0, messageResult: '', type: null })
       } else if (status >= 400) {
@@ -384,7 +423,7 @@ const AdminProducts = () => {
       }
     }
   }, [responseState])
-  const handleTableChange = debounce((pagination, filters, sorter) => {
+  const handleTableChange = (pagination, filters, sorter) => {
     setLoading(true)
     const params = {
       pagination,
@@ -396,7 +435,8 @@ const AdminProducts = () => {
     if (pagination.pageSize !== tableParams.pagination?.pageSize) {
       setData([])
     }
-  }, 50)
+    setLoading(false)
+  }
   return (
     <section className='max-w-[100%] h-full'>
       {contextHolder}
@@ -428,8 +468,8 @@ const AdminProducts = () => {
         </Link>
       </header>
       <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md'>
-        <div className='flex justify-between items-center'>
-          <div className='searchProductBox flex items-center w-[340px] justify-between text-[14px] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
+        <div className='flex justify-between items-center gap-x-3'>
+          <div className='flex items-center w-[300px] justify-between text-[14px] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
             <input
               type='text'
               placeholder='Search for product'
@@ -443,30 +483,62 @@ const AdminProducts = () => {
             <button
               onClick={() => {
                 fetchProducts({
-                  search: searchValue,
-                  category_name: searchType
+                  search: searchValue
                 })
               }}
             >
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
-          <div className='filterBox flex gap-x-[12px] items-center animate-[slideRightToLeft_1s_ease]'>
-            <FilterOutlined className='text-xl' color='#1D242E' />
+          <div className='flex gap-x-[12px] items-center animate-[slideLeftToRight_1s_ease]'>
+            <ConfigProvider theme={filterSelectTheme}>
+              <Select
+                suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+                allowClear
+                showSearch
+                placeholder='- Choose Brand -'
+                placement='bottomLeft'
+                options={brand.map((item) => ({ label: item.brand_name, value: item.brand_name }))}
+                value={selectedBrand || undefined}
+                dropdownStyle={{
+                  maxHeight: 400,
+                  overflow: 'auto',
+                  minWidth: '300px'
+                }}
+                className='w-[250px] h-[50px]'
+                onChange={(value) => {
+                  setSelectedBrand(value)
+                }}
+              />
+            </ConfigProvider>
+          </div>
+          <div className='flex gap-x-[12px] items-center animate-[slideLeftToRight_1s_ease]'>
             <ConfigProvider theme={filterSelectTheme}>
               <TreeSelect
                 suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                 allowClear
                 showSearch
-                placeholder='- Choose Group -'
-                placement='bottomRight'
+                placeholder='- Choose Category -'
+                placement='bottomLeft'
                 treeData={treeData}
                 treeDefaultExpandAll
-                value={searchType || undefined}
-                dropdownStyle={{ maxHeight: 400, overflow: 'auto', minWidth: 300 }}
-                className='w-[217px] border-[1px] border-solid border-[#e8ebed] rounded-[4px] h-[50px]'
+                value={selectedCategory || undefined}
+                dropdownStyle={{ maxHeight: 400, overflow: 'auto', minWidth: '300px' }}
+                className='w-[250px] h-[50px]'
                 onChange={(value) => {
-                  setSearchType(value)
+                  setSelectedCategory(value)
+                }}
+              />
+            </ConfigProvider>
+          </div>
+          <div className='flex gap-x-[12px] items-center animate-[slideLeftToRight_1s_ease]'>
+            <ConfigProvider theme={filterSelectTheme}>
+              <RangePicker
+                className='w-[250px] h-[50px]'
+                format={'DD/MM/YYYY'}
+                onChange={(date, dateString) => {
+                  setSelectedFrom(dateString[0])
+                  setSelectedTo(dateString[1])
                 }}
               />
             </ConfigProvider>
@@ -491,7 +563,7 @@ const AdminProducts = () => {
               size='small'
               columns={columns}
               rowKey={(record) => record.product_id}
-              dataSource={data}
+              dataSource={filterData}
               pagination={{
                 position: ['none'],
                 ...tableParams.pagination
@@ -509,22 +581,25 @@ const AdminProducts = () => {
               }}
             />
           </ConfigProvider>
-          <CustomPagination
-            total={tableParams.pagination.total}
-            current={tableParams.pagination.current}
-            pageSize={tableParams.pagination.pageSize}
-            onChange={(page, pageSize) =>
-              handleTableChange(
-                {
-                  ...tableParams.pagination,
-                  current: page,
-                  pageSize
-                },
-                tableParams.filters,
-                tableParams.sortOrder
-              )
-            }
-          />
+          <ConfigProvider theme={{}}>
+            <CustomPagination
+              total={tableParams.pagination.total}
+              current={tableParams.pagination.current}
+              pageSize={tableParams.pagination.pageSize}
+              className='text-[#ffffff]'
+              onChange={(page, pageSize) =>
+                handleTableChange(
+                  {
+                    ...tableParams.pagination,
+                    current: page,
+                    pageSize
+                  },
+                  tableParams.filters,
+                  tableParams.sortOrder
+                )
+              }
+            />
+          </ConfigProvider>
         </div>
       </div>
     </section>

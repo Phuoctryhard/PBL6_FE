@@ -1,7 +1,15 @@
+import { getAllByPlaceholderText } from '@testing-library/react'
 import { BASE_URL } from '../../until'
 const rootCategories = `${BASE_URL}/categories`
 const CategoriesAPI = {
   getCategories: async () => await fetch(rootCategories),
+  getAllCategories: async (token) =>
+    await fetch(`${rootCategories}/all`, {
+      method: 'GET',
+      headers: {
+        authorization: 'Bearer ' + token
+      }
+    }),
   addCategories: async (formData, token) =>
     await fetch(`${rootCategories}/add`, {
       method: 'POST',

@@ -1,11 +1,14 @@
 import { Link, useParams } from 'react-router-dom'
-import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message } from 'antd'
+import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message, Spin, TreeSelect } from 'antd'
 import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import './EditProduct.css'
+import ProductsAPI from '../../Api/admin/products'
+import CategoriesAPI from '../../Api/admin/categories'
+import BrandsAPI from '../../Api/admin/brands'
 const customThemeSelect = {
   token: {
     colorTextQuaternary: '#1D242E', // Disabled text color
@@ -70,22 +73,20 @@ const EditProduct = () => {
   const [messageApi, contextHolder] = message.useMessage()
   const [messageResult, setMessageResult] = useState('')
   const [status, setStatus] = useState(0)
-  //#endregion
-
-  const openMessage = (type, content, duration) => {
-    messageApi.open({
-      type: type,
-      content: content,
-      duration: duration
-    })
-  }
+  const [submitLoading, setSubmitLoading] = useState(false)
 
   const fetchProducts = async () => {
-    const response = await fetch(`https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products/${productID}`)
+    const response = await ProductsAPI.getProductByID(productID)
+    if (!response.ok) {
+      const { messages } = await response.json()
+      setStatus(response.status)
+      setMessageResult('Error fetching product:', messages)
+      return
+    }
     const data = await response.json()
     const product = data['data']
     setProductName(product.product_name !== null ? product.product_name : '')
-    setCategory(product.category_id !== null ? product.category_name : '')
+    setCategory(product.category_id !== null ? product.category_id : '')
     setBrand(product.brand_id !== null ? product.brand_name : '')
     setProductPrice(product.product_price !== null ? parseFloat(product.product_price).toString() : '')
     setProductDiscount(product.product_discount !== null ? parseFloat(product.product_discount).toString() : '')
@@ -362,6 +363,7 @@ const EditProduct = () => {
   }
 
   const handleSubmit = async (e) => {
+    setSubmitLoading(true)
     e.preventDefault()
     const isValidProductName = await handleErrorProductName(productName)
     const isValidCategory = handleErrorCategory(category)
@@ -393,6 +395,9 @@ const EditProduct = () => {
       !isValidProductUses ||
       !isValidProductDescription
     ) {
+      setSubmitLoading(false)
+      setStatus(422)
+      setMessageResult('Invalid data, please check your input')
       return
     }
     const form = e.target
@@ -425,61 +430,70 @@ const EditProduct = () => {
       formData.delete(key) // Ensure no duplicates
       formData.append(key, fields[key])
     })
-
     try {
-      const response = await fetch(
-        `https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products/update/${productID}`,
-        {
-          method: 'POST',
-          headers: {
-            authorization: 'Bearer ' + token
-          },
-          body: formData
-        }
-      )
+      const response = await ProductsAPI.updateProducts(productID, formData, token)
       if (!response.ok) {
-        // Handle HTTP errors
+        setSubmitLoading(false)
+        const { messages } = await response.json()
         if (response.status === 401) {
-          throw new Error('Unauthorized access. Please check your credentials.')
+          setStatus(401)
+          setMessageResult('Unauthorized access. Please check your credentials.')
+        } else if (response.status === 422) {
+          setStatus(422)
+          setMessageResult(`Invalid data: ${messages}`)
+        } else {
+          setStatus(response.status)
+          setMessageResult('Error update product:', messages)
         }
+        return
       }
       const result = await response.json()
       const { messages, status } = result
-      if (status >= 400) {
-        throw new Error(messages)
-      }
       setStatus(status)
       setMessageResult(messages)
     } catch (e) {
-      openMessage('error', e.message, 3)
+    } finally {
+      setSubmitLoading(false)
     }
   }
+  const convertDataToTree = (data) => {
+    const map = {}
+    const tree = []
 
-  const getDeepestCategories = (data) => {
-    let deepestCategories = []
-    const extractDeepest = (node) => {
-      if (!node.children || node.children.length === 0) {
-        deepestCategories.push({
-          title: node.category_id,
-          value: node.category_name
-        })
+    data.forEach((item) => {
+      map[item.category_id] = { ...item, children: [] }
+    })
+
+    data.forEach((item) => {
+      if (item.category_parent_id !== null) {
+        map[item.category_parent_id].children.push(map[item.category_id])
       } else {
-        node.children.forEach((child) => extractDeepest(child))
+        tree.push(map[item.category_id])
       }
-    }
+    })
 
-    data.forEach((item) => extractDeepest(item))
-    return deepestCategories
+    return tree
+  }
+
+  const convertToTreeData = (data) => {
+    return data.map((item) => ({
+      title: item.category_name,
+      value: item.category_id,
+      children: item.children ? convertToTreeData(item.children) : []
+    }))
   }
 
   useEffect(() => {
-    fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/categories')
+    fetchProducts()
+    CategoriesAPI.getAllCategories(token)
       .then((response) => response.json())
       .then(({ data }) => {
-        let categories = getDeepestCategories(data)
+        let categories = convertToTreeData(
+          convertDataToTree(data.filter((category) => category.category_is_delete === 0))
+        )
         setCategories(categories)
       })
-    fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/brands')
+    BrandsAPI.getBrands()
       .then((response) => response.json())
       .then(({ data }) => {
         let brands = data.map((brand) => ({
@@ -488,7 +502,6 @@ const EditProduct = () => {
         }))
         setBrands(brands)
       })
-    fetchProducts()
   }, [])
 
   useEffect(() => {
@@ -501,12 +514,12 @@ const EditProduct = () => {
 
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
-      toast.success('Add product success', { autoClose: 2000 })
+      toast.success('Update product success', { autoClose: 2000 })
       window.history.back()
     } else if (status >= 400) {
       toast.error(messageResult, { autoClose: 3000 })
     }
-  }, [status])
+  }, [status, messageResult])
   return (
     <section className='max-w-[100%] h-full flex flex-col'>
       {contextHolder}
@@ -572,6 +585,7 @@ const EditProduct = () => {
         </div>
       </header>
       <div className='Container'>
+        <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
         <form action='#' className='EditProductForm mt-6 w-[100%]' autoComplete='off' onSubmit={handleSubmit}>
           <div className='mb-5 flex w-full justify-between gap-x-12 animate-[slideUp_1s_ease]'>
             <div className='max-w-[48%] grow'>
@@ -612,28 +626,21 @@ const EditProduct = () => {
                     <span className='text-[red]'>* </span>Category
                   </label>
                   <ConfigProvider theme={customThemeSelect}>
-                    <Select
-                      id='Category'
-                      options={categories}
-                      value={category || undefined}
-                      placeholder='-Choose category-'
-                      className='EditProductForm__select'
+                    <TreeSelect
                       allowClear
-                      onDropdownVisibleChange={() => setErrorCategory('')}
+                      showSearch
+                      placeholder='- Choose Group -'
+                      placement='bottomLeft'
+                      treeData={categories}
+                      treeDefaultExpandAll
+                      value={category || undefined}
+                      dropdownStyle={{ overflow: 'auto' }}
+                      className='EditProductForm__select'
                       onChange={(value) => {
-                        const selectedCategory = categories.find((category) => category.value === value)
-                        if (selectedCategory) {
-                          setCategory(selectedCategory.value)
-                        } else {
-                          setCategory('')
-                        }
+                        setCategory(value)
                       }}
                     />
-                    <input
-                      type='hidden'
-                      name='category_id'
-                      value={categories.find((c) => c.value === category)?.title || ''}
-                    />
+                    <input type='hidden' name='category_id' value={category || ''} />
                   </ConfigProvider>
                   <p className='error_message'>{errorCategory}</p>
                 </div>

@@ -4,14 +4,17 @@ import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye } from 'iconsax-reac
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider, Select } from 'antd'
-import { Table, Breadcrumb, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin } from 'antd'
+import { Table, Breadcrumb, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin, DatePicker } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import debounce from 'lodash.debounce'
+const { RangePicker } = DatePicker
 const Brands = () => {
   const [data, setData] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [filterData, setFilterData] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchValue, setSearchValue] = useState('')
+  const [selectedFrom, setSelectedFrom] = useState(null)
+  const [selectedTo, setSelectedTo] = useState(null)
   const [tableParams, setTableParams] = useState({
     pagination: {
       current: 1,
@@ -82,7 +85,7 @@ const Brands = () => {
       dataIndex: 'brand_created_at',
       key: 'brand_created_at',
       width: '20%',
-      sorter: (a, b) => a.brand_created_at.localeCompare(b.brand_created_at),
+      sorter: (a, b) => new Date(a.brand_created_at) - new Date(b.brand_created_at),
       ellipsis: true,
       render: (text) => <span className='text-[14px]'>{DateFormat(text)}</span>
     },
@@ -91,17 +94,6 @@ const Brands = () => {
       dataIndex: 'brand_is_delete',
       key: 'brand_is_delete',
       width: '10%',
-      filters: [
-        {
-          text: 'Active',
-          value: 0
-        },
-        {
-          text: 'Deleted',
-          value: 1
-        }
-      ],
-      onFilter: (value, record) => record.brand_is_delete === value,
       render: (text) => (
         <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
       )
@@ -200,7 +192,55 @@ const Brands = () => {
     </div>
   )
 
-  const fetchBrands = debounce(async (params) => {
+  const searchBrand = () => {
+    setLoading(true)
+    const formatDate = (date) => {
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+        const [day, month, year] = date.split('/')
+        return `${year}-${month}-${day}`
+      }
+
+      // Check if the date is in ISO 8601 format
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
+        const parsedDate = new Date(date)
+        const day = String(parsedDate.getDate()).padStart(2, '0')
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+        const year = parsedDate.getFullYear()
+        return `${year}-${month}-${day}`
+      }
+
+      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+      if (Date.parse(date)) {
+        const parsedDate = new Date(date)
+        const day = String(parsedDate.getDate()).padStart(2, '0')
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+        const year = parsedDate.getFullYear()
+        return `${year}-${month}-${day}`
+      }
+      return ''
+    }
+    const result = data.filter((item) => {
+      const matchesBrandName = item.brand_name.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesDateRange =
+        selectedFrom && selectedTo
+          ? formatDate(item.brand_created_at) >= formatDate(selectedFrom) &&
+            formatDate(item.brand_created_at) <= formatDate(selectedTo)
+          : true
+      return matchesBrandName && matchesDateRange
+    })
+    const tableData = result.sort((a, b) => new Date(b.brand_created_at) - new Date(a.brand_created_at))
+    setFilterData(tableData)
+    setTableParams({
+      ...tableParams,
+      pagination: {
+        ...tableParams.pagination,
+        total: result.length
+      }
+    })
+    setLoading(false)
+  }
+
+  const fetchBrands = async (params) => {
     setLoading(true)
     const query = qs.stringify({
       ...params
@@ -226,6 +266,7 @@ const Brands = () => {
         brand_id: item.brand_id
       }))
       .sort((a, b) => new Date(b.brand_updated_at) - new Date(a.brand_updated_at))
+    setFilterData(tableData)
     setData(tableData)
     setTableParams({
       ...tableParams,
@@ -235,7 +276,7 @@ const Brands = () => {
       }
     })
     setLoading(false)
-  }, 300)
+  }
   const handleDragOver = (e) => {
     e.preventDefault()
     setDragging(true)
@@ -316,7 +357,7 @@ const Brands = () => {
     setSelectedFile(null)
   }
 
-  const handleTableChange = debounce((pagination, filters, sorter) => {
+  const handleTableChange = (pagination, filters, sorter) => {
     setLoading(true)
     const params = {
       pagination,
@@ -328,7 +369,8 @@ const Brands = () => {
     if (pagination.pageSize !== tableParams.pagination?.pageSize) {
       setData([])
     }
-  }, 50)
+    setLoading(false)
+  }
 
   const handleCancel = () => {
     setOpenModal(false)
@@ -387,24 +429,23 @@ const Brands = () => {
       setSubmitLoading(false)
     }
   }
-  useEffect(() => {
-    fetchBrands({
-      search: searchValue
-    })
-  }, [
-    tableParams.pagination?.current,
-    tableParams.pagination?.pageSize,
-    tableParams?.sortOrder,
-    tableParams?.sortField,
-    JSON.stringify(tableParams.filters),
-    searchValue
-  ])
 
   useEffect(() => {
     fetchBrands({
       search: searchValue
     })
-  }, [])
+  }, [
+    tableParams.pagination?.pageSize,
+    tableParams?.sortOrder,
+    tableParams?.sortField,
+    JSON.stringify(tableParams.filters)
+  ])
+
+  useEffect(() => {
+    if (data) {
+      searchBrand()
+    }
+  }, [searchValue, tableParams.pagination?.current, selectedFrom, selectedTo])
 
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
@@ -635,6 +676,47 @@ const Brands = () => {
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
+          <div className='flex gap-x-[12px] items-center animate-[slideRightToLeft_1s_ease]'>
+            <ConfigProvider
+              theme={{
+                token: {
+                  colorTextQuaternary: '#1D242E', // Disabled text color
+                  colorTextPlaceholder: '#1D242E', // Placeholder text color
+                  fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+                  controlOutline: 'none',
+                  colorBorder: '#e8ebed',
+                  borderRadius: '4px',
+                  colorPrimary: '#008f99'
+                },
+                components: {
+                  Select: {
+                    activeBorderColor: '#1D242E',
+                    hoverBorderColor: '#1D242E',
+                    optionActiveBg: '#bde0fe',
+                    optionSelectedBg: '#bde0fe',
+                    optionSelectedColor: '#1D242E'
+                  },
+                  TreeSelect: {
+                    nodeHoverBg: '#bde0fe',
+                    nodeSelectedBg: '#bde0fe'
+                  },
+                  DatePicker: {
+                    activeBorderColor: '#1D242E',
+                    hoverBorderColor: '#1D242E'
+                  }
+                }
+              }}
+            >
+              <RangePicker
+                className='w-[340px] h-[50px]'
+                format={'DD/MM/YYYY'}
+                onChange={(date, dateString) => {
+                  setSelectedFrom(dateString[0])
+                  setSelectedTo(dateString[1])
+                }}
+              />
+            </ConfigProvider>
+          </div>
         </div>
         <div className='pt-[15px] animate-[slideUp_1s_ease]'>
           <ConfigProvider
@@ -655,7 +737,7 @@ const Brands = () => {
               size='small'
               columns={columns}
               rowKey={(record) => record.brand_id}
-              dataSource={data}
+              dataSource={filterData}
               pagination={{
                 position: ['none'],
                 ...tableParams.pagination
