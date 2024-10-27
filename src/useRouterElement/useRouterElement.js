@@ -27,15 +27,15 @@ export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
   const userRole = 'admin'
   const { isAuthenticated } = useContext(AuthContext)
-  const navigate = useNavigate()
-  const CheckAuthenticate = () => {
-    if (!isAuthenticated) {
-      navigate('/login')
-    }
-  }
-  useEffect(() => {
-    CheckAuthenticate()
-  }, [isAuthenticated, navigate])
+  // const navigate = useNavigate()
+  // const CheckAuthenticate = () => {
+  //   if (!isAuthenticated) {
+  //     navigate('/login')
+  //   }
+  // }
+  // useEffect(() => {
+  //   CheckAuthenticate()
+  // }, [isAuthenticated, navigate])
 
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
