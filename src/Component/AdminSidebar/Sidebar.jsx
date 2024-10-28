@@ -99,9 +99,9 @@ const Sidebar = () => {
         <div className='navBar__info h-[102px] flex justify-between items-center px-[24px] py-[30px] bg-[#283342] min-w-[256px]'>
           <div className='flex relative'>
             <img
-              src='https://tse1.mm.bing.net/th?id=OIP.nYLK8kqqUKVLIWBkuEBBGQHaHa&pid=Api&P=0&h=220'
+              src='/assets/images/person.png'
               alt='no image'
-              className='navBar__avatar w-[42px] h-[42px] rounded-[4px] mr-[16px]'
+              className='navBar__avatar w-[42px] h-[42px] rounded-[4px] mr-[16px] object-cover'
             />
             <div className='status inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border-2 border-solid border-[#2e3744]'></div>
             <div className='text-[11px] flex flex-col justify-between items-start'>

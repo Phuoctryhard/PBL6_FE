@@ -8,6 +8,7 @@ import AdminEditProduct from '../Component/AdminEditProduct'
 import AdminViewProduct from '../Component/AdminViewProduct'
 import AdminBrands from '../Component/AdminBrands'
 import AdminManagement from '../Component/AdminManagement'
+import AdminSetting from '../Component/AdminSetting'
 import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
 import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
 import Login from '../Component/Login/Login.jsx'
@@ -336,13 +337,7 @@ export default function useRouterElement() {
       path: '/admin/setting',
       element: (
         <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>settings</div>
-            </div>
-          </div>
+          <AdminSetting />
         </AdminMainLayout>
       )
     },

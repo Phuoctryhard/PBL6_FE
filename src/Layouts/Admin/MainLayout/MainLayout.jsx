@@ -7,7 +7,7 @@ export default function MainLayout({ children }) {
       <Sidebar />
       <div className='container w-[calc(100%-256px)] h-[100vh]'>
         <Header />
-        <main className='flex w-full h-[calc(100%-60px)]'>
+        <main className='flex w-full h-[calc(100%-60px)] bg-[#f8f9fb]'>
           <div className='content h-full w-full px-[40px] pt-[30px] overflow-y-auto'>{children}</div>
         </main>
       </div>
