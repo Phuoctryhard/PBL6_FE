@@ -290,8 +290,8 @@ export default function Search(class1 = 'text-blue') {
             {' '}
             <div className=' hidden md:flex shrink-0 '>
               <img
-                class='w-auto h-[63px] cursor-pointer'
-                src='https://prod-cdn.pharmacity.io/e-com/images/static-website/pharmacity-logo.svg'
+                class='w-[70px] h-[70px] cursor-pointer rounded-full bg-white object-cover'
+                src='/assets/images/Logo.jpg'
                 alt='Pharmacity Logo'
               />
             </div>
@@ -429,13 +429,13 @@ export default function Search(class1 = 'text-blue') {
               </Popover>
               <div className='border-color-white absolute bottom-[6px] right-0 top-[6px] hidden border-l-[1px] md:inline-block'></div>
             </div>
-            {isAuthenticated  ? (
+            {isAuthenticated ? (
               <div className='flex items-center'>
                 <Popover content={profile} placement='bottomRight' overlayStyle={{ width: '230px' }}>
-                  {/*// <div className='flex items-center cursor-pointer'>
-                  //   <Avatar1 user_avatar={isProfile.user_avatar} />
-                  //   <div className='w-full h-10 flex items-center justify-center ml-1'>{isProfile.user_fullname}</div>
-                  // </div>*/}
+                  <div className='flex items-center cursor-pointer'>
+                    <Avatar1 user_avatar={isProfile?.user_avatar} />
+                    <div className='w-full h-10 flex items-center justify-center ml-1'>{isProfile?.user_fullname}</div>
+                  </div>
                 </Popover>
               </div>
             ) : (
