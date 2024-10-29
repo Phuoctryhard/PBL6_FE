@@ -68,19 +68,6 @@ export default function CategoryListProduct() {
       return productAPI.getAllProduct(useQueryParameter)
     }
   })
-
-  // Sử dụng useMemo để tạo queryKey
-  // const queryKey = useMemo(() => {
-  //   return ['products', categorySlug]
-  // }, [categorySlug])
-
-  // const { data: productsData } = useQuery({
-  //   queryKey: queryKey,
-  //   queryFn: () => {
-  //     return productAPI.getAllProduct(useQueryParameter)
-  //   }
-  // })
-
   // category
   if (useQueryParameter.category_name == 'Thuốc kê đơn') {
     var idcategory

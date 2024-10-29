@@ -27,7 +27,9 @@ import { AuthContext } from '../context/app.context.jsx'
 import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
+
   const userRole = 'admin'
+
 
   const ProtectRoute = () => {
     const { isAuthenticated } = useContext(AuthContext)
