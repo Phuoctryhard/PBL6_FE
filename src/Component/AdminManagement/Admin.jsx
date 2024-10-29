@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import './Admin.css'
 import { AdminAPI } from '../../Api/admin'
 import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye, ArrowDown2 } from 'iconsax-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Table,
   Breadcrumb,
@@ -48,6 +48,7 @@ const filterTheme = {
   }
 }
 const Admin = () => {
+  const navigate = useNavigate()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
@@ -360,14 +361,25 @@ const Admin = () => {
     setLoading(false)
   }
 
+  const handleUnauthenticated = () => {
+    localStorage.removeItem('accesstoken')
+    navigate('/login')
+  }
+
   const fetchAdmins = async () => {
     setLoading(true)
     try {
       const response = await AdminAPI.getAllAdmin(token)
       if (!response.ok) {
-        setStatus(response.status)
-        setMessageResult(`Error fetching admin: with status ${response.status}`)
-        setLoading(false)
+        if (response.status === 401) {
+          setStatus(401)
+          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthenticated()
+        } else {
+          setStatus(response.status)
+          setMessageResult(`Error fetching admin: with status ${response.status}`)
+          setLoading(false)
+        }
         return
       }
       const result = await response.json()
