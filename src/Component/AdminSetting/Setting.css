@@ -1,0 +1,54 @@
+.setting__information__button {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  gap: 1rem;
+  background-color: #f8f9fb;
+}
+
+.setting__information__button:hover,
+.setting__information__button:focus {
+  background-color: rgb(0, 143, 153, 0.1);
+  color: rgb(0, 143, 153);
+}
+
+.setting__uploadBtn {
+  width: 75%;
+  height: 130px;
+  border-radius: 0.375rem;
+}
+
+.setting__input {
+  margin-top: 1rem;
+}
+
+.setting__save_btn {
+  background-color: #008f99;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.setting_content_profile {
+  transition:
+    height 1s ease,
+    opacity 1s ease;
+  width: 100%;
+  height: max-content;
+}
+
+.setting_content_changePassword {
+  transition:
+    height 1s ease,
+    opacity 1s ease;
+  opacity: 0;
+  width: 100%;
+  height: max-content;
+}

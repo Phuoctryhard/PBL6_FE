@@ -10,6 +10,7 @@ import { Badge } from 'antd'
 import { Button } from 'antd'
 import { AuthContext } from '../../../../context/app.context'
 import categoryAPI from '../../../../Api/user/category.js'
+import Anh from './_480f2c92-d896-48ef-978c-6c37301968f7-removebg-preview.png'
 export default function Search(class1 = 'text-blue') {
   const { isAuthenticated, logout, isProfile } = useContext(AuthContext)
   const [openCategory, setopenCategory] = useState(false)
@@ -567,3 +568,5 @@ export default function Search(class1 = 'text-blue') {
     </>
   )
 }
+
+//    src='https://prod-cdn.pharmacity.io/e-com/images/static-website/pharmacity-logo.svg'
