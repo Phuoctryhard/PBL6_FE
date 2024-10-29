@@ -649,8 +649,8 @@ const Admin = () => {
 
   return (
     <section className='w-full max-w-[100%] h-full'>
-      <header className='flex justify-between'>
-        <div className='Breadcrumb animate-[slideLeftToRight_1s_ease]'>
+      <header className='flex justify-between animate-slideDown'>
+        <div className='Breadcrumb'>
           <h1>
             <Breadcrumb
               separator={<ArrowRight2 size='15' color='#1D242E' />}
@@ -670,7 +670,7 @@ const Admin = () => {
           <p className='mt-[11px]'>List of admin available</p>
         </div>
         <button
-          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] animate-[slideRightToLeft_1s_ease]'
+          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
           onClick={() => {
             setOpenModal(true)
             setTypeModal('add')
@@ -818,7 +818,7 @@ const Admin = () => {
           </form>
         </div>
       </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-[slideUp_1s_ease]'>
+      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-slideUp'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center w-[250px] justify-between text-[14px] rounded-[4px] relative'>
             <input
