@@ -56,7 +56,6 @@ class Http {
         return response
       },
       function (error) {
-        console.log(error.response.data.messages)
         return Promise.reject(error)
       }
     )
