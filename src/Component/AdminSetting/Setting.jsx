@@ -1,16 +1,20 @@
 import './Setting.css'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useContext } from 'react'
 import { ArrowRight2, Personalcard, TickCircle, Lock } from 'iconsax-react'
 import { Link } from 'react-router-dom'
 import { Breadcrumb, message, Modal, Tooltip, Spin, ConfigProvider } from 'antd'
 import { DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { AdminAPI } from '../../Api/admin'
+import { AuthContext } from '../../context/app.context'
 const AdminSetting = () => {
   const token = localStorage.getItem('accesstoken')
   const [typeForm, setTypeForm] = useState('profile') // type form profile or change password
   const [submitLoading, setSubmitLoading] = useState(false) // loading submit state
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
+
+  const { login, isProfile } = useContext(AuthContext)
+  console.log(isProfile)
 
   //#region Form profile data
   const [adminFullName, setAdminFullName] = useState('')

@@ -45,7 +45,6 @@ const Categories = () => {
   const [messageResult, setMessageResult] = useState(null)
   const token = localStorage.getItem('accesstoken')
   const [submitLoading, setSubmitLoading] = useState(false)
-
   const [openModalView, setOpenModalView] = useState(false)
   const [selectedCategoryData, setSelectedCategoryData] = useState(null)
   const [showDescription, setShowDescription] = useState(false)
@@ -511,12 +510,6 @@ const Categories = () => {
       setSubmitLoading(false)
     }
   }
-
-  // useEffect(() => {
-  //   fetchCategories(token, {
-  //     search: searchValue
-  //   })
-  // }, [])
 
   useEffect(() => {
     fetchCategories(token, {
