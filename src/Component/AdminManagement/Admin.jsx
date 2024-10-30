@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import './Admin.css'
 import { AdminAPI } from '../../Api/admin'
 import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye, ArrowDown2 } from 'iconsax-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Table,
   Breadcrumb,
@@ -48,6 +48,7 @@ const filterTheme = {
   }
 }
 const Admin = () => {
+  const navigate = useNavigate()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
@@ -360,14 +361,25 @@ const Admin = () => {
     setLoading(false)
   }
 
+  const handleUnauthenticated = () => {
+    localStorage.removeItem('accesstoken')
+    navigate('/login')
+  }
+
   const fetchAdmins = async () => {
     setLoading(true)
     try {
       const response = await AdminAPI.getAllAdmin(token)
       if (!response.ok) {
-        setStatus(response.status)
-        setMessageResult(`Error fetching admin: with status ${response.status}`)
-        setLoading(false)
+        if (response.status === 401) {
+          setStatus(401)
+          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthenticated()
+        } else {
+          setStatus(response.status)
+          setMessageResult(`Error fetching admin: with status ${response.status}`)
+          setLoading(false)
+        }
         return
       }
       const result = await response.json()
@@ -649,8 +661,8 @@ const Admin = () => {
 
   return (
     <section className='w-full max-w-[100%] h-full'>
-      <header className='flex justify-between'>
-        <div className='Breadcrumb animate-[slideLeftToRight_1s_ease]'>
+      <header className='flex justify-between animate-slideDown'>
+        <div className='Breadcrumb'>
           <h1>
             <Breadcrumb
               separator={<ArrowRight2 size='15' color='#1D242E' />}
@@ -670,7 +682,7 @@ const Admin = () => {
           <p className='mt-[11px]'>List of admin available</p>
         </div>
         <button
-          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] animate-[slideRightToLeft_1s_ease]'
+          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
           onClick={() => {
             setOpenModal(true)
             setTypeModal('add')
@@ -818,7 +830,7 @@ const Admin = () => {
           </form>
         </div>
       </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-[slideUp_1s_ease]'>
+      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-slideUp'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center w-[250px] justify-between text-[14px] rounded-[4px] relative'>
             <input

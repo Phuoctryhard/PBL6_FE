@@ -287,9 +287,15 @@ export default function Search(class1 = 'text-blue') {
         <div className='flex items-center md:mb-4 px-24 '>
           <div className='flex w-full flex-col-reverse items-start md:flex-row gap-5'>
             {' '}
-            <Link to='/' className=' hidden md:flex shrink-0 '>
-              <img class='w-[200px] h-[75px] cursor-pointer rounded-full bg-white' src={Anh} alt='Pharmacity Logo' />
-            </Link>
+
+            <div className=' hidden md:flex shrink-0 '>
+              <img
+                class='w-[70px] h-[70px] cursor-pointer rounded-full bg-white object-cover'
+                src='/assets/images/Logo.jpg'
+                alt='Pharmacity Logo'
+              />
+            </div>
+
             <div className='z-[11] grid w-full grid-cols-1 md:z-[10]'>
               <div className='w-full'>
                 <div className='mx-auto w-full'>

@@ -487,24 +487,31 @@ const EditProduct = () => {
   }
 
   useEffect(() => {
-    fetchProducts()
-    CategoriesAPI.getAllCategories(token)
-      .then((response) => response.json())
-      .then(({ data }) => {
-        let categories = convertToTreeData(
-          convertDataToTree(data.filter((category) => category.category_is_delete === 0))
-        )
-        setCategories(categories)
-      })
-    BrandsAPI.getBrands()
-      .then((response) => response.json())
-      .then(({ data }) => {
-        let brands = data.map((brand) => ({
-          title: brand.brand_id,
-          value: brand.brand_name
-        }))
-        setBrands(brands)
-      })
+    try {
+      fetchProducts()
+      CategoriesAPI.getAllCategories(token)
+        .then((response) => response.json())
+        .then(({ data }) => {
+          if (data) {
+            let categories = []
+            categories = convertToTreeData(
+              convertDataToTree(data.filter((category) => category.category_is_delete === 0))
+            )
+            setCategories(categories)
+          }
+        })
+      BrandsAPI.getBrands()
+        .then((response) => response.json())
+        .then(({ data }) => {
+          let brands = data.map((brand) => ({
+            title: brand.brand_id,
+            value: brand.brand_name
+          }))
+          setBrands(brands)
+        })
+    } catch (err) {
+      console.log(err)
+    }
   }, [])
 
   useEffect(() => {
