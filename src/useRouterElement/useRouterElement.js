@@ -25,8 +25,10 @@ import OrderHistory from '../Pages/User/Account/order_history/OrderHistory.jsx'
 import UpdatePassword from '../Pages/User/Account/personal-info/components/UpdatePassword/UpdatePassword.jsx'
 import { AuthContext } from '../context/app.context.jsx'
 import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
+import AdminLogin from '../Component/AdminLogin/AdminLogin.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
+
   const userRole = 'admin'
 
   const ProtectRoute = () => {
@@ -354,13 +356,22 @@ export default function useRouterElement() {
           )
         },
         {
+          path: '/admin/login',
+          element: (
+            <RegisterLayout>
+              <AdminLogin />
+            </RegisterLayout>
+          )
+        },
+        {
           path: '/register',
           element: (
             <RegisterLayout>
               <Register />
             </RegisterLayout>
           )
-        }
+        },
+        {}
       ]
     },
     {

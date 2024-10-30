@@ -22,3 +22,16 @@ export const clearProfile = () => {
 }
 
 export const BASE_URL = 'https://lucifernsz.com/PBL6_Pharmacity/BE/PBL6-BE/public/api'
+// SEO
+const removeSpecialCharacter = (stri) => {
+  return stri.replace(/[^\w\s]/gi, '')
+}
+
+export const generateNameId = (str, id) => {
+  return removeSpecialCharacter(str).replace(/\s+/g, '-') + `-i,${id}`
+}
+
+export const getIdfromNameId = (nameId) => {
+  var arr = nameId.split('-i,')
+  return arr[arr.length - 1]
+}
