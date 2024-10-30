@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import './Admin.css'
 import { AdminAPI } from '../../Api/admin'
 import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye, ArrowDown2 } from 'iconsax-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useNavigation } from 'react-router-dom'
 import {
   Table,
   Breadcrumb,
@@ -18,6 +18,9 @@ import {
   Select
 } from 'antd'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useAuth } from '../../context/app.context'
 const { RangePicker } = DatePicker
 const filterTheme = {
   token: {
@@ -47,12 +50,12 @@ const filterTheme = {
     }
   }
 }
+
 const Admin = () => {
   const navigate = useNavigate()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-
   //#region filter data
   const [searchValue, setSearchValue] = useState('')
   const [selectedFrom, setSelectedFrom] = useState(null)
@@ -303,10 +306,6 @@ const Admin = () => {
       sortField: sorter ? sorter.field : undefined
     }
     setTableParams(params)
-    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setData([])
-      setFilterData([])
-    }
     setLoading(false)
   }
 
@@ -361,20 +360,13 @@ const Admin = () => {
     setLoading(false)
   }
 
-  const handleUnauthenticated = () => {
-    localStorage.removeItem('accesstoken')
-    navigate('/login')
-  }
-
   const fetchAdmins = async () => {
     setLoading(true)
     try {
       const response = await AdminAPI.getAllAdmin(token)
       if (!response.ok) {
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
-          handleUnauthenticated()
+          handleUnauthorized()
         } else {
           setStatus(response.status)
           setMessageResult(`Error fetching admin: with status ${response.status}`)
@@ -436,7 +428,7 @@ const Admin = () => {
 
   useEffect(() => {
     fetchAdmins()
-  }, [tableParams.pagination?.pageSize])
+  }, [])
 
   useEffect(() => {
     if (data) {
@@ -451,6 +443,7 @@ const Admin = () => {
     selectedFrom,
     selectedTo,
     selectedRoles,
+    tableParams.pagination?.pageSize,
     selectedAdminStatus
   ])
   //#endregion
@@ -522,6 +515,23 @@ const Admin = () => {
       setErrorEmail('Email is required')
       return false
     }
+
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@(gmail\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/
+
+    if (!/^[a-zA-Z0-9._%+-]+@/.test(email)) {
+      setErrorEmail('Invalid email format: missing "@" symbol or incorrect local part')
+      return false
+    }
+
+    if (!/@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      setErrorEmail('Invalid email format: domain part is incorrect')
+      return false
+    }
+
+    if (!emailPattern.test(email)) {
+      setErrorEmail('Invalid email format')
+      return false
+    }
     return true
   }
 
@@ -541,8 +551,7 @@ const Admin = () => {
       setMessageResult(messages)
     } else {
       if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
+        handleUnauthorized()
       } else {
         setStatus(response.status)
         setMessageResult(`Error delete admin with status: ${response.status}, message: `, response.messages)
@@ -566,8 +575,7 @@ const Admin = () => {
       setMessageResult(messages)
     } else {
       if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
+        handleUnauthorized()
       } else {
         setStatus(response.status)
         setMessageResult(`Error restore admin with status: ${response.status}, message: `, response.messages)
@@ -600,14 +608,14 @@ const Admin = () => {
         response = await AdminAPI.addAdmin(formData, token)
       }
       if (typeModal === 'update') {
+        return
         response = await AdminAPI.updateAdmin(formData, token)
       }
       if (!response.ok) {
         setSubmitLoading(false)
         const { message, data } = await response.json()
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthorized()
         } else if (response.status === 422) {
           setStatus(422)
           setMessageResult(`Invalid data: ${data} with message: ${message}`)
@@ -659,6 +667,15 @@ const Admin = () => {
   }, [status, messageResult])
   //#endregion
 
+  const { setIsAuthenticated } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    localStorage.removeItem('accesstoken')
+    setIsAuthenticated(false)
+    navigate('/admin/login')
+  }
   return (
     <section className='w-full max-w-[100%] h-full'>
       <header className='flex justify-between animate-slideDown'>
@@ -728,6 +745,7 @@ const Admin = () => {
                   title={errorFileUpload}
                   open={errorFileUpload !== ''}
                   placement='top'
+                  overlayStyle={{ maxWidth: 'max-content' }}
                   align={{
                     offset: [0, 100]
                   }}
@@ -758,11 +776,6 @@ const Admin = () => {
                     </button>
                   </div>
                 </Tooltip>
-                {selectedFile && (
-                  <div>
-                    <span>{selectedFile.name}</span>
-                  </div>
-                )}
               </div>
             </div>
             <div className='AddCategoryForm__row'>
@@ -774,6 +787,7 @@ const Admin = () => {
                   title={errorAdminFullName}
                   open={errorAdminFullName !== ''}
                   placement='bottomLeft'
+                  overlayStyle={{ maxWidth: 'max-content' }}
                   align={{
                     offset: [60, -8]
                   }}
@@ -800,12 +814,13 @@ const Admin = () => {
                   title={errorEmail}
                   open={errorEmail !== ''}
                   placement='bottomLeft'
+                  overlayStyle={{ maxWidth: 'max-content' }}
                   align={{
                     offset: [60, -8]
                   }}
                 >
                   <input
-                    type='email'
+                    type='text'
                     name='email'
                     id='email'
                     className='AddCategoryForm__input'

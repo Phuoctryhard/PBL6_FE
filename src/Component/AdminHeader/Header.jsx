@@ -60,38 +60,42 @@ export default function Header() {
   }, [])
 
   return (
-    <header className='flex w-full h-[60px] items-center z-[200]'>
-      <div
-        className='content flex-1 justify-between px-[40px] py-[11px]'
-        style={{ boxShadow: '0 4px 5px rgba(0,0,0,0.25)' }}
-      >
-        <div className='flex items-center justify-between text-[14px]'>
-          <div className='searchBox flex items-center bg-[#e1eaf2] border-[1px] border-solid border-[#BCBEC1] w-[440px] justify-between rounded-[4px] relative'>
+    <header className='flex w-full h-[60px] items-center'>
+      <div className='flex-1 justify-between px-[40px] py-[11px]' style={{ boxShadow: '0 4px 5px rgba(0,0,0,0.25)' }}>
+        <div className='flex items-center justify-between text-sm w-full gap-3'>
+          <div
+            className='flex items-center bg-[#e1eaf2] border-[1px] border-solid border-[#BCBEC1] 
+          min-w-[440px] justify-between rounded-[4px] relative'
+          >
             <input
               type='text'
               placeholder='Search for anything here'
-              className='searchBox__input border-none outline-none bg-transparent w-[440px] rounded-[4px] py-[7px] px-[12px]'
+              className='searchBox__input border-none outline-none bg-transparent w-[440px] rounded-md py-[7px] px-[12px]'
             />
             <SearchNormal className='absolute right-0 top-[50%] transform -translate-y-1/2 mr-3' />
           </div>
-          <div className='languageSelect flex items-center min-w-[118px]'>
-            <Setting4 size={30} className='mr-[10px]' />
+          <div className='flex items-center min-w-[118px] justify-center p-2'>
+            <Setting4 size={23} />
             <ConfigProvider theme={languageSelectTheme}>
               <Select
                 suffixIcon={
-                  isDropdownOpen ? <ArrowUp2 size='15' color='#1D242E' /> : <ArrowDown2 size='15' color='#1D242E' />
+                  isDropdownOpen ? <ArrowUp2 size='14' color='#1D242E' /> : <ArrowDown2 size='14' color='#1D242E' />
                 }
                 defaultValue='Vietnamese'
                 className='w-[120px] h-[40px] rounded-[4px]'
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                <Select.Option value='Vietnamese'>Vietnamese</Select.Option>
-                <Select.Option value='English'>English</Select.Option>
+                <Select.Option value='Vietnamese'>
+                  <span className='text-sm'>Vietnamese</span>
+                </Select.Option>
+                <Select.Option value='English'>
+                  <span className='text-sm'>English</span>
+                </Select.Option>
               </Select>
             </ConfigProvider>
           </div>
-          <div className='time flex flex-col items-end text-[14px] text-[#1D242E] gap-y-[6px] justify-center content-center'>
-            <div className='flex items-center justify-center'>
+          <div className='time flex flex-col items-end text-sm text-[#1D242E] gap-y-1.5 justify-center w-[14rem]'>
+            <div className='flex items-center justify-end'>
               <div
                 className='w-[18px] h-[18px] rounded-[50%] mr-[11px]'
                 style={{
@@ -100,7 +104,7 @@ export default function Header() {
               ></div>
               <span className='font-bold'>{greeting}</span>
             </div>
-            <span className='w-[200px] text-right max-w-[200px]'>{time}</span>
+            <span className='text-right w-max'>{time}</span>
           </div>
         </div>
       </div>

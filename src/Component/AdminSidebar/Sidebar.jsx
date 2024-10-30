@@ -1,5 +1,6 @@
+import { useAuth, AuthProvider } from '../../context/app.context'
 import React, { useState, useEffect, useRef } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SideBarItem } from './Component/SideBarItem'
 import {
   ArchiveBox,
@@ -16,10 +17,44 @@ import {
   Setting2,
   User,
   HambergerMenu,
-  UserAdd
+  UserAdd,
+  UserSquare,
+  Logout
 } from 'iconsax-react'
+import { AdminAPI } from '../../Api/admin'
 import './Sidebar.css'
+import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 const Sidebar = () => {
+  const token = localStorage.getItem('accesstoken')
+  const [status, setStatus] = useState(null)
+  const [messageResult, setMessageResult] = useState('')
+  const navigate = useNavigate()
+  const { setIsAuthenticated } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    localStorage.removeItem('accesstoken')
+    setIsAuthenticated(false)
+    navigate('/admin/login')
+  }
+  const location = useLocation()
+
+  //#region info admin
+  const [adminFullName, setAdminFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [Avatar, setAvatar] = useState(null)
+  const [adminRole, setAdminRole] = useState('')
+  //#endregion
+
+  //#region nav and subNav
+  //nav selected and active state change
+  const [selectedId, setSelectedId] = useState(null)
+  const [activeNav, setActiveNav] = useState(null)
+
+  //subNav data
   const Inventory = [
     { id: 'products', name: 'Products' },
     { id: 'categories', name: 'Categories' }
@@ -30,15 +65,25 @@ const Sidebar = () => {
     { id: 'manage-admins', name: 'Admin' }
   ]
 
-  const location = useLocation()
-  const [selectedId, setSelectedId] = useState(null)
+  //show subNav
   const [showInventory, setShowInventory] = useState(false)
   const [showUser, setShowUser] = useState(false)
-  const [activeNav, setActiveNav] = useState(null)
   const [maxHeightProduct, setMaxHeightProduct] = useState('0px')
   const [maxHeightUser, setMaxHeightUser] = useState('0px')
   const productRef = useRef(null)
   const userRef = useRef(null)
+
+  //handle nav and subNav click
+  const handleNavClick = (navId) => {
+    setActiveNav(navId)
+    setShowInventory(navId === 'inventory' ? !showInventory : false)
+    setShowUser(navId === 'users' ? !showUser : false)
+  }
+
+  const handleSubNavClick = (itemId) => {
+    setSelectedId(itemId)
+    setActiveNav(null)
+  }
 
   useEffect(() => {
     if (showInventory) {
@@ -56,6 +101,7 @@ const Sidebar = () => {
     }
   }, [showUser])
 
+  //handle subNav active when refresh page
   useEffect(() => {
     const path = location.pathname
     const navID = path.split('/')[2]
@@ -74,17 +120,84 @@ const Sidebar = () => {
       handleNavClick(navID)
     }
   }, [])
+  //#endregion
 
-  const handleNavClick = (navId) => {
-    setActiveNav(navId)
-    setShowInventory(navId === 'inventory' ? !showInventory : false)
-    setShowUser(navId === 'users' ? !showUser : false)
+  //#region admin profile
+  //#region fetch admin profile
+  const fetchAdminProfile = async () => {
+    const response = await AdminAPI.getAdmin(token)
+    if (!response.ok) {
+      const { message, data } = await response.json()
+      if (response.status === 401) {
+        handleUnauthorized()
+      } else if (response.status === 422) {
+        setStatus(422)
+        setMessageResult(`Invalid data: ${data} with message: ${message}`)
+      } else {
+        setStatus(response.status)
+        setMessageResult(`Error get profile: ${data} with message: ${message}`)
+      }
+      return
+    }
+    const result = await response.json()
+    const { data } = result
+    setAdminFullName(data.admin_fullname)
+    setEmail(data.email)
+    setAvatar(data.admin_avatar)
+    switch (data.admin_is_admin) {
+      case 0:
+        setAdminRole('User')
+        break
+      case 1:
+        setAdminRole('Admin')
+        break
+      case 2:
+        setAdminRole('Super Admin')
+        break
+    }
+  }
+  useEffect(() => {
+    fetchAdminProfile()
+  }, [])
+  //#endregion
+
+  //#region show admin profile options
+  const [showProfileOptions, setShowProfileOptions] = useState(false)
+  const MoreRef = useRef(null)
+  const ProfileSettingRef = useRef(null)
+  let closeTimeout
+
+  //handle show profile options
+  const handleMouseEnterShowProfile = () => {
+    clearTimeout(closeTimeout)
+    setShowProfileOptions(true)
   }
 
-  const handleSubNavClick = (itemId) => {
-    setSelectedId(itemId)
-    setActiveNav(null)
+  const handleMouseLeaveCloseProfile = () => {
+    closeTimeout = setTimeout(() => {
+      setShowProfileOptions(false)
+    }, 200)
   }
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(closeTimeout)
+    }
+  }, [])
+
+  //handle click profile options
+  const handleMyProfileClick = () => {
+    setShowProfileOptions(false)
+    handleNavClick('setting')
+  }
+
+  const handleLogoutClick = () => {
+    localStorage.removeItem('accesstoken')
+    setIsAuthenticated(false)
+    navigate('/admin/login')
+  }
+  //#endregion
+
   return (
     <nav className='navBar w-[256px] bg-[#283342] text-[#ffffff] h-[100vh] overflow-y-auto overflow-x-hidden'>
       <div className='navBar__header sticky top-0 left-0 w-[100%]'>
@@ -97,20 +210,55 @@ const Sidebar = () => {
           <span className='logo__name text-[18px] text-[#FFFFFF]'>Pharmarcy</span>
         </div>
         <div className='navBar__info h-[102px] flex justify-between items-center px-[24px] py-[30px] bg-[#283342] min-w-[256px]'>
-          <div className='flex relative'>
+          <div className='flex relative w-full'>
             <img
-              src='/assets/images/person.png'
+              src={Avatar || '/assets/images/default-avatar.png'}
               alt='no image'
               className='navBar__avatar w-[42px] h-[42px] rounded-[4px] mr-[16px] object-cover'
             />
             <div className='status inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border-2 border-solid border-[#2e3744]'></div>
-            <div className='text-[11px] flex flex-col justify-between items-start'>
-              <span className='text-[14px]'>Minh đẹp trai</span>
-              <span className='text-[#d6b80d]'>Super admin</span>
+            <div className='text-xs flex flex-col justify-between items-start'>
+              <span className='text-sm whitespace-nowrap overflow-hidden text-ellipsis w-[80%]'>{adminFullName}</span>
+              <span className='text-[#d6b80d]'>{adminRole}</span>
             </div>
           </div>
-          <div>
-            <More size={20} color='#ffffff' />
+          <More
+            ref={MoreRef}
+            size={20}
+            color='#ffffff'
+            className='rotate-90 cursor-pointer'
+            onMouseEnter={handleMouseEnterShowProfile}
+            onMouseLeave={handleMouseLeaveCloseProfile}
+          />
+          <div
+            ref={ProfileSettingRef}
+            className='w-32 h-max bg-[#ffffff] absolute right-2 top-[83%] flex flex-col box-border rounded-md text-xs after:content-[""] after:absolute after:bottom-[85%] after:right-2 after:w-4 after:h-4 after:bg-[#ffffff] after:rotate-45 after:rounded-tl-md after:shadow-[-2px_-2px_0_0_#ffffff] border border-solid border-[#1D242E] origin-[87.8%_0%] transition-all duration-500 ease'
+            onMouseEnter={handleMouseEnterShowProfile}
+            onMouseLeave={handleMouseLeaveCloseProfile}
+            style={{
+              opacity: showProfileOptions ? 1 : 0,
+              visibility: showProfileOptions ? 'visible' : 'hidden',
+              transform: showProfileOptions ? 'scale(1)' : 'scale(0)'
+            }}
+          >
+            <Link to='/admin/setting'>
+              <button
+                className='w-full px-4 py-2.5 flex gap-3 text-[#1D242E] items-center justify-start border-b border-b-solid border-b-[rgba(29,36,46,0.3)]'
+                type='button'
+                onClick={handleMyProfileClick}
+              >
+                <UserSquare size={20} />
+                <span className='select-none'>My Profile</span>
+              </button>
+            </Link>
+            <button
+              className='w-full px-4 py-2.5 flex gap-3 text-[red] items-center justify-start'
+              type='button'
+              onClick={handleLogoutClick}
+            >
+              <Logout size={20} />
+              <span className='select-none'>LogOut</span>
+            </button>
           </div>
         </div>
       </div>
@@ -189,11 +337,11 @@ const Sidebar = () => {
           <SideBarItem name='Reports' iconName={<FavoriteChart className='w-6' />} />
         </NavLink>
         <NavLink
-          to='/admin/receipts'
-          className={activeNav === 'receipts' ? 'bg-[#008f99]' : ''}
-          onClick={() => handleNavClick('receipts')}
+          to='/admin/imports'
+          className={activeNav === 'imports' ? 'bg-[#008f99]' : ''}
+          onClick={() => handleNavClick('imports')}
         >
-          <SideBarItem name='Receipts' iconName={<ReceiptEdit className='w-6' />} />
+          <SideBarItem name='Imports' iconName={<ReceiptEdit className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/suppliers'

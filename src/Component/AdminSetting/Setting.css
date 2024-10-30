@@ -15,11 +15,16 @@
 .setting__information__button:focus {
   background-color: rgb(0, 143, 153, 0.1);
   color: rgb(0, 143, 153);
+  outline: none;
 }
 
+.setting__information__button.isFocus {
+  background-color: rgb(0, 143, 153, 0.1);
+  color: rgb(0, 143, 153);
+}
 .setting__uploadBtn {
   width: 75%;
-  height: 130px;
+  height: 9rem;
   border-radius: 0.375rem;
 }
 
@@ -34,21 +39,4 @@
   border-radius: 0.5rem;
   font-size: 0.75rem;
   cursor: pointer;
-}
-
-.setting_content_profile {
-  transition:
-    height 1s ease,
-    opacity 1s ease;
-  width: 100%;
-  height: max-content;
-}
-
-.setting_content_changePassword {
-  transition:
-    height 1s ease,
-    opacity 1s ease;
-  opacity: 0;
-  width: 100%;
-  height: max-content;
 }

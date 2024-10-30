@@ -1,6 +1,5 @@
 import { clearProfile, getAccessToken, getProfile } from '../until/index.js'
-import { createContext, useState } from 'react'
-
+import { createContext, useState, useContext } from 'react'
 // Context API
 
 const initialAppContext = {
@@ -30,4 +29,7 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   )
+}
+export const useAuth = () => {
+  return useContext(AuthContext)
 }

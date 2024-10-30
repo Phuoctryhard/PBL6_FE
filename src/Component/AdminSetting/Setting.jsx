@@ -5,19 +5,27 @@ import { Link } from 'react-router-dom'
 import { Breadcrumb, message, Modal, Tooltip, Spin, ConfigProvider } from 'antd'
 import { DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { AdminAPI } from '../../Api/admin'
+
 const AdminSetting = () => {
   const token = localStorage.getItem('accesstoken')
   const [typeForm, setTypeForm] = useState('profile') // type form profile or change password
   const [submitLoading, setSubmitLoading] = useState(false) // loading submit state
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-
+  const PersonalBtnRef = useRef(null)
+  const ChangePasswordBtnRef = useRef(null)
+  const [focusPersonalForm, setFocusPersonalForm] = useState()
+  const [focusChangePasswordForm, setFocusChangePasswordForm] = useState()
   //#region Form profile data
   const [adminFullName, setAdminFullName] = useState('')
   const [errorAdminFullName, setErrorAdminFullName] = useState('')
+  const [adminFullNameCard, setAdminFullNameCard] = useState('')
   const [email, setEmail] = useState('')
+  const [emailCard, setEmailCard] = useState('')
   const [errorEmail, setErrorEmail] = useState('')
   const [Avatar, setAvatar] = useState(null)
+  const [imageCard, setImageCard] = useState(null)
+  const [adminRole, setAdminRole] = useState('')
   const fileInputRef = useRef(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [errorFileUpload, setErrorFileUpload] = useState('')
@@ -39,7 +47,7 @@ const AdminSetting = () => {
     const droppedFile = e.dataTransfer.files[0]
     if (droppedFile && droppedFile.type.startsWith('image/')) {
       setSelectedFile(droppedFile)
-      setAvatar(URL.createObjectURL(droppedFile))
+      setImageCard(URL.createObjectURL(droppedFile))
       fileInputRef.current.value = null
     }
   }
@@ -48,8 +56,8 @@ const AdminSetting = () => {
   const handleUploadAvatar = (e) => {
     const file = e.target.files[0]
     if (file && file.type.startsWith('image/')) {
-      setAvatar(URL.createObjectURL(file))
       setSelectedFile(file)
+      setImageCard(URL.createObjectURL(file))
       fileInputRef.current.value = null
     }
   }
@@ -57,7 +65,7 @@ const AdminSetting = () => {
   //handle clear Avatar
   const handleClearAvatar = (e) => {
     e.stopPropagation()
-    setAvatar(null)
+    setImageCard(null)
     setSelectedFile(null)
   }
 
@@ -74,16 +82,34 @@ const AdminSetting = () => {
       setErrorEmail('Email is required')
       return false
     }
+
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@(gmail\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/
+
+    if (!/^[a-zA-Z0-9._%+-]+@/.test(email)) {
+      setErrorEmail('Invalid email format: missing "@" symbol or incorrect local part')
+      return false
+    }
+
+    if (!/@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      setErrorEmail('Invalid email format: domain part is incorrect')
+      return false
+    }
+    if (!emailPattern.test(email)) {
+      setErrorEmail('Invalid email format')
+      return false
+    }
     return true
   }
 
   //handle cancel
   const handleCancel = () => {
-    setAdminFullName('')
-    setEmail('')
+    PersonalBtnRef.current.focus()
+    setAdminFullName(adminFullNameCard)
+    setEmail(emailCard)
+    setAvatar(imageCard)
     setErrorAdminFullName('')
     setErrorEmail('')
-    setAvatar(null)
+    setErrorFileUpload('')
     setSelectedFile(null)
   }
   //#endregion
@@ -95,51 +121,140 @@ const AdminSetting = () => {
   const [errorNewPassword, setErrorNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errorConfirmPassword, setErrorConfirmPassword] = useState('')
+
+  const handleErrorCurrentPassword = (current_password) => {
+    if (current_password === '') {
+      setErrorCurrentPassword('Current password is required')
+      return false
+    }
+    return true
+  }
+
+  const handleErrorNewPassword = (new_password) => {
+    if (new_password === '') {
+      setErrorNewPassword('New password is required')
+      return false
+    }
+    return true
+  }
+
+  const handleErrorConfirmPassword = (new_password_confirmation, new_password) => {
+    if (new_password_confirmation === '') {
+      setErrorConfirmPassword('Confirm password is required')
+      return false
+    }
+    if (new_password_confirmation !== new_password) {
+      setErrorConfirmPassword('Confirm password and new password does not match')
+      return false
+    }
+
+    return true
+  }
   //#endregion
+
+  const fetchAdminProfile = async () => {
+    const response = await AdminAPI.getAdmin(token)
+    if (!response.ok) {
+      const { message, data } = await response.json()
+      if (response.status === 401) {
+        setStatus(401)
+        setMessageResult('Unauthorized access. Please check your credentials.')
+      } else if (response.status === 422) {
+        setStatus(422)
+        setMessageResult(`Invalid data: ${data} with message: ${message}`)
+      } else {
+        setStatus(response.status)
+        setMessageResult(`Error get profile: ${data} with message: ${message}`)
+      }
+      return
+    }
+    const result = await response.json()
+    const { data } = result
+    setAdminFullName(data.admin_fullname)
+    setEmail(data.email)
+    setAvatar(data.admin_avatar)
+    setAdminFullNameCard(data.admin_fullname)
+    setEmailCard(data.email)
+    setImageCard(data.admin_avatar)
+    switch (data.admin_is_admin) {
+      case 0:
+        setAdminRole('User')
+        break
+      case 1:
+        setAdminRole('Admin')
+        break
+      case 2:
+        setAdminRole('Super Admin')
+        break
+    }
+  }
+
+  useEffect(() => {
+    fetchAdminProfile()
+  }, [])
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitLoading(true)
     const formData = new FormData()
-    const admin_fullname = adminFullName
-    const adminEmail = email
-    const isValidEmail = handleErrorEmail(adminEmail)
-    const isValidFullName = handleErrorFullName(admin_fullname)
-    if (!isValidEmail || !isValidFullName) {
-      setSubmitLoading(false)
-      return
-    }
-    formData.append('admin_fullname', adminFullName)
-    formData.append('email', adminEmail)
-    if (selectedFile) formData.append('admin_avatar', selectedFile)
-    console.log('data', Object.fromEntries(formData))
-    let response = null
-    try {
-      response = await AdminAPI.updateAdmin(formData, token)
-      if (!response.ok) {
+    if (typeForm === 'profile') {
+      const admin_fullname = adminFullName
+      const adminEmail = email
+      const isValidEmail = handleErrorEmail(adminEmail)
+      const isValidFullName = handleErrorFullName(admin_fullname)
+      if (!isValidEmail || !isValidFullName) {
         setSubmitLoading(false)
-        const { message, data } = await response.json()
-        if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
-        } else if (response.status === 422) {
-          setStatus(422)
-          setMessageResult(`Invalid data: ${data} with message: ${message}`)
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Error update profile: ${data} with message: ${message}`)
-        }
         return
       }
-      const result = await response.json()
-      const { messages, status } = result
-      setStatus(status)
-      setMessageResult(messages)
+      formData.append('admin_fullname', adminFullName)
+      formData.append('email', adminEmail)
+      if (selectedFile) formData.append('admin_avatar', selectedFile)
+      console.log('data', Object.fromEntries(formData))
       setSubmitLoading(false)
-    } catch (e) {
-      setSubmitLoading(false)
-    } finally {
+    } else {
+      const current_password = currentPassword
+      const new_password = newPassword
+      const new_password_confirmation = confirmPassword
+      const isValidCurrentPassword = handleErrorCurrentPassword(current_password)
+      const isValidNewPassword = handleErrorNewPassword(new_password)
+      const isValidConfirmPassword = handleErrorConfirmPassword(new_password_confirmation, new_password)
+      if (!isValidCurrentPassword || !isValidNewPassword || !isValidConfirmPassword) {
+        setSubmitLoading(false)
+        return
+      }
+      formData.append('current_password', current_password)
+      formData.append('new_password', new_password)
+      formData.append('new_password_confirmation', new_password_confirmation)
+      console.log('data', Object.fromEntries(formData))
       setSubmitLoading(false)
     }
+    // let response = null
+    // try {
+    //   response = await AdminAPI.updateAdmin(formData, token)
+    //   if (!response.ok) {
+    //     setSubmitLoading(false)
+    //     const { message, data } = await response.json()
+    //     if (response.status === 401) {
+    //       setStatus(401)
+    //       setMessageResult('Unauthorized access. Please check your credentials.')
+    //     } else if (response.status === 422) {
+    //       setStatus(422)
+    //       setMessageResult(`Invalid data: ${data} with message: ${message}`)
+    //     } else {
+    //       setStatus(response.status)
+    //       setMessageResult(`Error update profile: ${data} with message: ${message}`)
+    //     }
+    //     return
+    //   }
+    //   const result = await response.json()
+    //   const { messages, status } = result
+    //   setStatus(status)
+    //   setMessageResult(messages)
+    //   setSubmitLoading(false)
+    // } catch (e) {
+    //   setSubmitLoading(false)
+    // } finally {
+    //   setSubmitLoading(false)
+    // }
   }
 
   return (
@@ -159,23 +274,26 @@ const AdminSetting = () => {
         <div className='w-[380px] bg-[#ffffff] rounded-xl border-[1px] border-solid border-[#ebedf0] p-6 animate-slideLeftToRight h-max'>
           <div className='setting__information flex flex-col gap-y-6 items-center justify-center w-[100%]'>
             <img
-              src='/assets/images/person.png'
+              src={Avatar ? Avatar : '/assets/images/default-avatar.png'}
               alt='setting'
               className='w-40 h-40 rounded-full border border-dashed border-[rgb(102, 181, 163)] object-cover'
             />
             <div className='gap-2 flex flex-col justify-center items-center'>
-              <span className='text-sm font-semibold'>Minh đẹp trai</span>
-              <span className='text-xs text-[rgb(160,160,160)]'>minh32405@gmail.com</span>
-              <span className='text-xs text-[#d6b80d]'>super admin</span>
+              <span className='text-sm font-semibold'>{adminFullNameCard}</span>
+              <span className='text-xs text-[rgb(160,160,160)]'>{emailCard}</span>
+              <span className='text-xs text-[#d6b80d]'>{adminRole}</span>
             </div>
             <div className='w-full text-lg flex flex-col gap-4 px-12'>
               <button
                 autoFocus
+                ref={PersonalBtnRef}
                 type='button'
-                className='setting__information__button'
+                className={`setting__information__button ${focusPersonalForm ? 'isFocus' : ''}`}
                 onClick={() => {
+                  ChangePasswordBtnRef.current.tabIndex = -1
                   setTypeForm('profile')
-                  handleCancel()
+                  setFocusPersonalForm(true)
+                  setFocusChangePasswordForm(false)
                 }}
               >
                 <Personalcard size={16} />
@@ -183,8 +301,13 @@ const AdminSetting = () => {
               </button>
               <button
                 type='button'
-                className='setting__information__button'
-                onClick={() => setTypeForm('changePassword')}
+                ref={ChangePasswordBtnRef}
+                className={`setting__information__button focus:outline-none ${focusChangePasswordForm ? 'isFocus' : ''}`}
+                onClick={() => {
+                  setTypeForm('changePassword')
+                  setFocusPersonalForm(false)
+                  setFocusChangePasswordForm(true)
+                }}
               >
                 <Lock size={16} />
                 <span>Change password</span>
@@ -194,13 +317,7 @@ const AdminSetting = () => {
         </div>
         <div className='w-[780px] bg-[#ffffff] rounded-xl border-[1px] border-solid border-[#ebedf0] p-6 animate-slideRightToLeft overflow-hidden h-max'>
           <form action='' onSubmit={handleSubmit} autoComplete='off' className='w-full'>
-            <div
-              className={`setting_content_profile`}
-              style={{
-                height: typeForm === 'profile' ? '470px' : 0,
-                opacity: typeForm === 'profile' ? 1 : 0
-              }}
-            >
+            {typeForm === 'profile' ? (
               <div className='w-full'>
                 <div className='AddCategoryForm__row'>
                   <div className='AddCategoryForm__group AddCategoryForm__WidthFull relative'>
@@ -220,6 +337,7 @@ const AdminSetting = () => {
                       title={errorFileUpload}
                       open={errorFileUpload !== ''}
                       placement='top'
+                      overlayStyle={{ maxWidth: 'max-content' }}
                       align={{
                         offset: [0, 100]
                       }}
@@ -233,21 +351,18 @@ const AdminSetting = () => {
                         <button
                           type='button'
                           onClick={() => document.getElementById('admin_avatar').click()}
-                          className='AddCategoryForm__uploadBtn setting__uploadBtn grow'
-                          style={{
-                            border: Avatar !== null ? 'None' : '3px dashed #e8ebed'
-                          }}
+                          className='AddCategoryForm__uploadBtn setting__uploadBtn focus:outline-none focus:border-[1px] focus:border-solid focus:border-[#1d242e] [&:not(:focus)]:outline-none [&:not(:focus)]:border-[3px] [&:not(:focus)]:border-dashed [&:not(:focus)]:border-[#ebedf0]'
                         >
-                          {Avatar ? (
+                          {imageCard ? (
                             <>
-                              <img src={Avatar} alt='Avatar' className='w-full h-[300px] object-cover' />
+                              <img src={imageCard} alt='Avatar' className='w-full h-full rounded-md' />
                               <CloseCircleOutlined
                                 className='absolute top-0 right-0 text-red-500 text-[20px] cursor-pointer'
                                 onClick={handleClearAvatar}
                               />
                             </>
                           ) : (
-                            <div className='flex flex-col gap-y-2 justify-center items-center'>
+                            <div className='flex flex-col gap-y-2 justify-center items-center '>
                               <CloudUploadOutlined className='text-[#008f99] text-3xl' />
                               <span className='text-base'>Drag or upload your image here</span>
                               <em className='text-sm text-gray-400'>
@@ -256,16 +371,11 @@ const AdminSetting = () => {
                             </div>
                           )}
                         </button>
-                        <div className='bg-[#cccccc] h-32 w-32 rounded-md flex'>
-                          <p className='m-auto text-gray-600 text-sm'>300x300</p>
+                        <div className='bg-[#cccccc] h-full w-32 rounded-md flex grow'>
+                          <p className='m-auto text-gray-600 text-sm'>160x160</p>
                         </div>
                       </div>
                     </Tooltip>
-                    {selectedFile && (
-                      <div>
-                        <span>{selectedFile.name}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
                 <div className='AddCategoryForm__row'>
@@ -277,6 +387,7 @@ const AdminSetting = () => {
                       title={errorAdminFullName}
                       open={errorAdminFullName !== ''}
                       placement='bottomLeft'
+                      overlayStyle={{ maxWidth: 'max-content' }}
                       align={{
                         offset: [60, -8]
                       }}
@@ -303,12 +414,13 @@ const AdminSetting = () => {
                       title={errorEmail}
                       open={errorEmail !== ''}
                       placement='bottomLeft'
+                      overlayStyle={{ maxWidth: 'max-content' }}
                       align={{
                         offset: [60, -8]
                       }}
                     >
                       <input
-                        type='email'
+                        type='text'
                         name='email'
                         id='email'
                         className='AddCategoryForm__input setting__input'
@@ -320,34 +432,25 @@ const AdminSetting = () => {
                     </Tooltip>
                   </div>
                 </div>
-                <div>
-                  <div className='flex gap-4 w-full'>
-                    <button
-                      type='submit'
-                      className='bg-[#008f99] text-[#ffffff] px-2 py-4 w-full text-sm font-medium rounded flex items-center justify-center gap-4 hover:opacity-80'
-                    >
-                      <span>Save Changes</span>
-                      <TickCircle size={20} />
-                    </button>
-                    <button
-                      type='button'
-                      className='bg-[#008f99] text-[#ffffff] px-2 py-4 w-full text-sm font-medium rounded flex items-center justify-center gap-4 hover:opacity-80'
-                      onClick={handleCancel}
-                    >
-                      <span>Cancel</span>
-                      <DeleteOutlined className='text-base' />
-                    </button>
-                  </div>
+                <div className='flex gap-4 w-full'>
+                  <button
+                    type='submit'
+                    className='bg-[#008f99] text-[#ffffff] px-2 py-4 w-full text-sm font-medium rounded flex items-center justify-center gap-4 hover:opacity-80 focus:outline-none focus:opacity-80'
+                  >
+                    <span>Save Changes</span>
+                    <TickCircle size={20} />
+                  </button>
+                  <button
+                    type='button'
+                    className='bg-[#008f99] text-[#ffffff] px-2 py-4 w-full text-sm font-medium rounded flex items-center justify-center gap-4 hover:opacity-80 focus:outline-none focus:opacity-80'
+                    onClick={handleCancel}
+                  >
+                    <span>Cancel</span>
+                    <DeleteOutlined className='text-base' />
+                  </button>
                 </div>
               </div>
-            </div>
-            <div
-              className={`setting_content_changePassword`}
-              style={{
-                height: typeForm === 'changePassword' ? '400px' : 0,
-                opacity: typeForm === 'changePassword' ? 1 : 0
-              }}
-            >
+            ) : (
               <div className='w-full'>
                 <div className='AddCategoryForm__row'>
                   <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
@@ -358,6 +461,7 @@ const AdminSetting = () => {
                       title={errorCurrentPassword}
                       open={errorCurrentPassword !== ''}
                       placement='bottomLeft'
+                      overlayStyle={{ maxWidth: 'max-content' }}
                       align={{
                         offset: [60, -8]
                       }}
@@ -383,6 +487,7 @@ const AdminSetting = () => {
                       title={errorNewPassword}
                       open={errorNewPassword !== ''}
                       placement='bottomLeft'
+                      overlayStyle={{ maxWidth: 'max-content' }}
                       align={{
                         offset: [60, -8]
                       }}
@@ -408,6 +513,7 @@ const AdminSetting = () => {
                       title={errorConfirmPassword}
                       open={errorConfirmPassword !== ''}
                       placement='bottomLeft'
+                      overlayStyle={{ maxWidth: 'max-content' }}
                       align={{
                         offset: [60, -8]
                       }}
@@ -428,7 +534,7 @@ const AdminSetting = () => {
                   <div className='flex gap-4 w-full'>
                     <button
                       type='submit'
-                      className='bg-[#008f99] text-[#ffffff] px-2 py-4 w-full text-sm font-medium rounded flex items-center justify-center gap-4 hover:opacity-80'
+                      className='bg-[#008f99] text-[#ffffff] px-2 py-4 w-full text-sm font-medium rounded flex items-center justify-center gap-4 hover:opacity-80 focus:outline-none focus:opacity-80'
                     >
                       <span>Save changes</span>
                       <TickCircle size={20} />
@@ -436,7 +542,7 @@ const AdminSetting = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </form>
         </div>
       </div>

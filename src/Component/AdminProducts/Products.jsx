@@ -8,6 +8,10 @@ import { Pagination } from 'antd'
 import qs from 'qs'
 import { ProductsAPI, BrandsAPi, CategoriesAPi } from '../../Api/admin'
 import { DashOutlined, DeleteOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/app.context'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 const { RangePicker } = DatePicker
 
 //#region theme for ant design components
@@ -44,6 +48,16 @@ const filterTheme = {
 const AdminProducts = () => {
   //access token
   const token = localStorage.getItem('accesstoken')
+  const navigate = useNavigate()
+  const { setIsAuthenticated } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    localStorage.removeItem('accesstoken')
+    setIsAuthenticated(false)
+    navigate('/admin/login')
+  }
 
   //#region filter data
   //brand data
@@ -261,9 +275,6 @@ const AdminProducts = () => {
       sortField: sorter ? sorter.field : undefined
     }
     setTableParams(params)
-    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setData([])
-    }
     setLoading(false)
   }
 
@@ -273,11 +284,7 @@ const AdminProducts = () => {
       const response = await ProductsAPI.deleteProducts(ProductID, token)
       if (!response.ok) {
         if (response.status === 401) {
-          setResponseState({
-            status: 401,
-            messageResult: 'Unauthorized access. Please check your credentials.',
-            type: 'Delete'
-          })
+          handleUnauthorized()
         } else {
           setResponseState({
             status: response.status,
@@ -411,7 +418,7 @@ const AdminProducts = () => {
     fetchProducts({
       search: searchValue
     })
-  }, [tableParams.pagination?.pageSize])
+  }, [])
 
   //filter table change
   useEffect(() => {
@@ -427,6 +434,7 @@ const AdminProducts = () => {
     tableParams?.sortField,
     JSON.stringify(tableParams.filters),
     selectedFrom,
+    tableParams.pagination?.pageSize,
     selectedTo
   ])
   //#endregion

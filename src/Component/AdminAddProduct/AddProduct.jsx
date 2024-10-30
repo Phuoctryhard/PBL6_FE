@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message, Spin, TreeSelect } from 'antd'
-import { ArrowRight2, DocumentUpload, ProgrammingArrows, ArrowDown2 } from 'iconsax-react'
+import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/app.context'
 import './AddProduct.css'
 import ProductsAPI from '../../Api/admin/products'
 import CategoriesAPI from '../../Api/admin/categories'
@@ -36,6 +38,16 @@ const filterTheme = {
 }
 let currentSlide = 0
 const AddProduct = () => {
+  const navigate = useNavigate()
+  const { setIsAuthenticated } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    localStorage.removeItem('accesstoken')
+    setIsAuthenticated(false)
+    navigate('/admin/login')
+  }
   const [productID, setProductID] = useState('')
   const [errorProductID, setErrorProductID] = useState('')
   const [productName, setProductName] = useState('')
@@ -449,8 +461,7 @@ const AddProduct = () => {
         setSubmitLoading(false)
         const { messages } = await response.json()
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthorized()
         } else if (response.status === 422) {
           setStatus(422)
           setMessageResult(`Invalid data: ${messages}`)

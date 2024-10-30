@@ -1,21 +1,63 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import productAPI from '../../../../Api/user/product'
 import DOMPurify from 'dompurify'
 import Loading from '../../../../Component/Loading/Loading'
 import anh1 from './anh1.jpg'
-export default function DetailProduct() {
-  const { idproduct } = useParams()
-  //console.log(idproduct)
+import CartAPI from '../../../../Api/user/cart'
+import { toast } from 'react-toastify'
+import { queryClient } from '../../../..'
+import { getIdfromNameId } from '../../../../until'
 
+export default function DetailProduct() {
+  const [quantity, setQuantity] = useState(1)
+  const { idproduct } = useParams()
+  const idproduct1 = getIdfromNameId(idproduct)
   const { data, error, isLoading } = useQuery({
-    queryKey: ['detailProduct', idproduct],
-    queryFn: () => productAPI.getProductById(idproduct)
+    queryKey: ['detailProduct', idproduct1],
+    queryFn: () => productAPI.getProductById(idproduct1)
+  })
+
+  // Them vao gio hang
+  const mutateAddProductCart = useMutation({
+    mutationFn: CartAPI.addproduct_inCart,
+    onError: (error) => {
+      console.error('Lỗi khi thêm sản phẩm vào giỏ hàng:', error.response.data.message[0])
+    },
+    onSuccess: () => {
+      toast.success('Thêm vào giỏ hàng thành công', { autoClose: 1000 }) // Đóng sau 1 giây
+      queryClient.invalidateQueries({ queryKey: ['getCart'] })
+    }
   })
   if (isLoading) return <Loading />
-  const handleQuantity = (event) => {}
+  const handleQuantity = (value) => {
+    const newValue = parseInt(value.replace(/\D/g, '').replace(/^0+/, ''), 10) || ''
+    setQuantity(newValue)
+  }
+  const handleBlurQuantity = (event) => {
+    if (event.target.value === '') {
+      setQuantity(1)
+    }
+  }
+  // xu li nut
+  const handleSubQuantity = () => {
+    setQuantity((prev) => {
+      return prev - 1
+    })
+  }
+  const handlePlusQuantity = () => {
+    setQuantity((prev) => {
+      return prev + 1
+    })
+  }
   const sanitizedDescription = DOMPurify.sanitize(data?.data?.data?.product_description)
+  const handleAddProduct_InCart = () => {
+    mutateAddProductCart.mutate({
+      product_id: idproduct1,
+      cart_quantity: quantity
+    })
+  }
   return (
     <div className='px-24  '>
       <div class='hidden bg-neutral-100 md:block  mb-4'>
@@ -382,22 +424,41 @@ export default function DetailProduct() {
                 </button>
               </div>
 
-              <p class='text-base font-semibold text-neutral-900 pt-3'>Số lượng</p>
+              <p class='text-base font-semibold text-neutral-900 pt-3 '>Số lượng</p>
               <div className='flex items-center gap-x-1 pt-3'>
-                <button className='p-2 rounded-full bg-slate-100 hover:bg-slate-300'>-</button>
+                <button
+                  className={`p-2 rounded-full bg-slate-100 hover:bg-slate-300 } `}
+                  disabled={quantity === 1 ? true : false}
+                  onClick={handleSubQuantity}
+                >
+                  -
+                </button>
+
                 <input
                   type='text'
-                  onChange={(e) => handleQuantity(e)}
-                  className='w-[27px] h-5 outline-none text-center'
+                  inputMode='numeric' // Hiển thị bàn phím số trên thiết bị di động
+                  onChange={(e) => handleQuantity(e.target.value)}
+                  className='w-[27px] h-5 outline-none text-center appearance-none'
                   maxLength={3}
+                  min={1}
+                  max={999}
+                  defaultValue={1}
+                  value={quantity}
+                  onBlur={(e) => handleBlurQuantity(e)}
                 />
-                <button className='p-2 rounded-full bg-slate-100 hover:bg-slate-300'>+</button>
+
+                <button className='p-2 rounded-full bg-slate-100 hover:bg-slate-300' onClick={handlePlusQuantity}>
+                  +
+                </button>
               </div>
 
-              <div className='p-3 w-full bg-[#1A51A2] border rounded-lg text-center mt-3 hover:bg-[#1A51A2] hover:opacity-80 text-white font-semibold'>
+              <div className='p-3 w-full bg-[#1A51A2] border rounded-lg text-center mt-3 hover:bg-[#1A51A2] hover:opacity-80 text-white font-semibold cursor-pointer'>
                 Mua ngay
               </div>
-              <div className='p-3 w-full bg-[#ffffff] border rounded-lg text-center mt-3 font-semibold'>
+              <div
+                className='p-3 w-full bg-[#ffffff] border rounded-lg text-center mt-3 font-semibold hover:bg-gray-200 cursor-pointer'
+                onClick={handleAddProduct_InCart}
+              >
                 Thêm giỏ hàng
               </div>
               <div class='mt-2 grid grid-cols-3 gap-2'>
@@ -518,118 +579,120 @@ export default function DetailProduct() {
                   <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full w-6 h-6'>
                     <svg viewBox='0 0 25 25' fill='none' xmlns='http://www.w3.org/2000/svg'>
                       <g clip-path='url(#clip0_691_965)'>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M2.5 6.5H15.0512V16.204H2.5V6.5Z'
-                          fill='#5EAB46'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M2.5 6.5H15.0512V16.204H14.2532V7.28324H2.5V6.5Z'
-                          fill='#9FC48F'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M2.5 13.6392H15.0512V16.204H2.5V13.6392Z'
-                          fill='#0072BC'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M14.2532 13.6392H15.0512V16.204H14.2532V13.6392Z'
-                          fill='#99D9F0'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M4.06761 15.3389H21.6917C21.9046 15.3389 22.0788 15.513 22.0788 15.7259V16.6834C22.0788 16.8963 21.9046 17.0704 21.6917 17.0704H4.06761C3.85472 17.0704 3.68054 16.8963 3.68054 16.6834V15.7259C3.68054 15.513 3.85472 15.3389 4.06761 15.3389Z'
-                          fill='#208BC9'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M22.0788 16.2041V16.6834C22.0788 16.8963 21.9046 17.0705 21.6917 17.0705H4.06761C3.85472 17.0705 3.68054 16.8963 3.68054 16.6834V16.2041H22.0788Z'
-                          fill='#0072BC'
-                        ></path>
-                        <path
-                          d='M6.33763 9.11719C6.33763 9.27246 6.21173 9.39836 6.05642 9.39836H5.19353V9.6841H5.67962C5.83493 9.6841 5.96083 9.81 5.96083 9.96527C5.96083 10.1205 5.83493 10.2464 5.67962 10.2464H5.19353V11.0217C5.19353 11.177 5.06763 11.3029 4.91231 11.3029C4.757 11.3029 4.6311 11.177 4.6311 11.0217V9.11711C4.6311 8.96184 4.757 8.83594 4.91231 8.83594H6.05642C6.21173 8.83602 6.33763 8.96191 6.33763 9.11719ZM10.4451 9.3984C10.6004 9.3984 10.7263 9.2725 10.7263 9.11723C10.7263 8.96195 10.6004 8.83605 10.4451 8.83605H9.30099C9.14567 8.83605 9.01977 8.96195 9.01977 9.11723V11.0218C9.01977 11.1771 9.14567 11.303 9.30099 11.303H10.4451C10.6004 11.303 10.7263 11.1771 10.7263 11.0218C10.7263 10.8666 10.6004 10.7407 10.4451 10.7407H9.5822V10.2466H10.3666C10.5219 10.2466 10.6478 10.1207 10.6478 9.96539C10.6478 9.81012 10.5219 9.68422 10.3666 9.68422H9.5822V9.39848H10.4451V9.3984ZM8.53255 9.68984V9.71375C8.53255 9.98871 8.40134 10.233 8.19888 10.3893L8.49227 10.8768C8.57235 11.0098 8.52942 11.1826 8.39634 11.2627C8.35095 11.29 8.30095 11.303 8.25161 11.303C8.15622 11.303 8.06321 11.2545 8.0104 11.1668L7.64974 10.5675H7.38724V11.0218C7.38724 11.1771 7.26134 11.303 7.10603 11.303C6.95071 11.303 6.82481 11.1771 6.82481 11.0218V10.2864V10.0553V9.11719C6.82481 8.96191 6.95071 8.83602 7.10603 8.83602H7.67868C8.1495 8.83602 8.53255 9.21902 8.53255 9.68984ZM7.97013 9.68984C7.97013 9.52914 7.83942 9.3984 7.67872 9.3984H7.38727V10.0052H7.67872C7.69681 10.0052 7.71442 10.0033 7.73157 10.0002C7.73583 9.99906 7.74009 9.99832 7.74438 9.99746C7.87349 9.96754 7.97013 9.85184 7.97013 9.71375V9.68984ZM12.6388 10.7406H11.7759V10.2465H12.5603C12.7156 10.2465 12.8415 10.1206 12.8415 9.96535C12.8415 9.81008 12.7156 9.68418 12.5603 9.68418H11.7759V9.39844H12.6388C12.7941 9.39844 12.92 9.27254 12.92 9.11727C12.92 8.96199 12.7941 8.83609 12.6388 8.83609H11.4947C11.3394 8.83609 11.2135 8.96199 11.2135 9.11727V11.0219C11.2135 11.1771 11.3394 11.303 11.4947 11.303H12.6388C12.7941 11.303 12.92 11.1771 12.92 11.0219C12.92 10.8666 12.7941 10.7406 12.6388 10.7406Z'
-                          fill='white'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M8.39591 18.2681C9.53548 18.2681 10.4644 17.3392 10.4644 16.1996C10.4644 15.0612 9.53548 14.1311 8.39591 14.1311C7.25747 14.1311 6.32739 15.0612 6.32739 16.1996C6.32739 17.3392 7.25747 18.2681 8.39591 18.2681Z'
-                          fill='#365C75'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M8.39595 17.1285C8.90826 17.1285 9.3249 16.7107 9.3249 16.1995C9.3249 15.6884 8.90822 15.2717 8.39595 15.2717C7.88478 15.2717 7.46814 15.6884 7.46814 16.1995C7.46814 16.7107 7.88482 17.1285 8.39595 17.1285Z'
-                          fill='#E1EFFF'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M8.39594 14.1311C9.53891 14.1311 10.4645 15.0578 10.4645 16.1996C10.4645 17.3426 9.53891 18.2681 8.39594 18.2681C8.32309 18.2681 8.25137 18.2647 8.18079 18.2568C9.22133 18.1486 10.033 17.2697 10.033 16.1996C10.033 15.1306 9.22129 14.2506 8.18079 14.1425C8.25137 14.1357 8.32309 14.1311 8.39594 14.1311Z'
-                          fill='#274254'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M8.39588 15.2717C8.90932 15.2717 9.32482 15.6873 9.32482 16.1995C9.32482 16.713 8.90928 17.1285 8.39588 17.1285C8.3401 17.1285 8.28545 17.1228 8.23193 17.1137C8.66568 17.0363 8.99584 16.656 8.99584 16.1995C8.99584 15.743 8.66568 15.3627 8.23193 15.2853C8.28545 15.2763 8.3401 15.2717 8.39588 15.2717Z'
-                          fill='#D7D7E3'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M15.9767 17.0704H22.4999V11.1244L20.3392 8.22365C20.1377 7.95385 19.8485 7.80811 19.5115 7.80811H16.7053C16.3045 7.80811 15.9767 8.13596 15.9767 8.5367V17.0704Z'
-                          fill='#208BC9'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M17.0935 8.84424V11.1245H21.2055L19.5275 8.87154C19.5093 8.8465 19.5025 8.84424 19.4717 8.84424H17.0935Z'
-                          fill='#F0F0FC'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M18.8956 8.84424L20.5953 11.1245H21.2055L19.5275 8.87154C19.5093 8.8465 19.5024 8.84424 19.4717 8.84424H18.8956Z'
-                          fill='#D7D7E3'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M21.7987 17.0704H22.5V11.1244L20.3393 8.22365C20.1378 7.95385 19.8486 7.80811 19.5116 7.80811H18.8092C19.1462 7.80811 19.4365 7.95381 19.6369 8.22365L21.7987 11.1244V17.0704Z'
-                          fill='#99D9F0'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M19.2383 18.2726C20.3779 18.2726 21.3068 17.3437 21.3068 16.2041C21.3068 15.0657 20.3779 14.1367 19.2383 14.1367C18.0987 14.1367 17.1698 15.0657 17.1698 16.2041C17.1698 17.3436 18.0987 18.2726 19.2383 18.2726Z'
-                          fill='#365C75'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M19.2384 17.1331C19.7496 17.1331 20.1673 16.7164 20.1673 16.2042C20.1673 15.693 19.7495 15.2764 19.2384 15.2764C18.7272 15.2764 18.3094 15.693 18.3094 16.2042C18.3094 16.7165 18.7272 17.1331 19.2384 17.1331Z'
-                          fill='#E1EFFF'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M19.2383 14.1367C20.3813 14.1367 21.3069 15.0623 21.3069 16.2041C21.3069 17.3471 20.3813 18.2726 19.2383 18.2726C19.1655 18.2726 19.0938 18.2692 19.0232 18.2613C20.0637 18.1542 20.8754 17.2742 20.8754 16.2041C20.8754 15.1351 20.0637 14.2551 19.0232 14.147C19.0937 14.1401 19.1655 14.1367 19.2383 14.1367Z'
-                          fill='#274254'
-                        ></path>
-                        <path
-                          fill-rule='evenodd'
-                          clip-rule='evenodd'
-                          d='M19.2384 15.2764C19.7518 15.2764 20.1674 15.6919 20.1674 16.2042C20.1674 16.7176 19.7518 17.1331 19.2384 17.1331C19.1826 17.1331 19.1268 17.1286 19.0745 17.1183C19.5082 17.0409 19.8384 16.6618 19.8384 16.2041C19.8384 15.7476 19.5082 15.3685 19.0745 15.2911C19.128 15.2809 19.1826 15.2764 19.2384 15.2764Z'
-                          fill='#D7D7E3'
-                        ></path>
+                        <div>
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M2.5 6.5H15.0512V16.204H2.5V6.5Z'
+                            fill='#5EAB46'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M2.5 6.5H15.0512V16.204H14.2532V7.28324H2.5V6.5Z'
+                            fill='#9FC48F'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M2.5 13.6392H15.0512V16.204H2.5V13.6392Z'
+                            fill='#0072BC'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M14.2532 13.6392H15.0512V16.204H14.2532V13.6392Z'
+                            fill='#99D9F0'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M4.06761 15.3389H21.6917C21.9046 15.3389 22.0788 15.513 22.0788 15.7259V16.6834C22.0788 16.8963 21.9046 17.0704 21.6917 17.0704H4.06761C3.85472 17.0704 3.68054 16.8963 3.68054 16.6834V15.7259C3.68054 15.513 3.85472 15.3389 4.06761 15.3389Z'
+                            fill='#208BC9'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M22.0788 16.2041V16.6834C22.0788 16.8963 21.9046 17.0705 21.6917 17.0705H4.06761C3.85472 17.0705 3.68054 16.8963 3.68054 16.6834V16.2041H22.0788Z'
+                            fill='#0072BC'
+                          />
+                          <path
+                            d='M6.33763 9.11719C6.33763 9.27246 6.21173 9.39836 6.05642 9.39836H5.19353V9.6841H5.67962C5.83493 9.6841 5.96083 9.81 5.96083 9.96527C5.96083 10.1205 5.83493 10.2464 5.67962 10.2464H5.19353V11.0217C5.19353 11.177 5.06763 11.3029 4.91231 11.3029C4.757 11.3029 4.6311 11.177 4.6311 11.0217V9.11711C4.6311 8.96184 4.757 8.83594 4.91231 8.83594H6.05642C6.21173 8.83602 6.33763 8.96191 6.33763 9.11719ZM10.4451 9.3984C10.6004 9.3984 10.7263 9.2725 10.7263 9.11723C10.7263 8.96195 10.6004 8.83605 10.4451 8.83605H9.30099C9.14567 8.83605 9.01977 8.96195 9.01977 9.11723V11.0218C9.01977 11.1771 9.14567 11.303 9.30099 11.303H10.4451C10.6004 11.303 10.7263 11.1771 10.7263 11.0218C10.7263 10.8666 10.6004 10.7407 10.4451 10.7407H9.5822V10.2466H10.3666C10.5219 10.2466 10.6478 10.1207 10.6478 9.96539C10.6478 9.81012 10.5219 9.68422 10.3666 9.68422H9.5822V9.39848H10.4451V9.3984ZM8.53255 9.68984V9.71375C8.53255 9.98871 8.40134 10.233 8.19888 10.3893L8.49227 10.8768C8.57235 11.0098 8.52942 11.1826 8.39634 11.2627C8.35095 11.29 8.30095 11.303 8.25161 11.303C8.15622 11.303 8.06321 11.2545 8.0104 11.1668L7.64974 10.5675H7.38724V11.0218C7.38724 11.1771 7.26134 11.303 7.10603 11.303C6.95071 11.303 6.82481 11.1771 6.82481 11.0218V10.2864V10.0553V9.11719C6.82481 8.96191 6.95071 8.83602 7.10603 8.83602H7.67868C8.1495 8.83602 8.53255 9.21902 8.53255 9.68984ZM7.97013 9.68984C7.97013 9.52914 7.83942 9.3984 7.67872 9.3984H7.38727V10.0052H7.67872C7.69681 10.0052 7.71442 10.0033 7.73157 10.0002C7.73583 9.99906 7.74009 9.99832 7.74438 9.99746C7.87349 9.96754 7.97013 9.85184 7.97013 9.71375V9.68984ZM12.6388 10.7406H11.7759V10.2465H12.5603C12.7156 10.2465 12.8415 10.1206 12.8415 9.96535C12.8415 9.81008 12.7156 9.68418 12.5603 9.68418H11.7759V9.39844H12.6388C12.7941 9.39844 12.92 9.27254 12.92 9.11727C12.92 8.96199 12.7941 8.83609 12.6388 8.83609H11.4947C11.3394 8.83609 11.2135 8.96199 11.2135 9.11727V11.0219C11.2135 11.1771 11.3394 11.303 11.4947 11.303H12.6388C12.7941 11.303 12.92 11.1771 12.92 11.0219C12.92 10.8666 12.7941 10.7406 12.6388 10.7406Z'
+                            fill='white'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M8.39591 18.2681C9.53548 18.2681 10.4644 17.3392 10.4644 16.1996C10.4644 15.0612 9.53548 14.1311 8.39591 14.1311C7.25747 14.1311 6.32739 15.0612 6.32739 16.1996C6.32739 17.3392 7.25747 18.2681 8.39591 18.2681Z'
+                            fill='#365C75'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M8.39595 17.1285C8.90826 17.1285 9.3249 16.7107 9.3249 16.1995C9.3249 15.6884 8.90822 15.2717 8.39595 15.2717C7.88478 15.2717 7.46814 15.6884 7.46814 16.1995C7.46814 16.7107 7.88482 17.1285 8.39595 17.1285Z'
+                            fill='#E1EFFF'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M8.39594 14.1311C9.53891 14.1311 10.4645 15.0578 10.4645 16.1996C10.4645 17.3426 9.53891 18.2681 8.39594 18.2681C8.32309 18.2681 8.25137 18.2647 8.18079 18.2568C9.22133 18.1486 10.033 17.2697 10.033 16.1996C10.033 15.1306 9.22129 14.2506 8.18079 14.1425C8.25137 14.1357 8.32309 14.1311 8.39594 14.1311Z'
+                            fill='#274254'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M8.39588 15.2717C8.90932 15.2717 9.32482 15.6873 9.32482 16.1995C9.32482 16.713 8.90928 17.1285 8.39588 17.1285C8.3401 17.1285 8.28545 17.1228 8.23193 17.1137C8.66568 17.0363 8.99584 16.656 8.99584 16.1995C8.99584 15.743 8.66568 15.3627 8.23193 15.2853C8.28545 15.2763 8.3401 15.2717 8.39588 15.2717Z'
+                            fill='#D7D7E3'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M15.9767 17.0704H22.4999V11.1244L20.3392 8.22365C20.1377 7.95385 19.8485 7.80811 19.5115 7.80811H16.7053C16.3045 7.80811 15.9767 8.13596 15.9767 8.5367V17.0704Z'
+                            fill='#208BC9'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M17.0935 8.84424V11.1245H21.2055L19.5275 8.87154C19.5093 8.8465 19.5025 8.84424 19.4717 8.84424H17.0935Z'
+                            fill='#F0F0FC'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M18.8956 8.84424L20.5953 11.1245H21.2055L19.5275 8.87154C19.5093 8.8465 19.5024 8.84424 19.4717 8.84424H18.8956Z'
+                            fill='#D7D7E3'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M21.7987 17.0704H22.5V11.1244L20.3393 8.22365C20.1378 7.95385 19.8486 7.80811 19.5116 7.80811H18.8092C19.1462 7.80811 19.4365 7.95381 19.6369 8.22365L21.7987 11.1244V17.0704Z'
+                            fill='#99D9F0'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M19.2383 18.2726C20.3779 18.2726 21.3068 17.3437 21.3068 16.2041C21.3068 15.0657 20.3779 14.1367 19.2383 14.1367C18.0987 14.1367 17.1698 15.0657 17.1698 16.2041C17.1698 17.3436 18.0987 18.2726 19.2383 18.2726Z'
+                            fill='#365C75'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M19.2384 17.1331C19.7496 17.1331 20.1673 16.7164 20.1673 16.2042C20.1673 15.693 19.7495 15.2764 19.2384 15.2764C18.7272 15.2764 18.3094 15.693 18.3094 16.2042C18.3094 16.7165 18.7272 17.1331 19.2384 17.1331Z'
+                            fill='#E1EFFF'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M19.2383 14.1367C20.3813 14.1367 21.3069 15.0623 21.3069 16.2041C21.3069 17.3471 20.3813 18.2726 19.2383 18.2726C19.1655 18.2726 19.0938 18.2692 19.0232 18.2613C20.0637 18.1542 20.8754 17.2742 20.8754 16.2041C20.8754 15.1351 20.0637 14.2551 19.0232 14.147C19.0937 14.1401 19.1655 14.1367 19.2383 14.1367Z'
+                            fill='#274254'
+                          />
+                          <path
+                            fillRule='evenodd'
+                            clipRule='evenodd'
+                            d='M19.2384 15.2764C19.7518 15.2764 20.1674 15.6919 20.1674 16.2042C20.1674 16.7176 19.7518 17.1331 19.2384 17.1331C19.1826 17.1331 19.1268 17.1286 19.0745 17.1183C19.5082 17.0409 19.8384 16.6618 19.8384 16.2041C19.8384 15.7476 19.5082 15.3685 19.0745 15.2911C19.128 15.2809 19.1826 15.2764 19.2384 15.2764Z'
+                            fill='#D7D7E3'
+                          />
+                        </div>
                       </g>
                       <defs>
                         <clipPath id='clip0_691_965'>
@@ -652,108 +715,3 @@ export default function DetailProduct() {
     </div>
   )
 }
-
-// <div data-state='closed' class='group'>
-//                   <div
-//                     data-state='closed'
-//                     id='radix-:Rr79jsrtslafja:'
-//                     class='overflow-hidden transition-all data-[state=closed]:block data-[state=closed]:max-h-[120px] md:data-[state=closed]:max-h-none'
-//                   >
-//                     <div class='grid px-4 md:px-0 md:pb-2'>
-//                       <div id='mo-ta'>
-//                         <div class='pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none'>
-//                           <h3>Mô tả</h3>
-//                           <p>
-//                             Sản phẩm tập trung vào tác dụng bảo vệ và dưỡng ẩm nhờ các thành phần axit hyaluronic và hợp
-//                             chất Ceramides được cấp bằng sáng chế. Sản phẩm giúp tái tạo cấu trúc của lớp bảo vệ da và
-//                             phục hồi màng hydrolipid, ngăn ngừa rối loạn lớp bảo vệ da và đảm bảo mức hydrat hóa sinh
-//                             lý. Nhờ tác dụng bảo vệ Urgo Eczekalm làm dịu ngứa, rát, ban đỏ và phát ban trên da. Sản
-//                             phẩm giúp bảo vệ da khỏi sự xâm nhập của các tác nhân bên ngoài và giảm các triệu chứng của
-//                             tình trạng viêm da.
-//                           </p>
-//                         </div>
-//                       </div>
-//                       <div id='thanh-phan'>
-//                         <div class='pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none'>
-//                           <h3>Thành phần</h3>
-//                           <p>Axit hyaluronic, hợp chất Ceramides, Trehalose và Lecithin được cấp bằng sáng chế&nbsp;</p>
-//                         </div>
-//                       </div>
-//                       <div id='cong-dung'>
-//                         <div class='pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none'>
-//                           <h3>Công dụng</h3>
-//                           <p>
-//                             Chỉ định như chất hỗ trợ trong trường hợp viêm da cơ địa (cấp tính và mãn tính), bệnh da
-//                             khô, chàm, viêm da tiếp xúc (viêm da kích ứng, viêm da dị ứng), tăng sừng hóa. Chỉ định sử
-//                             dụng trong trường hợp mất tính toàn vẹn của lớp biểu bì liên quan đến da khô, phản ứng
-//                             nhanh, không dung nạp và nhạy cảm.
-//                           </p>
-//                         </div>
-//                       </div>
-//                       <div id='cach-su-dung'>
-//                         <div class='pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none'>
-//                           <h3>Cách sử dụng</h3>
-//                           <p>
-//                             Thoa một lớp mỏng lên vùng da bị tổn thương và mát xa nhẹ nhàng cho đến khi sản phẩm được
-//                             hấp thu hoàn toàn.
-//                           </p>
-//                           <p>Sử dụng 2 lần mỗi ngày trong 4 tuần trên vùng da sạch.</p>
-//                           <h3>Đối tượng sử dụng</h3>
-//                           <p>Người lớn, trẻ em và người cao tuổi</p>
-//                         </div>
-//                       </div>
-//                       <div id='luu-y-san-pham'>
-//                         <div class='pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none'>
-//                           <h3>Lưu ý</h3>
-//                           <p>
-//                             <strong>Cảnh báo:</strong> Không sử dụng sau ngày hết hạn. Không sử dụng nếu bao bì mở hoặc
-//                             bị hỏng, Tránh xa tầm tay trẻ em. Tránh tiếp xúc với mắt và màng nhầy. Không nuốt sản phẩm.
-//                             Bảo quản ở nơi khô ráo và thoáng mát, tránh xa nguồn nhiệt và ánh sáng trực tiếp. Không sử
-//                             dụng trong khi phơi nắng. Không thoa ở vùng mắt và viền mắt. Trong trường hợp vô tình tiếp
-//                             xúc, lập tức rửa sạch với nhiều nước. Rửa tay sạch sẽ trước khi sử dụng, đóng chặt nắp sau
-//                             khi sử dụng. Không sử dụng sản phẩm bừa bãi. Sử dụng ngoài da.
-//                           </p>
-//                           <p>
-//                             <strong>
-//                               Không có chống chỉ định hoặc tác dụng phụ đã biết nào khi sử dụng sản phẩm này:
-//                             </strong>
-//                             &nbsp;Khuyến cáo không sử dụng sản phẩm này trong trường hợp nhạy cảm hoặc dị ứng với bất kỳ
-//                             thành phần nào của sản phẩm. Nếu dị ứng da hoặc có phản ứng xảy ra, dừng sử dụng sản phẩm.
-//                             Nếu các triệu chứng trở nên tồi tệ hơn hoặc kéo dài sau vài ngày sử dụng, tham khảo ý kiến
-//                             của bác sĩ hoặc dược sĩ.
-//                           </p>
-//                         </div>
-//                       </div>
-//                       <div id='thong-tin-san-xuat'>
-//                         <div class='pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none'>
-//                           <h3>Thông tin sản xuất</h3>
-//                           <p>
-//                             <strong>Bảo quản: </strong>Bảo quản ở nhiệt độ phòng (15 - 25 độ C)
-//                           </p>
-//                           <p>
-//                             <strong>Nơi sản xuất:</strong> Ý
-//                           </p>
-//                           <p>
-//                             <strong>Số đăng ký: </strong>210000666/PCBA-HCM
-//                           </p>
-//                           <p>
-//                             <strong>Nhà phân phối:</strong> Công ty TNHH Dược Kim Đô
-//                           </p>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   </div>
-//                   <div class='relative mb-1 flex items-center justify-center p-0 md:hidden'>
-//                     <div class='absolute inset-x-0 bottom-full bg-gradient-to-b from-black/0 to-[#FFF_78.91%] group-data-[state=closed]:block group-data-[state=open]:hidden h-12 md:hidden'></div>
-//                     <button
-//                       class='relative justify-center border-0 bg-transparent text-sm font-normal text-hyperLink outline-none md:hover:text-primary-600 md:text-base hidden'
-//                       type='button'
-//                       aria-controls='radix-:Rr79jsrtslafja:'
-//                       aria-expanded='false'
-//                       data-state='closed'
-//                     >
-//                       Xem thêm
-//                     </button>
-//                   </div>
-//                 </div>
-// <img src={data.data.data.product_images[0]} alt='' />

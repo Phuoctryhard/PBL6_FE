@@ -1,16 +1,16 @@
 import React, { useContext } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import anh from './_480f2c92-d896-48ef-978c-6c37301968f7.png'
 import { schemaLogin } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import authAPI from '../../Api/user/auth'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/app.context'
-export default function Login() {
+export default function AdminLogin() {
   const { login } = useContext(AuthContext)
   const navigate = useNavigate()
   const {
@@ -22,23 +22,28 @@ export default function Login() {
   })
   // Mutations
   const mutation = useMutation({
-    mutationFn: authAPI.loginAccount
+    mutationFn: authAPI.loginAccountAdmin
   })
   const onSubmit = handleSubmit((data) => {
     // gửi lên api data
-    mutation.mutate(data, {
+    const formData = new FormData()
+    formData.append('email', data.email)
+    formData.append('password', data.password)
+    mutation.mutate(formData, {
       onSuccess: (data) => {
-        login(data.data.data, data.data.data.access_token)
-        const role = data.data.data.role
+        if (data.status >= 400) throw new Error(data.messages)
+        login(data.data, data.data.access_token)
+        const role = data.data.role
         if (role == 'user') {
           toast.success('Đăng nhập thành công')
           navigate('/')
         } else {
+          toast.success('Đăng nhập thành công')
           navigate('/admin')
         }
       },
-      onError: () => {
-        toast.error('Đăng nhập thất bại!')
+      onError: (data) => {
+        toast.error(`Đăng nhập thất bại: ${data.message}`)
       }
     })
   })

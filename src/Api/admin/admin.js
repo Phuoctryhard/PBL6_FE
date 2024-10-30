@@ -9,6 +9,13 @@ const AdminAPI = {
         Authorization: 'Bearer ' + token
       }
     }),
+  getAdmin: async (token) =>
+    await fetch(`${rootAdmin}/profile`, {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    }),
   addAdmin: async (data, token) =>
     await fetch(`${rootAdmin}/add-admin`, {
       method: 'POST',

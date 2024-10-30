@@ -1,6 +1,6 @@
 import './Categories.css'
 import CategoriesAPI from '../../Api/admin/categories'
-import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Refresh, Eye } from 'iconsax-react'
+import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Eye } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
@@ -18,8 +18,11 @@ import {
   Spin
 } from 'antd'
 import qs from 'qs'
-import debounce from 'lodash.debounce'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/app.context'
 const Categories = () => {
   const [data, setData] = useState([])
   const [filterData, setFilterData] = useState([])
@@ -45,7 +48,6 @@ const Categories = () => {
   const [messageResult, setMessageResult] = useState(null)
   const token = localStorage.getItem('accesstoken')
   const [submitLoading, setSubmitLoading] = useState(false)
-
   const [openModalView, setOpenModalView] = useState(false)
   const [selectedCategoryData, setSelectedCategoryData] = useState(null)
   const [showDescription, setShowDescription] = useState(false)
@@ -278,8 +280,7 @@ const Categories = () => {
       const response = await CategoriesAPI.searchCategories(token, query)
       if (!response.ok) {
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthorized()
         } else {
           setStatus(response.status)
           setMessageResult(`Error fetching categories: with status ${response.status}`)
@@ -337,9 +338,6 @@ const Categories = () => {
       sortField: sorter ? sorter.field : undefined
     }
     setTableParams(params)
-    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setData([])
-    }
     setLoading(false)
   }
   const handleUploadThumbnail = (e) => {
@@ -428,8 +426,7 @@ const Categories = () => {
       })
     } else {
       if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
+        handleUnauthorized()
       } else {
         setStatus(response.status)
         setMessageResult('Error:', response.messages)
@@ -491,8 +488,7 @@ const Categories = () => {
         setSubmitLoading(false)
         const { messages } = await response.json()
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthorized()
         } else if (response.status === 422) {
           setStatus(422)
           setMessageResult(`Invalid data: ${messages}`)
@@ -512,17 +508,11 @@ const Categories = () => {
     }
   }
 
-  // useEffect(() => {
-  //   fetchCategories(token, {
-  //     search: searchValue
-  //   })
-  // }, [])
-
   useEffect(() => {
     fetchCategories(token, {
       search: searchValue
     })
-  }, [tableParams.pagination?.pageSize])
+  }, [])
 
   useEffect(() => {
     if (data) {
@@ -533,6 +523,7 @@ const Categories = () => {
     tableParams.pagination?.current,
     tableParams?.sortOrder,
     tableParams?.sortField,
+    tableParams.pagination?.pageSize,
     JSON.stringify(tableParams.filters)
   ])
 
@@ -552,6 +543,16 @@ const Categories = () => {
     }
   }, [status, messageResult])
 
+  const navigate = useNavigate()
+  const { setIsAuthenticated } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    localStorage.removeItem('accesstoken')
+    setIsAuthenticated(false)
+    navigate('/admin/login')
+  }
   return (
     <section className='max-w-[100%] h-full'>
       <header className='flex justify-between animate-slideDown'>
@@ -652,11 +653,6 @@ const Categories = () => {
                     </button>
                   </div>
                 </Tooltip>
-                {selectedFile && (
-                  <div>
-                    <span>{selectedFile.name}</span>
-                  </div>
-                )}
               </div>
             </div>
             <div className='AddCategoryForm__row'>

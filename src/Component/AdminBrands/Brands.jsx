@@ -1,18 +1,41 @@
 import './Brands.css'
 import BrandsAPI from '../../Api/admin/brands'
-import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye } from 'iconsax-react'
+import { ArrowRight2, Add, SearchNormal, Edit, Eye } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
-import { ConfigProvider, Select } from 'antd'
-import { Table, Breadcrumb, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin, DatePicker } from 'antd'
+import { Link, useNavigate } from 'react-router-dom'
+import {
+  Table,
+  Breadcrumb,
+  Dropdown,
+  Popconfirm,
+  message,
+  Modal,
+  Tooltip,
+  Pagination,
+  Spin,
+  DatePicker,
+  ConfigProvider
+} from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useAuth } from '../../context/app.context'
 const { RangePicker } = DatePicker
 const Brands = () => {
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-
+  const navigate = useNavigate()
+  const { setIsAuthenticated } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    localStorage.removeItem('accesstoken')
+    setIsAuthenticated(false)
+    navigate('/admin/login')
+  }
   //#region filter data
   const [searchValue, setSearchValue] = useState('')
   const [selectedFrom, setSelectedFrom] = useState(null)
@@ -195,9 +218,6 @@ const Brands = () => {
       sortField: sorter ? sorter.field : undefined
     }
     setTableParams(params)
-    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setData([])
-    }
     setLoading(false)
   }
 
@@ -295,7 +315,7 @@ const Brands = () => {
     fetchBrands({
       search: searchValue
     })
-  }, [tableParams.pagination?.pageSize])
+  }, [])
 
   useEffect(() => {
     if (data) {
@@ -308,6 +328,7 @@ const Brands = () => {
     tableParams?.sortField,
     JSON.stringify(tableParams.filters),
     selectedFrom,
+    tableParams.pagination?.pageSize,
     selectedTo
   ])
   //#endregion
@@ -400,8 +421,7 @@ const Brands = () => {
       })
     } else {
       if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
+        handleUnauthorized()
       } else {
         setStatus(response.status)
         setMessageResult(`Error delete brand with status: ${response.status}, message: `, response.messages)
@@ -443,8 +463,7 @@ const Brands = () => {
         setSubmitLoading(false)
         const { messages } = await response.json()
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthorized()
         } else if (response.status === 422) {
           setStatus(422)
           setMessageResult(`Invalid data: ${messages}`)
@@ -525,7 +544,7 @@ const Brands = () => {
           <p className='mt-[11px]'>List of brands available</p>
         </div>
         <button
-          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
+          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] focus:outline-none focus:opacity-80 hover:opacity-80'
           onClick={() => {
             setOpenModal(true)
             setTypeModal('add')
@@ -601,11 +620,6 @@ const Brands = () => {
                     </button>
                   </div>
                 </Tooltip>
-                {selectedFile && (
-                  <div>
-                    <span>{selectedFile.name}</span>
-                  </div>
-                )}
               </div>
             </div>
             <div className='AddCategoryForm__row'>
@@ -793,7 +807,6 @@ const Brands = () => {
                 maxHeight: '450px',
                 backgroundColor: '#ffffff'
               }}
-              className='Brands__table'
             />
           </ConfigProvider>
           <CustomPagination
