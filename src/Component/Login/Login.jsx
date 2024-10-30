@@ -28,8 +28,6 @@ export default function Login() {
     // gửi lên api data
     mutation.mutate(data, {
       onSuccess: (data) => {
-        // localStorage.setItem('accesstoken', dat.data.data.access_token)
-        //login(dat.data.data.access_token)
         login(data.data.data, data.data.data.access_token)
         const role = data.data.data.role
         if (role == 'user') {

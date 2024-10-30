@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { AuthContext } from '../../context/app.context'
+import { useState, useEffect, useRef, useContext } from 'react'
 import './Admin.css'
 import { AdminAPI } from '../../Api/admin'
 import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye, ArrowDown2 } from 'iconsax-react'
@@ -19,6 +20,8 @@ import {
 } from 'antd'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { RangePicker } = DatePicker
+
+// import { AuthContext } from '../../context/app.context'
 const filterTheme = {
   token: {
     colorTextQuaternary: '#1D242E', // Disabled text color
@@ -52,6 +55,8 @@ const Admin = () => {
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
+  // const { login, isProfile } = useContext(AuthContext)
+  // console.log(isProfile)
 
   //#region filter data
   const [searchValue, setSearchValue] = useState('')
