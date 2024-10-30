@@ -28,10 +28,11 @@ export default function AdminLogin() {
     // gửi lên api data
     mutation.mutate(data, {
       onSuccess: (data) => {
-        console.log(data)
-        login(data.data.data, data.data.data.access_token)
+        console.log(data.data.data)
+        //localStorage.setItem('accesstoken', data.data.data.access_token)
+        login(data.data, data.data.access_token)
         const role = data.data.data.role
-        if (role == 'user') {
+        if (role === 'user') {
           toast.success('Đăng nhập thành công')
           navigate('/')
         } else {
