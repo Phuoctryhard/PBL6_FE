@@ -11,6 +11,7 @@ import { AuthContext } from '../../../context/app.context'
 export default function Cart() {
   const { isAuthenticated, logout } = useContext(AuthContext)
   // get list cart
+  const queryClient = useQueryClient()
   const { data } = useQuery({
     queryKey: ['getCart'],
     queryFn: CartAPI.getCart,
@@ -25,6 +26,8 @@ export default function Cart() {
     // Kiểm tra xem data có giá trị hợp lệ không
     if (data && data.data && Array.isArray(data.data.data)) {
       setProducts(data.data.data)
+    } else {
+      setProducts([])
     }
   }, [data])
 
@@ -35,15 +38,13 @@ export default function Cart() {
   const showModal = () => {
     setOpen(true)
   }
-  const queryClient = useQueryClient()
+
   const handleDelete = (id) => {
+    console.log(id)
     mutate.mutate(id, {
       onSuccess: () => {
         toast.success('Xóa sản phẩm thành công !')
         queryClient.invalidateQueries({ queryKey: ['getCart'] })
-        setTimeout(() => {
-          navigate('/cart')
-        }, 2000) // 1000ms = 1 giây
       },
       onError() {
         console.log('Thấtbai ')
@@ -154,9 +155,8 @@ export default function Cart() {
   //// xóa
   const handleOk = (id) => {
     handleDelete(id)
-    setTimeout(() => {
-      setOpen(false)
-    }, 2000)
+
+    setOpen(false)
   }
   const handleCancel = () => {
     setOpen(false)
@@ -245,7 +245,9 @@ export default function Cart() {
       <div className='grid grid-cols-9 pt-5 gap-x-5 '>
         <div className='col-span-6'>
           <div className='flex justify-between '>
-            <div className='text-2xl font-semibold'>Giỏ hàng 5 </div>
+            <div className='text-2xl font-semibold'>
+              Giỏ hàng {data?.data?.data?.length ? data.data.data.length : ''}{' '}
+            </div>
             <button className='text-[#0070e0] hover:text-black' onClick={handleDeleteMany}>
               Xóa
             </button>

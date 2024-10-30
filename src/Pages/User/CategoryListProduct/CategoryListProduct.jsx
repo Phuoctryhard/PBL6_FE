@@ -18,7 +18,7 @@ import { Previous } from 'iconsax-react'
 import { useLocation } from 'react-router-dom'
 import { schemaPrice } from '../../../Component/ValidateScheme/Validate'
 import Loading from '../../../Component/Loading/Loading'
-
+import { generateNameId } from '../../../until/index.js'
 export default function CategoryListProduct() {
   const location = useLocation()
   const queryParams = new URLSearchParams(location.search)
@@ -68,6 +68,7 @@ export default function CategoryListProduct() {
       return productAPI.getAllProduct(useQueryParameter)
     }
   })
+
   // category
   if (useQueryParameter.category_name == 'Thuốc kê đơn') {
     var idcategory
@@ -219,35 +220,12 @@ export default function CategoryListProduct() {
                     </svg>
                   </span>
                 </li>
-                <li class='h-5 text-sm'>
-                  <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
-                    <a href='/cham-soc-sac-dep'>Chăm sóc sắc đẹp</a>
-                  </span>
-                  <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
-                    <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                      <path
-                        d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
-                        fill='currentColor'
-                      ></path>
-                    </svg>
-                  </span>
-                </li>
-                <li class='h-5 text-sm'>
-                  <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
-                    <a href='/san-pham-chong-nang'>Sản phẩm chống nắng</a>
-                  </span>
-                  <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
-                    <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                      <path
-                        d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
-                        fill='currentColor'
-                      ></path>
-                    </svg>
-                  </span>
-                </li>
+
                 <li class='h-5 text-sm'>
                   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'>
-                    Kem chống nắng dành cho mặt
+                    <a href={`/category?category_name=${useQueryParameter?.category_name}`}>
+                      {useQueryParameter?.category_name}
+                    </a>
                   </span>
                 </li>
               </ul>
@@ -428,12 +406,12 @@ export default function CategoryListProduct() {
               productsData.data.data.data.map((element) => {
                 return (
                   <div className='border border-1 shadow-lg rounded-lg overflow-hidden'>
-                    <Link to={`/${element.product_id}`} className=' '>
+                    <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
                       <img src={element.product_images} alt='' />
                     </Link>
 
                     <div className='p-3'>
-                      <Link to={`/${element.product_id}`}>
+                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
                         <h3 class='line-clamp-2  font-semibold text-base'>{element.product_name}</h3>
                       </Link>
                       <del class='block h-5 text-sm font-semibold text-neutral-600 mt-2'>115.000 đ</del>
@@ -469,6 +447,34 @@ export default function CategoryListProduct() {
     </div>
   )
 }
+
 // <img src={element.product_images} alt='' />
 // <p className='text-blue p-3'>Thiết lập lại</p>
 // <div class='bg-neutral-100 h-3 mt-12'></div>
+
+// <li class='h-5 text-sm'>
+//                   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
+//                     <a href='/cham-soc-sac-dep'>Chăm sóc sắc đẹp</a>
+//                   </span>
+//                   <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
+//                     <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+//                       <path
+//                         d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
+//                         fill='currentColor'
+//                       ></path>
+//                     </svg>
+//                   </span>
+//                 </li>
+//                 <li class='h-5 text-sm'>
+//                   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
+//                     <a href='/san-pham-chong-nang'>Sản phẩm chống nắng</a>
+//                   </span>
+//                   <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
+//                     <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+//                       <path
+//                         d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
+//                         fill='currentColor'
+//                       ></path>
+//                     </svg>
+//                   </span>
+//                 </li>

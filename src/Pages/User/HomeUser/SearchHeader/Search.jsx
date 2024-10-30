@@ -34,21 +34,20 @@ export default function Search(class1 = 'text-blue') {
     cacheTime: 10 * 60 * 1000 // Dữ liệu được giữ trong cache tối đa 10 phút
   })
 
-  console.log(ListCategory?.data?.data)
+  //console.log(ListCategory?.data?.data)
 
   var handleClick = () => {
     setopenCategory(!openCategory)
   }
   const navigate = useNavigate()
   const handleDrop = () => {
-    navigate({
-      pathname: '/category',
-      search: `?${createSearchParams({
-        keyword: 'John'
-      })}`
-    })
+    // navigate({
+    //   pathname: '/category',
+    //   search: `?${createSearchParams({
+    //     keyword: 'John'
+    //   })}`
+    // })
   }
-  console.log(isProfile)
   const { data } = useQuery({
     queryKey: ['getCart'],
     queryFn: CartAPI.getCart,
@@ -56,7 +55,6 @@ export default function Search(class1 = 'text-blue') {
     staleTime: 1000 * 60 * 10 // Dữ liệu được coi là tươi trong 10 phút
   })
 
-  console.log(isAuthenticated)
   var handleNavigate = () => {
     navigate('/cart')
   }
@@ -64,6 +62,7 @@ export default function Search(class1 = 'text-blue') {
     logout()
     navigate('/login')
   }
+  console.log(data?.data?.data?.length)
   const profile = (
     <div className='w-full  rounded-md '>
       <div className=''>
@@ -189,7 +188,6 @@ export default function Search(class1 = 'text-blue') {
     <div className=''>
       <div className='w-full  '>
         <p className='text-xl font-thin '>Sản phẩm mới thêm </p>
-
         {data?.data?.data ? (
           data.data.data.map((element) => {
             return (
@@ -212,7 +210,7 @@ export default function Search(class1 = 'text-blue') {
         )}
       </div>
       <div className='flex justify-between items-center my-2'>
-        <span>{} Thêm hàng vào giỏ </span>
+        <span>{data?.data?.data?.length} Thêm hàng vào giỏ </span>
         <button className='bg-[#1A51A2] px-3 py-2  rounded-lg text-white ' onClick={handleNavigate}>
           Xem giỏ hàng 1
         </button>
@@ -289,9 +287,9 @@ export default function Search(class1 = 'text-blue') {
         <div className='flex items-center md:mb-4 px-24 '>
           <div className='flex w-full flex-col-reverse items-start md:flex-row gap-5'>
             {' '}
-            <div className=' hidden md:flex shrink-0 '>
+            <Link to='/' className=' hidden md:flex shrink-0 '>
               <img class='w-[200px] h-[75px] cursor-pointer rounded-full bg-white' src={Anh} alt='Pharmacity Logo' />
-            </div>
+            </Link>
             <div className='z-[11] grid w-full grid-cols-1 md:z-[10]'>
               <div className='w-full'>
                 <div className='mx-auto w-full'>
@@ -405,7 +403,7 @@ export default function Search(class1 = 'text-blue') {
                 </button>
               </Popover>
               <Popover content={ShopingCart} placement='bottomRight' className='' overlayStyle={{ width: '450px' }}>
-                <Badge count={5} offset={[-15, 7]}>
+                <Badge count={data?.data?.data?.length > 0 ? data.data.data.length : ''} offset={[-15, 7]}>
                   <div className='h-10 px-3'>
                     <svg
                       xmlns='http://www.w3.org/2000/svg'
