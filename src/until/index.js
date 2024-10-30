@@ -17,6 +17,7 @@ export const getProfile = () => {
 export const saveProfile = (profile) => {
   localStorage.setItem('profile', JSON.stringify(profile))
 }
+
 export const clearProfile = () => {
   localStorage.removeItem('profile')
 }

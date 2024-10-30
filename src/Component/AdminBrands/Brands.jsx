@@ -504,8 +504,8 @@ const Brands = () => {
 
   return (
     <section className='w-full max-w-[100%] h-full'>
-      <header className='flex justify-between'>
-        <div className='Breadcrumb animate-[slideLeftToRight_1s_ease]'>
+      <header className='flex justify-between animate-slideDown'>
+        <div className='Breadcrumb'>
           <h1>
             <Breadcrumb
               separator={<ArrowRight2 size='15' color='#1D242E' />}
@@ -525,7 +525,7 @@ const Brands = () => {
           <p className='mt-[11px]'>List of brands available</p>
         </div>
         <button
-          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] animate-[slideRightToLeft_1s_ease]'
+          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
           onClick={() => {
             setOpenModal(true)
             setTypeModal('add')
@@ -693,9 +693,9 @@ const Brands = () => {
           </Tooltip>
         </div>
       </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md'>
+      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-slideUp'>
         <div className='flex justify-between items-center'>
-          <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] animate-[slideLeftToRight_1s_ease] relative'>
+          <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for brands'
@@ -716,7 +716,7 @@ const Brands = () => {
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
-          <div className='flex gap-x-[12px] items-center animate-[slideRightToLeft_1s_ease]'>
+          <div className='flex gap-x-[12px] items-center'>
             <ConfigProvider
               theme={{
                 token: {
@@ -758,7 +758,7 @@ const Brands = () => {
             </ConfigProvider>
           </div>
         </div>
-        <div className='pt-[15px] animate-[slideUp_1s_ease]'>
+        <div className='pt-[15px]'>
           <ConfigProvider
             theme={{
               components: {

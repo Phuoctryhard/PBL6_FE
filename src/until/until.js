@@ -10,8 +10,6 @@ class Http {
     this.accessToken = getAccessToken()
     this.instance = axios.create({
       baseURL: 'https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/',
-      //https://lucifernsz.com/PBL6_Pharmacity/BE/PBL6-BE/public/api
-     // baseURL: 'https://lucifernsz.com/PBL6_Pharmacity/BE/PBL6-BE/public/api/',
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json'
@@ -19,9 +17,6 @@ class Http {
     })
     this.instance.interceptors.request.use(
       (config) => {
-        if (config.data instanceof FormData) {
-          config.headers['Content-Type'] = 'multipart/form-data' // Nếu là form-data thì đổi header
-        }
         if (this.accessToken && config.headers) {
           // header có thể undified -> kick chuột vô nó
           //authorization : viết đúng định dạng để server chấp nhận
