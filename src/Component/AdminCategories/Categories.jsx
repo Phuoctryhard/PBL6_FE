@@ -1,29 +1,38 @@
 import './Categories.css'
-import CategoriesAPI from '../../Api/admin/categories'
-import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Eye } from 'iconsax-react'
+import { CategoriesAPI } from '../../Api/admin'
+import { Add, SearchNormal, ArrowDown2, Edit, Eye } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
-import {
-  Table,
-  TreeSelect,
-  Breadcrumb,
-  Empty,
-  Dropdown,
-  Popconfirm,
-  message,
-  Modal,
-  Tooltip,
-  Pagination,
-  Spin
-} from 'antd'
+import { TreeSelect, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/app.context'
+import AdminTable from '../AdminTable'
+import BreadCrumbs from '../AdminBreadCrumbs'
 const Categories = () => {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    logout()
+    navigate('/admin/login')
+  }
+
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
+
   const [data, setData] = useState([])
   const [filterData, setFilterData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -51,6 +60,34 @@ const Categories = () => {
   const [openModalView, setOpenModalView] = useState(false)
   const [selectedCategoryData, setSelectedCategoryData] = useState(null)
   const [showDescription, setShowDescription] = useState(false)
+
+  const optionsDateformatFull = {
+    weekday: 'long',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }
+  const optionsDateformatShort = {
+    weekday: 'long',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }
+
+  // Date format
+  const DateFormatView = (date) => {
+    let formattedDate = 'N/A'
+    if (/^\d{4}\-\d{2}\-\d{2}$/.test(date)) {
+      const [year, month, day] = date.split('-')
+      formattedDate = new Date(year, month - 1, day).toLocaleDateString('en-GB', optionsDateformatShort)
+    } else if (date) formattedDate = new Date(date).toLocaleDateString('en-GB', optionsDateformatFull)
+    return `${formattedDate}`
+  }
+
   const columns = [
     {
       title: '#',
@@ -64,7 +101,6 @@ const Categories = () => {
       title: 'Name',
       dataIndex: 'category_name',
       key: 'category_name',
-      width: '20%',
       sorter: (a, b) => a.category_name.localeCompare(b.category_name),
       ellipsis: true,
       render: (text, record) => (
@@ -85,12 +121,18 @@ const Categories = () => {
       ellipsis: true
     },
     {
-      title: 'Parent ID',
-      dataIndex: 'category_parent_id',
-      key: 'category_parent_id',
-      width: '10%',
-      sorter: (a, b) => a.category_parent_id - b.category_parent_id,
-      ellipsis: true
+      title: 'Description',
+      dataIndex: 'category_description',
+      key: 'category_description',
+      sorter: (a, b) => {
+        let valueA = a.category_description
+        let valueB = b.category_description
+        if (valueA === null) valueA = ''
+        if (valueB === null) valueB = ''
+        return valueB.localeCompare(valueA)
+      },
+      ellipsis: true,
+      render: (text) => (text ? text : 'N/A')
     },
     {
       title: 'Status',
@@ -156,7 +198,7 @@ const Categories = () => {
                     placement='bottomRight'
                     title={`Delete record ${record.category_id}`}
                     description='Are you sure to delete this record?'
-                    onConfirm={() => handelDeleteCategory(record.category_id)}
+                    onConfirm={() => handleDeleteCategory(record.category_id)}
                     okText='Delete'
                     cancelText='Cancel'
                   >
@@ -187,21 +229,6 @@ const Categories = () => {
       pageSize: 8
     }
   })
-  const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
-    <div className='flex justify-between items-center mt-3'>
-      <span className='inline-block text-[14px]'>
-        Showing {current - 1 < 1 ? 1 : (current - 1) * pageSize + 1} to{' '}
-        {current * pageSize <= total ? current * pageSize : total} of {total} entries
-      </span>
-      <Pagination
-        total={total}
-        current={current}
-        pageSize={pageSize}
-        onChange={onChange}
-        pageSizeOptions={pageSizeOptions || ['8', '10', '20']}
-      />
-    </div>
-  )
 
   const convertDataToTree = (data) => {
     const map = {}
@@ -228,23 +255,6 @@ const Categories = () => {
       value: item.category_id,
       children: item.children ? convertToTreeData(item.children) : []
     }))
-  }
-
-  const convertToSelectData = (data) => {
-    let selectData = []
-    const extractDeepest = (node) => {
-      if (!node.children || node.children.length === 0) {
-        selectData.push({
-          title: node.category_id,
-          value: node.category_name
-        })
-      } else {
-        node.children.forEach((child) => extractDeepest(child))
-      }
-    }
-
-    data.forEach((item) => extractDeepest(item))
-    return selectData
   }
 
   const searchCategories = () => {
@@ -285,10 +295,8 @@ const Categories = () => {
           setStatus(response.status)
           setMessageResult(`Error fetching categories: with status ${response.status}`)
         }
-        setLoading(false)
         return
       }
-
       const result = await response.json()
       const data = result.data
       const treeDataConvert = convertDataToTree(data)
@@ -322,7 +330,6 @@ const Categories = () => {
           total: treeDataConvert.length
         }
       })
-      setLoading(false)
     } catch (e) {
     } finally {
       setLoading(false)
@@ -342,10 +349,14 @@ const Categories = () => {
   }
   const handleUploadThumbnail = (e) => {
     const file = e.target.files[0]
-    if (file && file.type.startsWith('image/')) {
+    const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
+    if (file && validExtensions.includes(file.type)) {
       setThumbnail(URL.createObjectURL(file))
       setSelectedFile(file)
       fileInputRef.current.value = null
+    } else {
+      setStatus(422)
+      setMessageResult(`File ${file.name} is not a valid image file.`)
     }
   }
   const handleDragOver = (e) => {
@@ -417,9 +428,8 @@ const Categories = () => {
     setParentCategory()
   }
 
-  const handelDeleteCategory = async (id) => {
+  const handleDeleteCategory = async (id) => {
     const response = await CategoriesAPI.deleteCategories(id, token)
-    setTypeModal('Delete')
     if (response.ok) {
       fetchCategories(token, {
         search: searchValue
@@ -433,10 +443,8 @@ const Categories = () => {
       }
       return
     }
-    const result = await response.json()
-    const { messages, status } = result
-    setStatus(status)
-    setMessageResult(messages)
+    setStatus(200)
+    setMessageResult(`Delete category with id: ${id} successfully.`)
   }
 
   const handleSubmit = async (e) => {
@@ -474,14 +482,8 @@ const Categories = () => {
     let response = null
     try {
       if (typeModal === 'add') {
-        const category_created_at = new Date().toISOString()
-        const category_updated_at = new Date().toISOString()
-        formData.append('category_created_at', category_created_at)
-        formData.append('category_updated_at', category_updated_at)
         response = await CategoriesAPI.addCategories(formData, token)
       } else if (typeModal === 'update') {
-        const category_updated_at = new Date().toISOString()
-        formData.append('category_updated_at', category_updated_at)
         response = await CategoriesAPI.updateCategories(selectedCategory, formData, token)
       }
       if (!response.ok) {
@@ -498,10 +500,12 @@ const Categories = () => {
         }
         return
       }
-      const result = await response.json()
-      const { messages, status } = result
-      setStatus(status)
-      setMessageResult(messages)
+      setStatus(200)
+      if (typeModal === 'add') {
+        setMessageResult('Category was added successfully.')
+      } else if (typeModal === 'update') {
+        setMessageResult('Category was updated successfully')
+      }
     } catch (error) {
     } finally {
       setSubmitLoading(false)
@@ -529,7 +533,7 @@ const Categories = () => {
 
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
-      message.success(`${typeModal} category was successfully`, 3)
+      openMessage('success', messageResult, 3)
       fetchCategories(token, {
         search: searchValue
       })
@@ -537,43 +541,30 @@ const Categories = () => {
       setMessageResult(null)
       handleCancel()
     } else if (status >= 400) {
-      message.error(messageResult, 3)
+      openMessage('error', messageResult, 3)
       setStatus(null)
       setMessageResult(null)
     }
   }, [status, messageResult])
 
-  const navigate = useNavigate()
-  const { setIsAuthenticated } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    localStorage.removeItem('accesstoken')
-    setIsAuthenticated(false)
-    navigate('/admin/login')
-  }
   return (
     <section className='max-w-[100%] h-full'>
+      {contextHolder}
       <header className='flex justify-between animate-slideDown'>
-        <div className='Breadcrumb'>
-          <h1>
-            <Breadcrumb
-              separator={<ArrowRight2 size='15' color='#1D242E' />}
-              className='font-bold text-[#848A91]'
-              items={[
-                { title: 'Inventory' },
-                {
-                  title: (
-                    <Link to='/admin/categories' tabIndex='-1'>
-                      List of categories ({filterData?.length})
-                    </Link>
-                  )
-                }
-              ]}
-            ></Breadcrumb>
-          </h1>
-          <p className='mt-[11px]'>List of categories available</p>
+        <div className='flex flex-col gap-3'>
+          <BreadCrumbs
+            items={[
+              { title: 'Inventory' },
+              {
+                title: (
+                  <Link to='/admin/categories' tabIndex='-1'>
+                    List of categories ({filterData?.length})
+                  </Link>
+                )
+              }
+            ]}
+          />
+          <p>List of categories available</p>
         </div>
         <button
           className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
@@ -816,13 +807,13 @@ const Categories = () => {
           </Tooltip>
         </div>
       </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-slideUp'>
+      <div className='p-5 my-4 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for categories'
-              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='focus:border-[#1D242E] border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
@@ -840,58 +831,21 @@ const Categories = () => {
             </button>
           </div>
         </div>
-        <div className='pt-[15px]'>
-          <ConfigProvider
-            theme={{
-              components: {
-                Table: {
-                  rowHoverBg: '#f5f5f5',
-                  headerSplitColor: 'transparent',
-                  headerBg: '#f5f5f5',
-                  sortField: '#f5f5f5',
-                  sortOrder: '#f5f5f5',
-                  borderColor: '#e8ebed'
-                }
-              }
+        <div className='pt-4'>
+          <AdminTable
+            columns={columns}
+            rowKey='category_id'
+            data={filterData}
+            tableParams={tableParams}
+            tableStyles={{ width: '1200px', minHeight: '350px', maxHeight: '450px', backgroundColor: '#ffffff' }}
+            scroll={{ y: '300px' }}
+            loading={loading}
+            handleTableChange={handleTableChange}
+            pageSizeOptionsParent={['8', '10', '20', '50']}
+            paginationTable={{
+              position: ['none'],
+              ...tableParams.pagination
             }}
-          >
-            <Table
-              size='small'
-              columns={columns}
-              rowKey={(record) => record.category_id}
-              dataSource={filterData}
-              pagination={{
-                position: ['none'],
-                ...tableParams.pagination
-              }}
-              loading={loading}
-              onChange={handleTableChange}
-              scroll={{
-                y: '300px'
-              }}
-              style={{
-                width: '1200px',
-                minHeight: '350px',
-                maxHeight: '450px',
-                backgroundColor: '#ffffff'
-              }}
-            />
-          </ConfigProvider>
-          <CustomPagination
-            total={tableParams.pagination.total}
-            current={tableParams.pagination.current}
-            pageSize={tableParams.pagination.pageSize}
-            onChange={(page, pageSize) =>
-              handleTableChange(
-                {
-                  ...tableParams.pagination,
-                  current: page,
-                  pageSize
-                },
-                tableParams.filters,
-                tableParams.sortOrder
-              )
-            }
           />
         </div>
       </div>

@@ -2,6 +2,7 @@ import { BASE_URL } from '../../until'
 const rootProducts = `${BASE_URL}/products`
 const ProductsAPI = {
   getProducts: async () => await fetch(rootProducts),
+  getProductsNames: async () => await fetch(`${rootProducts}/names`),
   getProductByID: async (id) => await fetch(`${rootProducts}/${id}`),
   addProducts: async (formData, token) =>
     await fetch(`${rootProducts}/add`, {

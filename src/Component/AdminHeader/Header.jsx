@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { ArrowDown2, SearchNormal, Setting4, ArrowUp2 } from 'iconsax-react'
 
 import { Select, ConfigProvider } from 'antd'
-import './Header.css'
 const languageSelectTheme = {
   token: {
     colorTextQuaternary: '#1D242E', // Disabled text color
@@ -60,8 +59,8 @@ export default function Header() {
   }, [])
 
   return (
-    <header className='flex w-full h-[60px] items-center'>
-      <div className='flex-1 justify-between px-[40px] py-[11px]' style={{ boxShadow: '0 4px 5px rgba(0,0,0,0.25)' }}>
+    <header className='flex w-full h-[60px] items-center bg-[#f7f8fa]'>
+      <div className='flex-1 justify-between px-[40px] py-[11px]'>
         <div className='flex items-center justify-between text-sm w-full gap-3'>
           <div
             className='flex items-center bg-[#e1eaf2] border-[1px] border-solid border-[#BCBEC1] 
@@ -70,7 +69,7 @@ export default function Header() {
             <input
               type='text'
               placeholder='Search for anything here'
-              className='searchBox__input border-none outline-none bg-transparent w-[440px] rounded-md py-[7px] px-[12px]'
+              className=' focus:border focus:border-[#1d242e] focus:border-solid outline-none bg-transparent w-[440px] rounded-md py-[7px] px-[12px]'
             />
             <SearchNormal className='absolute right-0 top-[50%] transform -translate-y-1/2 mr-3' />
           </div>
@@ -82,7 +81,7 @@ export default function Header() {
                   isDropdownOpen ? <ArrowUp2 size='14' color='#1D242E' /> : <ArrowDown2 size='14' color='#1D242E' />
                 }
                 defaultValue='Vietnamese'
-                className='w-[120px] h-[40px] rounded-[4px]'
+                className='w-32 h-10'
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
                 <Select.Option value='Vietnamese'>

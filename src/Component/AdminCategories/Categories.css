@@ -1,4 +1,4 @@
-.ant-breadcrumb ol {
+/* .ant-breadcrumb ol {
   display: flex;
   align-items: center;
   font-size: 24px;
@@ -14,8 +14,7 @@
 
 .ant-breadcrumb ol > li:last-child a {
   color: #000;
-}
-
+} */
 .AddCategoryForm__row {
   display: flex;
   justify-content: space-between;

@@ -7,6 +7,95 @@ html {
   line-height: 1.2;
 }
 
-body {
-  font-family: 'Montserrat', sans-serif;
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ant breadcrumb css */
+.ant-breadcrumb ol {
+  display: flex;
+  align-items: center;
+  font-size: 24px;
+}
+.ant-breadcrumb ol > li:hover {
+  cursor: pointer;
+}
+.ant-breadcrumb ol > li a:hover {
+  background-color: transparent;
+}
+.ant-breadcrumb ol > li:last-child a {
+  color: #000;
+}
+
+/* ant Tree select css */
+.ant-select-tree-treenode.ant-select-tree-treenode-switcher-open.ant-select-tree-treenode-selected
+  > .ant-select-tree-node-selected
+  > span,
+.ant-select-tree-treenode.ant-select-tree-treenode-switcher-close.ant-select-tree-treenode-selected
+  > .ant-select-tree-node-selected
+  > span {
+  color: #1d242e;
+  font-weight: 600;
+}
+
+/* DatePicker css */
+.ant-picker-cell-inner:hover {
+  color: #ffffff;
+  background-color: #008f99 !important;
+}
+/* Custom cursor for disabled dates */
+.ant-picker-dropdown .ant-picker-cell-disabled {
+  pointer-events: auto;
+}
+.ant-picker-dropdown .ant-picker-cell-disabled {
+  cursor: not-allowed;
+}
+.ant-picker-dropdown .ant-picker-cell-disabled:active {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.ant-picker-dropdown .ant-picker-cell-disabled .ant-picker-cell-inner:hover {
+  background-color: transparent !important;
+  color: #1d242e !important;
+}
+
+/* ant pagination css */
+/* ant pagination item css */
+.ant-pagination-item.ant-pagination-item-active {
+  color: #008f99;
+  border: 1px solid #008f99;
+}
+.ant-pagination-item.ant-pagination-item-active {
+  color: #008f99;
+  border: 1px solid #008f99;
+}
+.ant-pagination-item.ant-pagination-item-active:focus,
+.ant-pagination-item.ant-pagination-item-active:hover,
+.ant-pagination-item.ant-pagination-item-active:active {
+  color: #008f99;
+  border: 1px solid #008f99;
+}
+.ant-pagination-item.ant-pagination-item-active > a,
+.ant-pagination-item.ant-pagination-item-active:hover > a {
+  color: #008f99;
+}
+
+/* ant pagination option css */
+.ant-pagination-options
+  .ant-select-outlined:not(.ant-select-disabled):not(.ant-select-customize-input):not(
+    .ant-pagination-size-changer
+  ):hover
+  .ant-select-selector {
+  border: 1px solid #008f99;
+}
+.ant-pagination-options
+  .ant-select-outlined:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer)
+  .ant-select-selector {
+  border: 1px solid #008f99;
+}
+.ant-select-item.ant-select-item-option:hover,
+.ant-select-item.ant-select-item-option:active,
+.ant-select-item.ant-select-item-option:focus,
+.ant-select-item.ant-select-item-option.ant-select-item-option-selected {
+  background-color: rgb(0, 143, 153, 0.3);
 }

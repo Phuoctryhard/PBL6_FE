@@ -1,10 +1,46 @@
-import http from '../../until/until'
-const SuppliersAPI = {
-  getSuppliers: () => http.get('suppliers'),
-  addSuppliers: (data) => http.post('suppliers/add', data),
-  updateSuppliers: (id, data) => http.post(`suppliers/update/${id}`, data),
-  deleteSuppliers: (id) => http.post(`suppliers/${id}`),
-  searchSuppliers: (data) => http.get(`suppliers?search=${data}`)
+import { BASE_URL } from '../../until'
+const rootSupplier = `${BASE_URL}/suppliers`
+
+const SupplierAPI = {
+  getAllSuppliers: async (token) =>
+    await fetch(rootSupplier, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }),
+  getSupplierById: async (id, token) =>
+    await fetch(`${rootSupplier}/${id}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }),
+  addSupplier: async (formData, token) =>
+    await fetch(`${rootSupplier}/add`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: formData
+    }),
+  updateSupplier: async (id, formData, token) =>
+    await fetch(`${rootSupplier}/update/${id}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: formData
+    }),
+  deleteSupplier: async (id, token, data) =>
+    await fetch(`${rootSupplier}/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    })
 }
 
-export default SuppliersAPI
+export default SupplierAPI

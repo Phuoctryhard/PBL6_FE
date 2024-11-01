@@ -45,6 +45,25 @@ const AdminAPI = {
       headers: {
         Authorization: 'Bearer ' + token
       }
+    }),
+  changePassword: async (data, token) =>
+    await fetch(`${rootAdmin}/change-password`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token
+      },
+      body: data
+    }),
+  changeRole: async (id, token) =>
+    await fetch(`${rootAdmin}/change-role/${id}`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    }),
+  verifyEmail: async (token) =>
+    await fetch(`${rootAdmin}/verify-email?${token}`, {
+      method: 'POST'
     })
 }
 

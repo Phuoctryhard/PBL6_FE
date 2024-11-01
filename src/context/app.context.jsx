@@ -1,4 +1,4 @@
-import { clearProfile, getAccessToken, getProfile } from '../until/index.js'
+import { clearProfile, getAccessToken, getProfile, saveProfile } from '../until/index.js'
 import { createContext, useState, useContext } from 'react'
 // Context API
 
@@ -24,8 +24,15 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false) // Cập nhật trạng thái xác thực
   }
 
+  const setProfile = (profile) => {
+    setIsProfile(profile)
+    saveProfile(profile)
+  }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, login, logout, setIsProfile, isProfile }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, setIsAuthenticated, login, logout, setIsProfile, isProfile, setProfile }}
+    >
       {children}
     </AuthContext.Provider>
   )

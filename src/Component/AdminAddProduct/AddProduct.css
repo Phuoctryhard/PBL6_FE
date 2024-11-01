@@ -19,6 +19,8 @@
   background-color: #e3ebf3;
   border: 1px solid #bcbec1;
   padding: 8px 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
 }
 
 .AddForm__input:focus {
@@ -37,6 +39,7 @@
   color: red;
   font-size: 12px;
   padding: 6px 0;
+  padding-top: 0;
   width: 100%;
   position: absolute;
   top: 100%;
@@ -142,14 +145,6 @@
   right: 0;
 }
 
-.manufacture__info {
-  width: 100%;
-}
-
-.manufacture__info .AddForm__group:first-child {
-  min-width: 48.5%;
-}
-
 .AddForm__textarea {
   width: 100%;
   margin-top: 4px;
@@ -159,6 +154,8 @@
   border: 1px solid #bcbec1;
   padding: 8px 10px;
   resize: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
 }
 
 .AddForm__textarea:focus {

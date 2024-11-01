@@ -1,21 +1,20 @@
 import { Link, useParams } from 'react-router-dom'
-import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message, Spin, TreeSelect } from 'antd'
-import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
+import { Select, ConfigProvider, Image, Tooltip, message, Spin, TreeSelect } from 'antd'
+import { DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
-import './EditProduct.css'
-import ProductsAPI from '../../Api/admin/products'
-import CategoriesAPI from '../../Api/admin/categories'
-import BrandsAPI from '../../Api/admin/brands'
+import { ProductsAPI, CategoriesAPI, BrandsAPI } from '../../Api/admin'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/app.context'
+import BreadCrumbs from '../AdminBreadCrumbs'
+
 const customThemeSelect = {
   token: {
     colorTextQuaternary: '#1D242E',
-    colorTextPlaceholder: '#1D242E',
-    fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+    colorTextPlaceholder: '#9da4b0',
+    fontFamily: 'Poppins, sans-serif',
     controlOutline: 'rgba(0, 0, 0, 0.4)',
     controlOutlineWidth: '1px',
     colorBorder: '#bcbec1',
@@ -38,15 +37,23 @@ const customThemeSelect = {
 let currentSlide = 0
 const EditProduct = () => {
   const navigate = useNavigate()
-  const { setIsAuthenticated } = useAuth()
+  const { logout } = useAuth()
   const handleUnauthorized = () => {
     toast.error('Unauthorized access or token expires, please login again!', {
       autoClose: { time: 3000 }
     })
-    localStorage.removeItem('accesstoken')
-    setIsAuthenticated(false)
+    logout()
     navigate('/admin/login')
   }
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
+
   const { productID } = useParams()
   const [productName, setProductName] = useState('')
   const [errorProductName, setErrorProductName] = useState('')
@@ -60,10 +67,6 @@ const EditProduct = () => {
   const [errorProductPrice, setErrorProductPrice] = useState('')
   const [productDiscount, setProductDiscount] = useState('')
   const [errorProductDiscount, setErrorProductDiscount] = useState('')
-  const [productQuantity, setProductQuantity] = useState('')
-  const [errorProductQuantity, setErrorProductQuantity] = useState('')
-  const [productSold, setProductSold] = useState('')
-  const [errorProductSold, setErrorProductSold] = useState('')
   const [productPackage, setProductPackage] = useState('')
   const [productIngredient, setProductIngredient] = useState('')
   const [productDosageForm, setProductDosageForm] = useState('')
@@ -85,7 +88,6 @@ const EditProduct = () => {
   const [productDescription, setProductDescription] = useState('')
   const [errorProductDescription, setErrorProductDescription] = useState('')
   const token = localStorage.getItem('accesstoken')
-  const [messageApi, contextHolder] = message.useMessage()
   const [messageResult, setMessageResult] = useState('')
   const [status, setStatus] = useState(0)
   const [submitLoading, setSubmitLoading] = useState(false)
@@ -100,55 +102,30 @@ const EditProduct = () => {
     }
     const data = await response.json()
     const product = data['data']
+
     setProductName(product.product_name !== null ? product.product_name : '')
     setCategory(product.category_id !== null ? product.category_id : '')
-    setBrand(product.brand_id !== null ? product.brand_name : '')
+    setBrand(product.brand_id !== null ? product.brand_id : '')
     setProductPrice(product.product_price !== null ? parseFloat(product.product_price).toString() : '')
     setProductDiscount(product.product_discount !== null ? parseFloat(product.product_discount).toString() : '')
-    setProductQuantity(product.product_quantity !== null ? parseFloat(product.product_quantity).toString() : '')
-    setProductSold(product.product_sold !== null ? parseFloat(product.product_sold).toString() : '')
     setProductPackage(product.package !== null ? product.package : '')
     setProductIngredient(product.ingredient !== null ? product.ingredient : '')
     setProductDosageForm(product.dosage_form !== null ? product.dosage_form : '')
     setProductSpecification(product.specification !== null ? product.specification : '')
     setProductManufacturer(product.manufacturer !== null ? product.manufacturer : '')
     setProductPlaceOfManufacture(product.place_of_manufacture !== null ? product.place_of_manufacture : '')
-    setUploadImages(product.product_images !== null ? product.product_images.map((image) => `${image}`) : [])
+    const imageUrls = product.product_images !== null ? product.product_images.map((image) => `${image}`) : []
+    setUploadImages(imageUrls)
     setProductUses(product.product_uses !== null ? product.product_uses : '')
     setProductDescription(product.product_description !== null ? product.product_description : '')
-  }
-
-  const fetchExistingNames = async () => {
-    const response = await fetch('https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products')
-    const data = await response.json()
-    return data['data'].map((product) => product.product_name)
   }
 
   const handleErrorProductName = async (value) => {
     if (value === '') {
       setErrorProductName('This field cannot be empty.')
       return false
-    } else if (
-      !/^[A-Za-zÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ]/.test(
-        value
-      )
-    ) {
-      setErrorProductName('Name must start with a letter.')
-      return false
-    } else if (
-      !/^[A-Za-z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ ]+$/.test(
-        value
-      )
-    ) {
-      setErrorProductName('Name can only contain letters, numbers, and spaces.')
-      return false
-    } else if (value.length < 3 || value.length > 50) {
-      setErrorProductName('Name must be between 3 and 50 characters long.')
-      return false
-    }
-    const existingNames = await fetchExistingNames()
-    if (existingNames.includes(value) && value !== productName) {
-      setErrorProductName('This name already exists.')
+    } else if (value.length < 3 || value.length > 100) {
+      setErrorProductName('Name must be between 3 and 100 characters long.')
       return false
     }
     return true
@@ -170,34 +147,12 @@ const EditProduct = () => {
     return true
   }
 
-  const handleErrorProductQuantity = (value) => {
-    if (value === '') {
-      setErrorProductQuantity('This field cannot be empty.')
-      return false
-    } else if (!/^[1-9]\d*$/.test(value)) {
-      setErrorProductQuantity('Please enter a positive number')
-      return false
-    }
-    return true
-  }
-
-  const handleErrorProductSold = (value) => {
-    if (value === '') {
-      setErrorProductSold('This field cannot be empty.')
-      return false
-    } else if (!/^[0-9]\d*$/.test(value)) {
-      setErrorProductSold('Please enter a positive number')
-      return false
-    }
-    return true
-  }
-
   const handleErrorProductPrice = (value) => {
     if (value === '') {
       setErrorProductPrice('This field cannot be empty.')
       return false
-    } else if (!/^[1-9]\d*$/.test(value)) {
-      setErrorProductPrice('Please enter a positive number')
+    } else if (!/^\d+(\.\d+)?$/.test(value) || parseFloat(value) <= 0) {
+      setErrorProductPrice('Please enter a positive number.')
       return false
     }
     return true
@@ -281,10 +236,29 @@ const EditProduct = () => {
 
   const handleUploadImages = (event) => {
     if (event.target.files) {
+      setUploadImages([])
       const files = Array.from(event.target.files)
-      const filesArray = Array.from(event.target.files).map((file) => URL.createObjectURL(file))
+      const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
+      const validFiles = []
+      const filesArray = []
+      const errorMessages = []
+      files.forEach((file) => {
+        if (validExtensions.includes(file.type)) {
+          validFiles.push(file)
+          filesArray.push(URL.createObjectURL(file))
+        } else {
+          errorMessages.push(`${file.name} is not a valid image file`)
+        }
+      })
+      if (errorMessages.length > 1) {
+        setStatus(422)
+        setMessageResult('Found invalid image files. System will only keep the valid ones.')
+      } else if (errorMessages.length === 1) {
+        setStatus(422)
+        setMessageResult(errorMessages[0])
+      }
       setUploadImages((prevImages) => prevImages.concat(filesArray))
-      setFiles((prevFiles) => prevFiles.concat(files))
+      setFiles((prevFiles) => prevFiles.concat(validFiles))
       event.target.value = null
     }
   }
@@ -292,7 +266,14 @@ const EditProduct = () => {
   const handleChangeUpload = (e) => {
     if (e.target.files) {
       const file = e.target.files[0]
+      const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
+      if (!validExtensions.includes(file.type)) {
+        setStatus(422)
+        setMessageResult(`File ${file.name} is not a valid image file`)
+        return
+      }
       const image = URL.createObjectURL(file)
+
       const currentIndex = currentSlide
       // Remove the current image and add the new image at the same index
       uploadImages.splice(currentIndex, 1, image)
@@ -385,8 +366,6 @@ const EditProduct = () => {
     const isValidBrand = handleErrorBrand(brand)
     const isValidProductPrice = handleErrorProductPrice(productPrice)
     const isValidProductDiscount = handleErrorProductDiscount(productDiscount)
-    const isValidProductQuantity = handleErrorProductQuantity(productQuantity)
-    const isValidProductSold = handleErrorProductSold(productSold)
     const isValidFileUpload = handleErrorFileUpload(uploadImages)
     const isValidProductDosageForm = handleErrorDosageForm(productDosageForm)
     const isValidProductSpecification = handleErrorSpecification(productSpecification)
@@ -400,8 +379,6 @@ const EditProduct = () => {
       !isValidBrand ||
       !isValidProductPrice ||
       !isValidProductDiscount ||
-      !isValidProductQuantity ||
-      !isValidProductSold ||
       !isValidFileUpload ||
       !isValidProductDosageForm ||
       !isValidProductSpecification ||
@@ -415,36 +392,29 @@ const EditProduct = () => {
       setMessageResult('Invalid data, please check your input')
       return
     }
-    const form = e.target
-    const formData = new FormData(form)
+    const formData = new FormData()
     const product_images = Array.from(new Set(files.map((file) => file.name))).map((name) =>
       files.find((file) => file.name === name)
     )
     product_images.forEach((file) => {
       formData.append('product_images[]', file)
     })
-    // Append fields, converting empty strings to null and ensuring no duplicates
-    const fields = {
-      product_name: formData.get('product_name') || '',
-      category_id: formData.get('category_id') || '',
-      brand_id: formData.get('brand_id') || '',
-      product_price: formData.get('product_price') || '',
-      product_discount: formData.get('product_discount') || '',
-      product_quantity: formData.get('product_quantity') || '',
-      product_sold: formData.get('product_sold') || '',
-      package: formData.get('package') || '',
-      ingredient: formData.get('ingredient') || '',
-      dosage_form: formData.get('dosage_form') || '',
-      specification: formData.get('specification') || '',
-      manufacturer: formData.get('manufacturer') || '',
-      place_of_manufacture: formData.get('place_of_manufacture') || '',
-      product_uses: formData.get('product_uses') || '',
-      product_description: formData.get('product_description') || ''
-    }
-    Object.keys(fields).forEach((key) => {
-      formData.delete(key) // Ensure no duplicates
-      formData.append(key, fields[key])
-    })
+
+    formData.append('product_id', productID)
+    formData.append('product_name', productName)
+    formData.append('category_id', category)
+    formData.append('brand_id', brand)
+    formData.append('product_price', productPrice)
+    formData.append('product_discount', productDiscount)
+    if (productPackage) formData.append('package', productPackage)
+    if (productIngredient) formData.append('ingredient', productIngredient)
+    formData.append('dosage_form', productDosageForm)
+    formData.append('specification', productSpecification)
+    formData.append('manufacturer', productManufacturer)
+    formData.append('place_of_manufacture', productPlaceOfManufacture)
+    formData.append('product_uses', productUses)
+    formData.append('product_description', productDescription)
+    console.log('data', Object.fromEntries(formData))
     try {
       const response = await ProductsAPI.updateProducts(productID, formData, token)
       if (!response.ok) {
@@ -461,62 +431,84 @@ const EditProduct = () => {
         }
         return
       }
-      const result = await response.json()
-      const { messages, status } = result
-      setStatus(status)
-      setMessageResult(messages)
+      setStatus(response.status)
+      setMessageResult('Update product success')
     } catch (e) {
     } finally {
       setSubmitLoading(false)
     }
   }
+
+  const convertToTreeSelectData = (data) => {
+    return data.map((item) => ({
+      label: item.category_name,
+      value: item.category_id
+    }))
+  }
   const convertDataToTree = (data) => {
     const map = {}
     const tree = []
-
     data.forEach((item) => {
       map[item.category_id] = { ...item, children: [] }
     })
-
     data.forEach((item) => {
-      if (item.category_parent_id !== null) {
+      if (item.category_parent_id !== null && map[item.category_parent_id]) {
         map[item.category_parent_id].children.push(map[item.category_id])
-      } else {
+      } else if (item.category_parent_id === null) {
         tree.push(map[item.category_id])
       }
     })
-
     return tree
   }
-
-  const convertToTreeData = (data) => {
-    return data.map((item) => ({
-      title: item.category_name,
-      value: item.category_id,
-      children: item.children ? convertToTreeData(item.children) : []
-    }))
+  const getDeepestChildren = (tree) => {
+    const deepestChildren = []
+    const traverse = (node) => {
+      if (!node.children || node.children.length === 0) {
+        deepestChildren.push(node)
+      } else {
+        node.children.forEach((child) => traverse(child))
+      }
+    }
+    tree.forEach((node) => traverse(node))
+    return deepestChildren
   }
 
   useEffect(() => {
     try {
       fetchProducts()
       CategoriesAPI.getAllCategories(token)
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.status === 401) {
+            handleUnauthorized()
+          }
+          return response.json()
+        })
         .then(({ data }) => {
-          if (data) {
-            let categories = []
-            categories = convertToTreeData(
-              convertDataToTree(data.filter((category) => category.category_is_delete === 0))
-            )
-            setCategories(categories)
+          try {
+            if (data) {
+              let categories = convertToTreeSelectData(
+                getDeepestChildren(
+                  convertDataToTree(
+                    data.filter(
+                      (category) =>
+                        category.category_is_delete === 0 && !category.category_type.toLowerCase().includes('disease')
+                    )
+                  )
+                )
+              )
+              setCategories(categories)
+            }
+          } catch (err) {
+            setStatus(400)
+            setMessageResult('Error fetching category:', err.message)
           }
         })
       BrandsAPI.getBrands()
         .then((response) => response.json())
         .then(({ data }) => {
           let brands = data.map((brand) => ({
-            title: brand.brand_id,
-            value: brand.brand_name
+            label: brand.brand_name,
+            value: brand.brand_id
           }))
           setBrands(brands)
         })
@@ -536,40 +528,41 @@ const EditProduct = () => {
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
       toast.success('Update product success', { autoClose: 2000 })
+      setStatus(null)
+      setMessageResult(null)
       window.history.back()
     } else if (status >= 400) {
-      toast.error(messageResult, { autoClose: 3000 })
+      openMessage('error', messageResult, 4)
+      setStatus(null)
+      setMessageResult(null)
     }
   }, [status, messageResult])
+
   return (
     <section className='max-w-[100%] h-full flex flex-col'>
       {contextHolder}
       <header className='flex justify-between animate-[slideDown_1s_ease]'>
-        <div className='Breadcrumb'>
-          <h1>
-            <Breadcrumb
-              separator={<ArrowRight2 size='15' color='#1D242E' />}
-              className='font-bold text-[#848A91]'
-              items={[
-                { title: 'Inventory' },
-                {
-                  title: (
-                    <Link to='/admin/products' tabIndex={-1}>
-                      List of products
-                    </Link>
-                  )
-                },
-                {
-                  title: (
-                    <Link to={`/admin/products/update/${productID}`} tabIndex={-1}>
-                      <span>Update Product</span>
-                    </Link>
-                  )
-                }
-              ]}
-            />
-          </h1>
-          <p className='mt-[11px]'>
+        <div className='flex flex-col gap-3'>
+          <BreadCrumbs
+            items={[
+              { title: 'Inventory' },
+              {
+                title: (
+                  <Link to='/admin/products' tabIndex={-1}>
+                    List of products
+                  </Link>
+                )
+              },
+              {
+                title: (
+                  <Link to={`/admin/products/update/${productID}`} tabIndex={-1}>
+                    <span>Update Product</span>
+                  </Link>
+                )
+              }
+            ]}
+          />
+          <p className='mt-2'>
             All fields marked with (<span className='text-[red]'>*</span>) are required, except those that are optional.
           </p>
         </div>
@@ -607,8 +600,13 @@ const EditProduct = () => {
       </header>
       <div className='Container'>
         <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
-        <form action='#' className='AddForm mt-6 w-[100%]' autoComplete='off' onSubmit={handleSubmit}>
-          <div className='mb-5 flex w-full justify-between gap-x-12 animate-[slideUp_1s_ease]'>
+        <form
+          action='#'
+          className='AddForm mt-6 w-[100%] flex flex-col text-base'
+          autoComplete='off'
+          onSubmit={handleSubmit}
+        >
+          <div className='flex w-full justify-between gap-x-12 animate-[slideUp_1s_ease]'>
             <div className='max-w-[48%] grow'>
               <div className='AddForm__row'>
                 <div className='AddForm__group'>
@@ -647,15 +645,16 @@ const EditProduct = () => {
                     <span className='text-[red]'>* </span>Category
                   </label>
                   <ConfigProvider theme={customThemeSelect}>
-                    <TreeSelect
+                    <Select
+                      suffixIcon={null}
                       allowClear
                       showSearch
-                      placeholder='- Choose Group -'
+                      placeholder='Select Category'
                       placement='bottomLeft'
-                      treeData={categories}
-                      treeDefaultExpandAll
                       value={category || undefined}
-                      dropdownStyle={{ overflow: 'auto' }}
+                      options={categories}
+                      filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
+                      onDropdownVisibleChange={() => setErrorCategory('')}
                       className='AddForm__select'
                       onChange={(value) => {
                         setCategory(value)
@@ -671,23 +670,20 @@ const EditProduct = () => {
                   </label>
                   <ConfigProvider theme={customThemeSelect}>
                     <Select
+                      suffixIcon={null}
                       id='Brand'
                       options={brands}
-                      placeholder='-Choose brand-'
+                      placeholder='Select brand'
                       className='AddForm__select'
-                      value={brand || undefined}
                       allowClear
+                      value={brand || undefined}
+                      showSearch
+                      filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
                       onDropdownVisibleChange={() => setErrorBrand('')}
                       onChange={(value) => {
-                        const selectedBrand = brands.find((brand) => brand.value === value)
-                        if (selectedBrand) {
-                          setBrand(selectedBrand.value)
-                        } else {
-                          setBrand('')
-                        }
+                        setBrand(value)
                       }}
                     />
-                    <input type='hidden' name='brand_id' value={brands.find((b) => b.value === brand)?.title || ''} />
                   </ConfigProvider>
                   <p className='error_message'>{errorBrand}</p>
                 </div>
@@ -724,40 +720,6 @@ const EditProduct = () => {
                     onFocus={() => setErrorProductDiscount('')}
                   />
                   <p className='error_message'>{errorProductDiscount}</p>
-                </div>
-              </div>
-              <div className='AddForm__row'>
-                <div className='AddForm__group'>
-                  <label htmlFor='product_quantity'>
-                    <span className='text-[red]'>* </span>Quantity
-                  </label>
-                  <input
-                    type='text'
-                    id='product_quantity'
-                    name='product_quantity'
-                    placeholder='40'
-                    className='AddForm__input'
-                    value={productQuantity}
-                    onChange={(e) => setProductQuantity(e.target.value)}
-                    onFocus={() => setErrorProductQuantity('')}
-                  />
-                  <p className='error_message'>{errorProductQuantity}</p>
-                </div>
-                <div className='AddForm__group'>
-                  <label htmlFor='product_sold'>
-                    <span className='text-[red]'>* </span>Sold
-                  </label>
-                  <input
-                    type='text'
-                    id='product_sold'
-                    name='product_sold'
-                    placeholder='20'
-                    className='AddForm__input'
-                    value={productSold}
-                    onChange={(e) => setProductSold(e.target.value)}
-                    onFocus={() => setErrorProductSold('')}
-                  />
-                  <p className='error_message'>{errorProductSold}</p>
                 </div>
               </div>
               <div className='AddForm__row'>
@@ -820,6 +782,40 @@ const EditProduct = () => {
                   <p className='error_message'>{errorProductSpecification}</p>
                 </div>
               </div>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
+                  <label htmlFor='manufacturer'>
+                    <span className='text-[red]'>* </span>Manufacturer
+                  </label>
+                  <input
+                    type='text'
+                    id='manufacturer'
+                    name='manufacturer'
+                    placeholder='Công ty cổ phần dược phẩm Việt Nam'
+                    className='AddForm__input'
+                    onChange={(e) => setProductManufacturer(e.target.value)}
+                    onFocus={() => setErrorProductManufacturer('')}
+                    value={productManufacturer}
+                  />
+                  <p className='error_message'>{errorProductManufacturer}</p>
+                </div>
+                <div className='AddForm__group'>
+                  <label htmlFor='place_of_manufacture'>
+                    <span className='text-[red]'>* </span>Place of manufacture
+                  </label>
+                  <input
+                    type='text'
+                    id='place_of_manufacture'
+                    name='place_of_manufacture'
+                    placeholder='Việt Nam'
+                    className='AddForm__input'
+                    onChange={(e) => setProductPlaceOfManufacture(e.target.value)}
+                    onFocus={() => setErrorProductPlaceOfManufacture('')}
+                    value={productPlaceOfManufacture}
+                  />
+                  <p className='error_message'>{errorProductPlaceOfManufacture}</p>
+                </div>
+              </div>
             </div>
             <Tooltip
               title={errorFiles}
@@ -831,7 +827,7 @@ const EditProduct = () => {
             >
               <div className='max-w-[48%] bg-[transparent] grow flex flex-col gap-y-1'>
                 <label htmlFor=''>
-                  <span className='text-[red]'>* </span>Image (.jpg, .jpeg, .png)
+                  <span className='text-[red]'>* </span>Image (.jpg, .jpeg, .png, .gif, .svg)
                 </label>
                 <div className='slider__container'>
                   <div className='slides'>
@@ -900,7 +896,7 @@ const EditProduct = () => {
                 <input
                   type='file'
                   id='imageUpload'
-                  accept='image/jpg, image/jpeg, image/png'
+                  accept='image/jpg, image/jpeg, image/png, image/gif, image/svg'
                   multiple
                   style={{ display: 'none' }}
                   onChange={handleUploadImages}
@@ -908,7 +904,7 @@ const EditProduct = () => {
                 <input
                   type='file'
                   id='imageChangeUpload'
-                  accept='image/jpg, image/jpeg, image/png'
+                  accept='image/jpg, image/jpeg, image/png, image/gif, image/svg'
                   style={{ display: 'none' }}
                   onChange={handleChangeUpload}
                 />
@@ -916,40 +912,6 @@ const EditProduct = () => {
             </Tooltip>
           </div>
           <div className='flex gap-x-12 justify-between flex-col'>
-            <div className='AddForm__row manufacture__info'>
-              <div className='AddForm__group'>
-                <label htmlFor='manufacturer'>
-                  <span className='text-[red]'>* </span>Manufacturer
-                </label>
-                <input
-                  type='text'
-                  id='manufacturer'
-                  name='manufacturer'
-                  placeholder='Công ty cổ phần dược phẩm Việt Nam'
-                  className='AddForm__input'
-                  onChange={(e) => setProductManufacturer(e.target.value)}
-                  onFocus={() => setErrorProductManufacturer('')}
-                  value={productManufacturer}
-                />
-                <p className='error_message'>{errorProductManufacturer}</p>
-              </div>
-              <div className='AddForm__group'>
-                <label htmlFor='place_of_manufacture'>
-                  <span className='text-[red]'>* </span>Place of manufacture
-                </label>
-                <input
-                  type='text'
-                  id='place_of_manufacture'
-                  name='place_of_manufacture'
-                  placeholder='Việt Nam'
-                  className='AddForm__input'
-                  onChange={(e) => setProductPlaceOfManufacture(e.target.value)}
-                  onFocus={() => setErrorProductPlaceOfManufacture('')}
-                  value={productPlaceOfManufacture}
-                />
-                <p className='error_message'>{errorProductPlaceOfManufacture}</p>
-              </div>
-            </div>
             <div className='AddForm__row w-full'>
               <div className='relative w-full'>
                 <label htmlFor='product_uses'>
@@ -977,7 +939,7 @@ const EditProduct = () => {
                   id='product_description'
                   name='product_description'
                   rows={6}
-                  placeholder='<div class="pmc-content-html [&amp;_a:not(.ignore-css_a)]:text-hyperLink max-w-[calc(100vw-32px)] overflow-auto md:w-[calc(var(--width-container)-312px-48px)] md:max-w-none"><p><strong>Thành phần </strong></p><p>ACETYLCYSTEINE 100mg Tá dược bao gồm Vitamin C, Saccharose, Natri saccharin, Kollidon K30, Mùi cam   </p><p></p><p><strong>Chỉ định (Thuốc dùng cho bệnh gì?) </strong></p><p>Thuốc Acehasan 100 làm loãng đờm trong các bệnh phế quản - phổi cấp và mãn tính kèm theo sự tăng tiết chất nhầy'
+                  placeholder='Thuốc Acehasan 100 làm loãng đờm trong các bệnh phế quản - phổi cấp và mãn tính kèm theo sự tăng tiết chất nhầy'
                   className='AddForm__textarea'
                   onChange={(e) => {
                     setProductDescription(e.target.value)
@@ -989,7 +951,7 @@ const EditProduct = () => {
               </div>
             </div>
           </div>
-          <div className='AddForm__row button__group'>
+          <div className='AddForm__row button__group mt-2'>
             <button type='submit' className='AddForm__SubmitButton'>
               Submit
             </button>

@@ -47,7 +47,6 @@ class Http {
             saveProfile(response.data.data)
           }
         }
-
         return response
       },
       function (error) {

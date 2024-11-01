@@ -1,17 +1,53 @@
 import './Setting.css'
 import { useState, useEffect, useRef } from 'react'
 import { ArrowRight2, Personalcard, TickCircle, Lock } from 'iconsax-react'
-import { Link } from 'react-router-dom'
-import { Breadcrumb, message, Modal, Tooltip, Spin, ConfigProvider } from 'antd'
+import { Breadcrumb, message, Tooltip, Spin } from 'antd'
 import { DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { AdminAPI } from '../../Api/admin'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/app.context'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const AdminSetting = () => {
-  const token = localStorage.getItem('accesstoken')
   const [typeForm, setTypeForm] = useState('profile') // type form profile or change password
   const [submitLoading, setSubmitLoading] = useState(false) // loading submit state
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
+  const navigate = useNavigate()
+  const { isProfile, logout, setProfile } = useAuth()
+
+  const [token, setToken] = useState(localStorage.getItem('accesstoken'))
+
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    logout()
+    navigate('/admin/login')
+  }
+
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setToken(localStorage.getItem('accesstoken'))
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [])
+
   const PersonalBtnRef = useRef(null)
   const ChangePasswordBtnRef = useRef(null)
   const [focusPersonalForm, setFocusPersonalForm] = useState()
@@ -47,7 +83,7 @@ const AdminSetting = () => {
     const droppedFile = e.dataTransfer.files[0]
     if (droppedFile && droppedFile.type.startsWith('image/')) {
       setSelectedFile(droppedFile)
-      setImageCard(URL.createObjectURL(droppedFile))
+      setAvatar(URL.createObjectURL(droppedFile))
       fileInputRef.current.value = null
     }
   }
@@ -55,17 +91,21 @@ const AdminSetting = () => {
   //handle upload Avatar
   const handleUploadAvatar = (e) => {
     const file = e.target.files[0]
-    if (file && file.type.startsWith('image/')) {
+    const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
+    if (file && validExtensions.includes(file.type)) {
       setSelectedFile(file)
-      setImageCard(URL.createObjectURL(file))
+      setAvatar(URL.createObjectURL(file))
       fileInputRef.current.value = null
+    } else {
+      setStatus(422)
+      setMessageResult(`File ${file.name} is not a valid image file.`)
     }
   }
 
   //handle clear Avatar
   const handleClearAvatar = (e) => {
     e.stopPropagation()
-    setImageCard(null)
+    setAvatar(null)
     setSelectedFile(null)
   }
 
@@ -103,14 +143,13 @@ const AdminSetting = () => {
 
   //handle cancel
   const handleCancel = () => {
-    PersonalBtnRef.current.focus()
     setAdminFullName(adminFullNameCard)
     setEmail(emailCard)
     setAvatar(imageCard)
+    setSelectedFile(null)
     setErrorAdminFullName('')
     setErrorEmail('')
     setErrorFileUpload('')
-    setSelectedFile(null)
   }
   //#endregion
 
@@ -155,16 +194,12 @@ const AdminSetting = () => {
   const fetchAdminProfile = async () => {
     const response = await AdminAPI.getAdmin(token)
     if (!response.ok) {
-      const { message, data } = await response.json()
+      const { messages } = await response.json()
       if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
-      } else if (response.status === 422) {
-        setStatus(422)
-        setMessageResult(`Invalid data: ${data} with message: ${message}`)
+        handleUnauthorized()
       } else {
         setStatus(response.status)
-        setMessageResult(`Error get profile: ${data} with message: ${message}`)
+        setMessageResult(`Error get profile: ${messages}`)
       }
       return
     }
@@ -178,20 +213,22 @@ const AdminSetting = () => {
     setImageCard(data.admin_avatar)
     switch (data.admin_is_admin) {
       case 0:
-        setAdminRole('User')
-        break
-      case 1:
         setAdminRole('Admin')
         break
-      case 2:
+      case 1:
         setAdminRole('Super Admin')
+        break
+      case 2:
+        setAdminRole('Manager')
         break
     }
   }
 
   useEffect(() => {
+    setFocusPersonalForm(true)
     fetchAdminProfile()
   }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitLoading(true)
@@ -208,9 +245,8 @@ const AdminSetting = () => {
       formData.append('admin_fullname', adminFullName)
       formData.append('email', adminEmail)
       if (selectedFile) formData.append('admin_avatar', selectedFile)
-      console.log('data', Object.fromEntries(formData))
-      setSubmitLoading(false)
     } else {
+      ChangePasswordBtnRef.current.focus()
       const current_password = currentPassword
       const new_password = newPassword
       const new_password_confirmation = confirmPassword
@@ -224,41 +260,65 @@ const AdminSetting = () => {
       formData.append('current_password', current_password)
       formData.append('new_password', new_password)
       formData.append('new_password_confirmation', new_password_confirmation)
-      console.log('data', Object.fromEntries(formData))
+    }
+    let response = null
+    try {
+      if (typeForm === 'profile') response = await AdminAPI.updateAdmin(formData, token)
+      else response = await AdminAPI.changePassword(formData, token)
+      if (response) {
+        if (!response.ok) {
+          const { messages } = await response.json()
+          if (response.status === 401) {
+            handleUnauthorized()
+          } else {
+            setStatus(response.status)
+            setMessageResult(messages)
+          }
+          setSubmitLoading(false)
+          return
+        }
+        const result = await response.json()
+        if (typeForm === 'profile') {
+          const profileData = {
+            ...Object.fromEntries(formData),
+            admin_is_admin: adminRole,
+            admin_avatar: selectedFile ? URL.createObjectURL(selectedFile) : imageCard
+          }
+          setProfile(profileData)
+        } else {
+          setCurrentPassword('')
+          setNewPassword('')
+          setConfirmPassword('')
+        }
+        const { messages, status } = result
+        setStatus(status)
+        setMessageResult(messages)
+        setSubmitLoading(false)
+      }
+    } catch (e) {
+      setSubmitLoading(false)
+    } finally {
       setSubmitLoading(false)
     }
-    // let response = null
-    // try {
-    //   response = await AdminAPI.updateAdmin(formData, token)
-    //   if (!response.ok) {
-    //     setSubmitLoading(false)
-    //     const { message, data } = await response.json()
-    //     if (response.status === 401) {
-    //       setStatus(401)
-    //       setMessageResult('Unauthorized access. Please check your credentials.')
-    //     } else if (response.status === 422) {
-    //       setStatus(422)
-    //       setMessageResult(`Invalid data: ${data} with message: ${message}`)
-    //     } else {
-    //       setStatus(response.status)
-    //       setMessageResult(`Error update profile: ${data} with message: ${message}`)
-    //     }
-    //     return
-    //   }
-    //   const result = await response.json()
-    //   const { messages, status } = result
-    //   setStatus(status)
-    //   setMessageResult(messages)
-    //   setSubmitLoading(false)
-    // } catch (e) {
-    //   setSubmitLoading(false)
-    // } finally {
-    //   setSubmitLoading(false)
-    // }
   }
 
+  useEffect(() => {
+    if ([200, 201, 202, 204].includes(status)) {
+      if (typeForm === 'profile') {
+        openMessage('success', 'Update admin was successfully', 3)
+        fetchAdminProfile()
+      } else openMessage('success', 'Change password was successfully', 3)
+      setStatus(null)
+      setMessageResult(null)
+    } else if (status >= 400) {
+      openMessage('error', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    }
+  }, [status, messageResult])
   return (
     <section className='w-full max-w-[100%] h-full'>
+      {contextHolder}
       <header className='flex justify-between'>
         <div className='Breadcrumb animate-[slideLeftToRight_1s_ease]'>
           <h1>
@@ -270,11 +330,12 @@ const AdminSetting = () => {
           </h1>
         </div>
       </header>
+      <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
       <div className='mt-10 flex gap-x-6 h-max'>
         <div className='w-[380px] bg-[#ffffff] rounded-xl border-[1px] border-solid border-[#ebedf0] p-6 animate-slideLeftToRight h-max'>
           <div className='setting__information flex flex-col gap-y-6 items-center justify-center w-[100%]'>
             <img
-              src={Avatar ? Avatar : '/assets/images/default-avatar.png'}
+              src={imageCard ? imageCard : '/assets/images/default-avatar.png'}
               alt='setting'
               className='w-40 h-40 rounded-full border border-dashed border-[rgb(102, 181, 163)] object-cover'
             />
@@ -285,7 +346,6 @@ const AdminSetting = () => {
             </div>
             <div className='w-full text-lg flex flex-col gap-4 px-12'>
               <button
-                autoFocus
                 ref={PersonalBtnRef}
                 type='button'
                 className={`setting__information__button ${focusPersonalForm ? 'isFocus' : ''}`}
@@ -343,7 +403,7 @@ const AdminSetting = () => {
                       }}
                     >
                       <div
-                        className='mt-4 flex gap-x-4'
+                        className='mt-4 flex gap-x-4 w-full justify-center'
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
@@ -352,10 +412,13 @@ const AdminSetting = () => {
                           type='button'
                           onClick={() => document.getElementById('admin_avatar').click()}
                           className='AddCategoryForm__uploadBtn setting__uploadBtn focus:outline-none focus:border-[1px] focus:border-solid focus:border-[#1d242e] [&:not(:focus)]:outline-none [&:not(:focus)]:border-[3px] [&:not(:focus)]:border-dashed [&:not(:focus)]:border-[#ebedf0]'
+                          style={{
+                            border: Avatar ? 'none' : dragging ? '3px dashed #1d242e' : '3px dashed #ebedf0'
+                          }}
                         >
-                          {imageCard ? (
+                          {Avatar ? (
                             <>
-                              <img src={imageCard} alt='Avatar' className='w-full h-full rounded-md' />
+                              <img src={Avatar} alt='Avatar' className='w-full h-full rounded-md object-contain' />
                               <CloseCircleOutlined
                                 className='absolute top-0 right-0 text-red-500 text-[20px] cursor-pointer'
                                 onClick={handleClearAvatar}
@@ -371,7 +434,12 @@ const AdminSetting = () => {
                             </div>
                           )}
                         </button>
-                        <div className='bg-[#cccccc] h-full w-32 rounded-md flex grow'>
+                        <div
+                          className='bg-[#cccccc] h-full w-32 rounded-md flex grow'
+                          style={{
+                            display: Avatar ? 'none' : 'flex'
+                          }}
+                        >
                           <p className='m-auto text-gray-600 text-sm'>160x160</p>
                         </div>
                       </div>
@@ -400,7 +468,9 @@ const AdminSetting = () => {
                         placeholder='Lam Nhat Minh'
                         value={adminFullName}
                         onChange={(e) => setAdminFullName(e.target.value)}
-                        onFocus={() => setErrorAdminFullName('')}
+                        onFocus={() => {
+                          setErrorAdminFullName('')
+                        }}
                       />
                     </Tooltip>
                   </div>

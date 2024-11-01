@@ -1,4 +1,4 @@
-import { useAuth, AuthProvider } from '../../context/app.context'
+import { useAuth } from '../../context/app.context'
 import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SideBarItem } from './Component/SideBarItem'
@@ -16,30 +16,19 @@ import {
   ReceiptEdit,
   Setting2,
   User,
-  HambergerMenu,
   UserAdd,
   UserSquare,
   Logout
 } from 'iconsax-react'
-import { AdminAPI } from '../../Api/admin'
 import './Sidebar.css'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+
 const Sidebar = () => {
   const token = localStorage.getItem('accesstoken')
-  const [status, setStatus] = useState(null)
-  const [messageResult, setMessageResult] = useState('')
   const navigate = useNavigate()
-  const { setIsAuthenticated } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    localStorage.removeItem('accesstoken')
-    setIsAuthenticated(false)
-    navigate('/admin/login')
-  }
+  const { setIsAuthenticated, isProfile, logout } = useAuth()
   const location = useLocation()
 
   //#region info admin
@@ -61,7 +50,7 @@ const Sidebar = () => {
   ]
 
   const Users = [
-    { id: 'customers', name: 'Customers' },
+    { id: 'manage-users', name: 'Customers' },
     { id: 'manage-admins', name: 'Admin' }
   ]
 
@@ -105,13 +94,13 @@ const Sidebar = () => {
   useEffect(() => {
     const path = location.pathname
     const navID = path.split('/')[2]
-    const subNavID = ['products', 'categories', 'customers', 'manage-admins']
+    const subNavID = ['products', 'categories', 'customers', 'manage-admins', 'manage-users']
     if (subNavID.includes(navID)) {
       if (navID === 'products' || navID === 'categories') {
         setActiveNav(null)
         setShowInventory(true)
         setSelectedId(navID)
-      } else if (navID === 'manage-admins') {
+      } else if (navID === 'manage-admins' || navID === 'manage-users') {
         setActiveNav(null)
         setShowUser(true)
         setSelectedId(navID)
@@ -125,40 +114,16 @@ const Sidebar = () => {
   //#region admin profile
   //#region fetch admin profile
   const fetchAdminProfile = async () => {
-    const response = await AdminAPI.getAdmin(token)
-    if (!response.ok) {
-      const { message, data } = await response.json()
-      if (response.status === 401) {
-        handleUnauthorized()
-      } else if (response.status === 422) {
-        setStatus(422)
-        setMessageResult(`Invalid data: ${data} with message: ${message}`)
-      } else {
-        setStatus(response.status)
-        setMessageResult(`Error get profile: ${data} with message: ${message}`)
-      }
-      return
-    }
-    const result = await response.json()
-    const { data } = result
+    const data = isProfile
     setAdminFullName(data.admin_fullname)
     setEmail(data.email)
     setAvatar(data.admin_avatar)
-    switch (data.admin_is_admin) {
-      case 0:
-        setAdminRole('User')
-        break
-      case 1:
-        setAdminRole('Admin')
-        break
-      case 2:
-        setAdminRole('Super Admin')
-        break
-    }
+    setAdminRole(data.admin_is_admin)
   }
   useEffect(() => {
     fetchAdminProfile()
-  }, [])
+  }, [isProfile])
+
   //#endregion
 
   //#region show admin profile options
@@ -192,33 +157,33 @@ const Sidebar = () => {
   }
 
   const handleLogoutClick = () => {
-    localStorage.removeItem('accesstoken')
-    setIsAuthenticated(false)
+    logout()
     navigate('/admin/login')
   }
   //#endregion
 
   return (
     <nav className='navBar w-[256px] bg-[#283342] text-[#ffffff] h-[100vh] overflow-y-auto overflow-x-hidden'>
-      <div className='navBar__header sticky top-0 left-0 w-[100%]'>
-        <div className='navBar__logo bg-[#1D242E] py-[9px] px-[24px] flex items-center min-w-[256px] h-[60px] z-[1]'>
+      <header className='sticky top-0 left-0 w-full z-10'>
+        <div className='bg-[#1d242e] py-[9px] px-[24px] flex items-center w-full h-[60px] justify-between gap-4'>
           <img
-            src='/assets/images/Admin_homepage_logo.png'
+            src='/assets/images/Logo_Pbl6.png'
             alt='Admin-homepage-logo'
-            className='w-[42px] h-[42px] mr-[16px]'
+            className='w-[2.813rem] h-[2.813rem] object-contain'
           />
-          <span className='logo__name text-[18px] text-[#FFFFFF]'>Pharmarcy</span>
+          <span className='w-full font-semibold text-sm'>MediCare Central</span>
         </div>
-        <div className='navBar__info h-[102px] flex justify-between items-center px-[24px] py-[30px] bg-[#283342] min-w-[256px]'>
-          <div className='flex relative w-full'>
+        <div className='h-[102px] flex justify-between items-center px-[25px] py-[30px] bg-[#283342] w-full gap-4'>
+          <div className='flex relative w-full gap-4'>
             <img
               src={Avatar || '/assets/images/default-avatar.png'}
               alt='no image'
-              className='navBar__avatar w-[42px] h-[42px] rounded-[4px] mr-[16px] object-cover'
+              className='w-[2.813rem] h-[2.813rem] rounded object-cover'
             />
-            <div className='status inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border-2 border-solid border-[#2e3744]'></div>
-            <div className='text-xs flex flex-col justify-between items-start'>
-              <span className='text-sm whitespace-nowrap overflow-hidden text-ellipsis w-[80%]'>{adminFullName}</span>
+            <span className='inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 animate-ping'></span>
+            <span className='inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border border-solid border-[#2e3744]'></span>
+            <div className='text-xs flex flex-col justify-between items-start w-[6.688rem]'>
+              <span className='text-sm whitespace-nowrap overflow-hidden text-ellipsis w-full'>{adminFullName}</span>
               <span className='text-[#d6b80d]'>{adminRole}</span>
             </div>
           </div>
@@ -226,13 +191,13 @@ const Sidebar = () => {
             ref={MoreRef}
             size={20}
             color='#ffffff'
-            className='rotate-90 cursor-pointer'
+            className='cursor-pointer'
             onMouseEnter={handleMouseEnterShowProfile}
             onMouseLeave={handleMouseLeaveCloseProfile}
           />
           <div
             ref={ProfileSettingRef}
-            className='w-32 h-max bg-[#ffffff] absolute right-2 top-[83%] flex flex-col box-border rounded-md text-xs after:content-[""] after:absolute after:bottom-[85%] after:right-2 after:w-4 after:h-4 after:bg-[#ffffff] after:rotate-45 after:rounded-tl-md after:shadow-[-2px_-2px_0_0_#ffffff] border border-solid border-[#1D242E] origin-[87.8%_0%] transition-all duration-500 ease'
+            className='w-32 h-max bg-[#ffffff] absolute right-4 top-[85%] flex flex-col box-border rounded-md text-xs after:content-[""] after:absolute after:bottom-[85%] after:right-2 after:w-4 after:h-4 after:bg-[#ffffff] after:rotate-45 after:rounded-tl-md after:shadow-[-2px_-2px_0_0_#ffffff] border border-solid border-[#1D242E] origin-[87.8%_0%] transition-all duration-500 ease'
             onMouseEnter={handleMouseEnterShowProfile}
             onMouseLeave={handleMouseLeaveCloseProfile}
             style={{
@@ -261,7 +226,7 @@ const Sidebar = () => {
             </button>
           </div>
         </div>
-      </div>
+      </header>
       <div className='navBar__menu flex flex-col text-[14px] min-w-[256px]'>
         <NavLink
           to='/admin/overview'
@@ -366,7 +331,7 @@ const Sidebar = () => {
           }}
         >
           <SideBarItem
-            name='Users'
+            name='Managers'
             iconName={<User className='w-6' />}
             arrowIcon={
               <ArrowDown2
@@ -389,22 +354,31 @@ const Sidebar = () => {
             }}
           >
             <ul>
-              {Users.map((item) => (
-                <li
-                  key={item.id}
-                  onClick={() => {
-                    handleSubNavClick(item.id)
-                  }}
-                  style={{ backgroundColor: item.id === selectedId ? '#008f99' : '' }}
-                >
-                  <NavLink
-                    to={`/admin/${item.id}`}
-                    className='pl-[62px] px-[24px] h-[46px] flex items-center justify-start cursor-pointer'
+              {Users.filter((item) => {
+                if (adminRole.toLowerCase() === 'admin') {
+                  return item.id === 'manage-users'
+                }
+                return item
+              }).map((item) => {
+                return (
+                  <li
+                    key={item.id}
+                    onClick={() => {
+                      handleSubNavClick(item.id)
+                    }}
+                    style={{
+                      backgroundColor: item.id === selectedId ? '#008f99' : ''
+                    }}
                   >
-                    {item.name}
-                  </NavLink>
-                </li>
-              ))}
+                    <NavLink
+                      to={`/admin/${item.id}`}
+                      className='pl-[62px] px-[24px] h-[46px] flex items-center justify-start cursor-pointer'
+                    >
+                      {item.name}
+                    </NavLink>
+                  </li>
+                )
+              })}
             </ul>
           </div>
         }
@@ -423,11 +397,11 @@ const Sidebar = () => {
           <SideBarItem name='Comments/reviews' iconName={<Keyboard className='w-6' />} />
         </NavLink>
         <NavLink
-          to='/admin/illness'
-          className={activeNav === 'illness' ? 'bg-[#008f99]' : ''}
-          onClick={() => handleNavClick('illness')}
+          to='/admin/disease'
+          className={activeNav === 'disease' ? 'bg-[#008f99]' : ''}
+          onClick={() => handleNavClick('disease')}
         >
-          <SideBarItem name='illness' iconName={<Hospital className='w-6' />} />
+          <SideBarItem name='Diseases' iconName={<Hospital className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/setting'
