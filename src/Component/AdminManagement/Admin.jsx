@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import './Admin.css'
 import { AdminAPI } from '../../Api/admin'
 import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye, ArrowDown2 } from 'iconsax-react'
 import { Link, useNavigate, useNavigation } from 'react-router-dom'
@@ -21,6 +20,7 @@ import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined 
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '../../context/app.context'
+import AdminTable from '../AdminTable'
 const { RangePicker } = DatePicker
 const filterTheme = {
   token: {
@@ -845,13 +845,13 @@ const Admin = () => {
           </form>
         </div>
       </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-slideUp'>
+      <div className='my-4 p-5 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center w-[250px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for admins'
-              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='focus:border-[#1D242E] border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
@@ -937,58 +937,21 @@ const Admin = () => {
             </ConfigProvider>
           </div>
         </div>
-        <div className='pt-[15px]'>
-          <ConfigProvider
-            theme={{
-              components: {
-                Table: {
-                  rowHoverBg: '#f5f5f5',
-                  headerSplitColor: 'transparent',
-                  headerBg: '#f5f5f5',
-                  sortField: '#f5f5f5',
-                  sortOrder: '#f5f5f5',
-                  borderColor: '#e8ebed'
-                }
-              }
+        <div className='pt-4'>
+          <AdminTable
+            columns={columns}
+            rowKey='admin_id'
+            data={filterData}
+            tableParams={tableParams}
+            tableStyles={{ width: '1200px', minHeight: '350px', maxHeight: '450px', backgroundColor: '#ffffff' }}
+            scroll={{ y: '300px' }}
+            loading={loading}
+            handleTableChange={handleTableChange}
+            pageSizeOptionsParent={['8', '10', '20', '50']}
+            paginationTable={{
+              position: ['none'],
+              ...tableParams.pagination
             }}
-          >
-            <Table
-              size='small'
-              columns={columns}
-              rowKey={(record) => record.admin_id}
-              dataSource={filterData}
-              pagination={{
-                position: ['none'],
-                ...tableParams.pagination
-              }}
-              loading={loading}
-              onChange={handleTableChange}
-              scroll={{
-                y: '300px'
-              }}
-              style={{
-                width: '1200px',
-                minHeight: '350px',
-                maxHeight: '450px',
-                backgroundColor: '#ffffff'
-              }}
-            />
-          </ConfigProvider>
-          <CustomPagination
-            total={tableParams.pagination.total}
-            current={tableParams.pagination.current}
-            pageSize={tableParams.pagination.pageSize}
-            onChange={(page, pageSize) =>
-              handleTableChange(
-                {
-                  ...tableParams.pagination,
-                  current: page,
-                  pageSize
-                },
-                tableParams.filters,
-                tableParams.sortOrder
-              )
-            }
           />
         </div>
       </div>

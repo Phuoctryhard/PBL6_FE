@@ -333,7 +333,7 @@ const ViewProduct = () => {
         <div className='w-[100%] max-[100%] bg-[#ffffff] rounded-xl px-7 pt-7'>
           <div className='container__group'>
             <div className='group__content'>
-              <h2 className='text-[16px] font-bold border-b-[2px] border-b-solid border-b-[#e7ebee] px-[30px] py-[15px] w-[100%]'>
+              <h2 className='text-base font-bold border-b-[2px] border-b-solid border-b-[#e7ebee] px-[30px] py-[15px] w-[100%]'>
                 Product Description
               </h2>
               <div className='group__row'>

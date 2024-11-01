@@ -200,23 +200,24 @@ const Sidebar = () => {
 
   return (
     <nav className='navBar w-[256px] bg-[#283342] text-[#ffffff] h-[100vh] overflow-y-auto overflow-x-hidden'>
-      <div className='navBar__header sticky top-0 left-0 w-[100%]'>
-        <div className='navBar__logo bg-[#1D242E] py-[9px] px-[24px] flex items-center min-w-[256px] h-[60px] z-[1]'>
+      <header className='navBar__header sticky top-0 left-0 w-[100%] z-10'>
+        <div className='navBar__logo bg-[#1d242e] py-[9px] px-[24px] flex items-center min-w-[256px] h-[60px] justify-between gap-4'>
           <img
-            src='/assets/images/Admin_homepage_logo.png'
+            src='/assets/images/Logo_Pbl6.png'
             alt='Admin-homepage-logo'
-            className='w-[42px] h-[42px] mr-[16px]'
+            className='w-[2.813rem] h-[2.813rem] object-contain'
           />
-          <span className='logo__name text-[18px] text-[#FFFFFF]'>Pharmarcy</span>
+          <span className='w-full font-semibold text-sm'>MediCare Central</span>
         </div>
         <div className='navBar__info h-[102px] flex justify-between items-center px-[24px] py-[30px] bg-[#283342] min-w-[256px]'>
-          <div className='flex relative w-full'>
+          <div className='flex relative w-full gap-4'>
             <img
               src={Avatar || '/assets/images/default-avatar.png'}
               alt='no image'
-              className='navBar__avatar w-[42px] h-[42px] rounded-[4px] mr-[16px] object-cover'
+              className='w-[2.813rem] h-[2.813rem] rounded object-cover'
             />
-            <div className='status inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border-2 border-solid border-[#2e3744]'></div>
+            <span className='status inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 animate-ping'></span>
+            <span className='inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border border-solid border-[#2e3744]'></span>
             <div className='text-xs flex flex-col justify-between items-start'>
               <span className='text-sm whitespace-nowrap overflow-hidden text-ellipsis w-[80%]'>{adminFullName}</span>
               <span className='text-[#d6b80d]'>{adminRole}</span>
@@ -261,7 +262,7 @@ const Sidebar = () => {
             </button>
           </div>
         </div>
-      </div>
+      </header>
       <div className='navBar__menu flex flex-col text-[14px] min-w-[256px]'>
         <NavLink
           to='/admin/overview'

@@ -1,4 +1,3 @@
-import './Brands.css'
 import BrandsAPI from '../../Api/admin/brands'
 import { ArrowRight2, Add, SearchNormal, Edit, Eye } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
@@ -21,6 +20,8 @@ import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined 
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '../../context/app.context'
+import AdminTable from '../AdminTable'
+import BreadCrumbs from '../AdminBreadCrumbs'
 const { RangePicker } = DatePicker
 const Brands = () => {
   const token = localStorage.getItem('accesstoken')
@@ -265,6 +266,7 @@ const Brands = () => {
         total: result.length
       }
     })
+    console.log('tableParams', tableParams)
   }
 
   const fetchBrands = async (params) => {
@@ -326,9 +328,9 @@ const Brands = () => {
     tableParams.pagination?.current,
     tableParams?.sortOrder,
     tableParams?.sortField,
+    tableParams.pagination?.pageSize,
     JSON.stringify(tableParams.filters),
     selectedFrom,
-    tableParams.pagination?.pageSize,
     selectedTo
   ])
   //#endregion
@@ -524,24 +526,20 @@ const Brands = () => {
   return (
     <section className='w-full max-w-[100%] h-full'>
       <header className='flex justify-between animate-slideDown'>
-        <div className='Breadcrumb'>
-          <h1>
-            <Breadcrumb
-              separator={<ArrowRight2 size='15' color='#1D242E' />}
-              className='font-bold text-[#848A91]'
-              items={[
-                { title: 'Brands' },
-                {
-                  title: (
-                    <Link to='/admin/brands' tabIndex='-1'>
-                      List of brands ({filterData?.length})
-                    </Link>
-                  )
-                }
-              ]}
-            ></Breadcrumb>
-          </h1>
-          <p className='mt-[11px]'>List of brands available</p>
+        <div className='flex flex-col gap-3'>
+          <BreadCrumbs
+            items={[
+              { title: 'Brands' },
+              {
+                title: (
+                  <Link to='/admin/brands' tabIndex='-1'>
+                    List of brands ({filterData?.length})
+                  </Link>
+                )
+              }
+            ]}
+          />
+          <p>List of brands available</p>
         </div>
         <button
           className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] focus:outline-none focus:opacity-80 hover:opacity-80'
@@ -707,13 +705,13 @@ const Brands = () => {
           </Tooltip>
         </div>
       </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-slideUp'>
+      <div className='p-5 my-4 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for brands'
-              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='focus:border-[#1D242E] border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
@@ -743,17 +741,6 @@ const Brands = () => {
                   colorPrimary: '#008f99'
                 },
                 components: {
-                  Select: {
-                    activeBorderColor: '#1D242E',
-                    hoverBorderColor: '#1D242E',
-                    optionActiveBg: '#bde0fe',
-                    optionSelectedBg: '#bde0fe',
-                    optionSelectedColor: '#1D242E'
-                  },
-                  TreeSelect: {
-                    nodeHoverBg: '#bde0fe',
-                    nodeSelectedBg: '#bde0fe'
-                  },
                   DatePicker: {
                     activeBorderColor: '#1D242E',
                     hoverBorderColor: '#1D242E'
@@ -772,58 +759,21 @@ const Brands = () => {
             </ConfigProvider>
           </div>
         </div>
-        <div className='pt-[15px]'>
-          <ConfigProvider
-            theme={{
-              components: {
-                Table: {
-                  rowHoverBg: '#f5f5f5',
-                  headerSplitColor: 'transparent',
-                  headerBg: '#f5f5f5',
-                  sortField: '#f5f5f5',
-                  sortOrder: '#f5f5f5',
-                  borderColor: '#e8ebed'
-                }
-              }
+        <div className='pt-4'>
+          <AdminTable
+            columns={columns}
+            rowKey='brand_id'
+            data={filterData}
+            tableParams={tableParams}
+            tableStyles={{ width: '1200px', minHeight: '350px', maxHeight: '450px', backgroundColor: '#ffffff' }}
+            scroll={{ y: '300px' }}
+            loading={loading}
+            handleTableChange={handleTableChange}
+            pageSizeOptionsParent={['8', '10', '20', '50']}
+            paginationTable={{
+              position: ['none'],
+              ...tableParams.pagination
             }}
-          >
-            <Table
-              size='small'
-              columns={columns}
-              rowKey={(record) => record.brand_id}
-              dataSource={filterData}
-              pagination={{
-                position: ['none'],
-                ...tableParams.pagination
-              }}
-              loading={loading}
-              onChange={handleTableChange}
-              scroll={{
-                y: '300px'
-              }}
-              style={{
-                width: '1200px',
-                minHeight: '350px',
-                maxHeight: '450px',
-                backgroundColor: '#ffffff'
-              }}
-            />
-          </ConfigProvider>
-          <CustomPagination
-            total={tableParams.pagination.total}
-            current={tableParams.pagination.current}
-            pageSize={tableParams.pagination.pageSize}
-            onChange={(page, pageSize) =>
-              handleTableChange(
-                {
-                  ...tableParams.pagination,
-                  current: page,
-                  pageSize
-                },
-                tableParams.filters,
-                tableParams.sortOrder
-              )
-            }
           />
         </div>
       </div>

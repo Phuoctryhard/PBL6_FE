@@ -2,8 +2,7 @@ import { ArrowRight2, Add, SearchNormal, ArrowDown2, Edit, Eye } from 'iconsax-r
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
-import { Table, TreeSelect, Breadcrumb, Dropdown, Popconfirm, message, Select, DatePicker } from 'antd'
-import './Product.css'
+import { TreeSelect, Dropdown, Popconfirm, message, Select, DatePicker } from 'antd'
 import { Pagination } from 'antd'
 import qs from 'qs'
 import { ProductsAPI, BrandsAPi, CategoriesAPi } from '../../Api/admin'
@@ -12,6 +11,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/app.context'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import AdminTable from '../AdminTable'
+import BreadCrumbs from '../AdminBreadCrumbs'
 const { RangePicker } = DatePicker
 
 //#region theme for ant design components
@@ -473,39 +474,35 @@ const AdminProducts = () => {
     <section className='max-w-[100%] h-full'>
       {contextHolder}
       <header className='flex justify-between animate-[slideDown_1s_ease]'>
-        <div className='Breadcrumb'>
-          <h1>
-            <Breadcrumb
-              separator={<ArrowRight2 size='15' color='#1D242E' />}
-              className='font-bold text-[#848A91]'
-              items={[
-                { title: 'Inventory' },
-                {
-                  title: (
-                    <Link to='/admin/products' tabIndex='-1'>
-                      List of products ({filterData?.length})
-                    </Link>
-                  )
-                }
-              ]}
-            ></Breadcrumb>
-          </h1>
-          <p className='mt-[11px]'>List of products available for sales</p>
+        <div className='flex flex-col gap-3'>
+          <BreadCrumbs
+            items={[
+              { title: 'Inventory' },
+              {
+                title: (
+                  <Link to='/admin/products' tabIndex='-1'>
+                    List of products ({filterData?.length})
+                  </Link>
+                )
+              }
+            ]}
+          />
+          <p>List of products available for sales</p>
         </div>
         <Link to='/admin/products/add-product' tabIndex={-1}>
           <button className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'>
             <Add size='20' />
-            Add new item
+            Add new product
           </button>
         </Link>
       </header>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-[slideUp_1s_ease]'>
+      <div className='p-5 my-4 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-[slideUp_1s_ease]'>
         <div className='flex justify-between items-center gap-x-3'>
           <div className='flex items-center w-[300px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for product'
-              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px] focus:border-[#1D242E]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
@@ -577,60 +574,21 @@ const AdminProducts = () => {
           </div>
         </div>
         <div className='pt-[15px]'>
-          <ConfigProvider
-            theme={{
-              components: {
-                Table: {
-                  rowHoverBg: '#f5f5f5',
-                  headerSplitColor: 'transparent',
-                  headerBg: '#f5f5f5',
-                  sortField: '#f5f5f5',
-                  sortOrder: '#f5f5f5',
-                  borderColor: '#e8ebed'
-                }
-              }
+          <AdminTable
+            columns={columns}
+            rowKey='product_id'
+            data={filterData}
+            tableParams={tableParams}
+            tableStyles={{ width: '1200px', minHeight: '350px', maxHeight: '450px', backgroundColor: '#ffffff' }}
+            scroll={{ y: '300px' }}
+            loading={loading}
+            handleTableChange={handleTableChange}
+            pageSizeOptionsParent={['8', '10', '20', '50']}
+            paginationTable={{
+              position: ['none'],
+              ...tableParams.pagination
             }}
-          >
-            <Table
-              size='small'
-              columns={columns}
-              rowKey={(record) => record.product_id}
-              dataSource={filterData}
-              pagination={{
-                position: ['none'],
-                ...tableParams.pagination
-              }}
-              loading={loading}
-              onChange={handleTableChange}
-              scroll={{
-                y: '300px'
-              }}
-              style={{
-                width: '1200px',
-                minHeight: '350px',
-                maxHeight: '450px',
-                backgroundColor: '#ffffff'
-              }}
-            />
-          </ConfigProvider>
-          <ConfigProvider theme={{}}>
-            <CustomPagination
-              total={tableParams.pagination.total}
-              current={tableParams.pagination.current}
-              pageSize={tableParams.pagination.pageSize}
-              onChange={(page, pageSize) =>
-                handleTableChange(
-                  {
-                    ...tableParams.pagination,
-                    current: page,
-                    pageSize
-                  },
-                  tableParams.filters,
-                  tableParams.sortOrder
-                )
-              }
-            />
-          </ConfigProvider>
+          />
         </div>
       </div>
     </section>

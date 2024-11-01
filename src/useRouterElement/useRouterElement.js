@@ -9,6 +9,8 @@ import AdminViewProduct from '../Component/AdminViewProduct'
 import AdminBrands from '../Component/AdminBrands'
 import AdminManagement from '../Component/AdminManagement'
 import AdminSetting from '../Component/AdminSetting'
+import AdminImports from '../Component/AdminImports'
+import AdminDetailImport from '../Component/AdminDetailImport'
 import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
 import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
 import Login from '../Component/Login/Login.jsx'
@@ -178,33 +180,27 @@ export default function useRouterElement() {
       path: '/admin/products',
       element: (
         <AdminMainLayout>
-          <AdminProducts />
+          <Outlet />
         </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/products/add-product',
-      element: (
-        <AdminMainLayout>
-          <AdminAddProduct />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/products/update/:productID',
-      element: (
-        <AdminMainLayout>
-          <AdminEditProduct />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/products/:productID',
-      element: (
-        <AdminMainLayout>
-          <AdminViewProduct />
-        </AdminMainLayout>
-      )
+      ),
+      children: [
+        {
+          path: '',
+          element: <AdminProducts />
+        },
+        {
+          path: 'add-product',
+          element: <AdminAddProduct />
+        },
+        {
+          path: 'update/:productID',
+          element: <AdminEditProduct />
+        },
+        {
+          path: ':productID',
+          element: <AdminViewProduct />
+        }
+      ]
     },
     {
       path: '/admin/categories',
@@ -254,15 +250,19 @@ export default function useRouterElement() {
       path: '/admin/imports',
       element: (
         <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>Imports</div>
-            </div>
-          </div>
+          <Outlet />
         </AdminMainLayout>
-      )
+      ),
+      children: [
+        {
+          path: '',
+          element: <AdminImports />
+        },
+        {
+          path: ':id',
+          element: <AdminDetailImport />
+        }
+      ]
     },
     {
       path: '/admin/suppliers',

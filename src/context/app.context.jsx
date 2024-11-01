@@ -5,12 +5,14 @@ import { createContext, useState, useContext } from 'react'
 const initialAppContext = {
   isAuthenticated: Boolean(getAccessToken()),
   profile: getProfile()
+  // profileAdmin: getProfileAdmin()
 }
 export const AuthContext = createContext(initialAppContext)
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(initialAppContext.isAuthenticated)
   const [isProfile, setIsProfile] = useState(initialAppContext.profile)
+ // const [isProfileAdmin, setIsProfileAdmin] = useState(initialAppContext.profile)
 
   const login = (user, token) => {
     localStorage.setItem('accesstoken', token) // Lưu token vào localStorage

@@ -3,7 +3,6 @@ import { Breadcrumb, Select, ConfigProvider, Image, Tooltip, message, Spin, Tree
 import { ArrowRight2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
-import './EditProduct.css'
 import ProductsAPI from '../../Api/admin/products'
 import CategoriesAPI from '../../Api/admin/categories'
 import BrandsAPI from '../../Api/admin/brands'
@@ -11,6 +10,7 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/app.context'
+import BreadCrumbs from '../AdminBreadCrumbs'
 const customThemeSelect = {
   token: {
     colorTextQuaternary: '#1D242E',
@@ -545,31 +545,27 @@ const EditProduct = () => {
     <section className='max-w-[100%] h-full flex flex-col'>
       {contextHolder}
       <header className='flex justify-between animate-[slideDown_1s_ease]'>
-        <div className='Breadcrumb'>
-          <h1>
-            <Breadcrumb
-              separator={<ArrowRight2 size='15' color='#1D242E' />}
-              className='font-bold text-[#848A91]'
-              items={[
-                { title: 'Inventory' },
-                {
-                  title: (
-                    <Link to='/admin/products' tabIndex={-1}>
-                      List of products
-                    </Link>
-                  )
-                },
-                {
-                  title: (
-                    <Link to={`/admin/products/update/${productID}`} tabIndex={-1}>
-                      <span>Update Product</span>
-                    </Link>
-                  )
-                }
-              ]}
-            />
-          </h1>
-          <p className='mt-[11px]'>
+        <div className='flex flex-col gap-3'>
+          <BreadCrumbs
+            items={[
+              { title: 'Inventory' },
+              {
+                title: (
+                  <Link to='/admin/products' tabIndex={-1}>
+                    List of products
+                  </Link>
+                )
+              },
+              {
+                title: (
+                  <Link to={`/admin/products/update/${productID}`} tabIndex={-1}>
+                    <span>Update Product</span>
+                  </Link>
+                )
+              }
+            ]}
+          />
+          <p className='mt-2'>
             All fields marked with (<span className='text-[red]'>*</span>) are required, except those that are optional.
           </p>
         </div>
@@ -650,12 +646,13 @@ const EditProduct = () => {
                     <TreeSelect
                       allowClear
                       showSearch
-                      placeholder='- Choose Group -'
+                      placeholder='- Choose Category -'
                       placement='bottomLeft'
                       treeData={categories}
                       treeDefaultExpandAll
                       value={category || undefined}
                       dropdownStyle={{ overflow: 'auto' }}
+                      onDropdownVisibleChange={() => setErrorCategory('')}
                       className='AddForm__select'
                       onChange={(value) => {
                         setCategory(value)
