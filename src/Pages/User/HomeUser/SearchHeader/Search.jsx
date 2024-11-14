@@ -11,6 +11,7 @@ import { Button } from 'antd'
 import { AuthContext } from '../../../../context/app.context'
 import categoryAPI from '../../../../Api/user/category.js'
 import Anh from './_480f2c92-d896-48ef-978c-6c37301968f7-removebg-preview.png'
+import CategoryMain from '../Component/CategoryMain/CategoryMain.jsx'
 export default function Search(class1 = 'text-blue') {
   const { isAuthenticated, logout, isProfile } = useContext(AuthContext)
   const [openCategory, setopenCategory] = useState(false)
@@ -62,7 +63,7 @@ export default function Search(class1 = 'text-blue') {
     logout()
     navigate('/login')
   }
-  console.log(data?.data?.data?.length)
+
   const profile = (
     <div className='w-full  rounded-md '>
       <div className=''>
@@ -194,7 +195,11 @@ export default function Search(class1 = 'text-blue') {
               <div className='flex justify-between w-full py-2 mt-3 hover:bg-gray-300' key={element.cart_id}>
                 <div div className='flex gap-x-1  '>
                   <div className='h-20 w-20  '>
-                    <img src={element.product_images[0]} alt='' className='object-cover h-full w-full' />
+                    <img
+                      src={element?.product_images[0] ? element?.product_images[0] : ''}
+                      alt=''
+                      className='object-cover h-full w-full'
+                    />
                   </div>
 
                   <p className='truncate overflow-hidden whitespace-nowrap w-[250px] text-base font-normal'>
@@ -288,6 +293,7 @@ export default function Search(class1 = 'text-blue') {
           <div className='flex w-full flex-col-reverse items-start md:flex-row gap-5'>
             {' '}
             <div className='hidden md:flex shrink-0 '>
+
               <img
                 class='w-32 h-20 cursor-pointer bg-white object-cover rounded-md'
                 src='/assets/images/Logo_Pbl6.png'
@@ -493,65 +499,10 @@ export default function Search(class1 = 'text-blue') {
           className='grid grid-cols-8 px-24  gap-x-3 z-10 absolute bg-white '
           onMouseLeave={() => setopenCategory(false)}
         >
-          <div className='col-span-2 bg-yellow-500  pt-3 bordder border-r-2'>
-            <div className='flex flex-col rounded-lg'>
-              {ListCategory?.data?.data &&
-                ListCategory.data.data.map((element, index) => {
-                  return (
-                    <div
-                      className={`flex p-3 gap-2 text-black mb-3 mr-2 items-center rounded-lg font-medium hover:bg-[#EBFAFB] ${index === 0 ? 'bg-[#EBFAFB]' : ''}`}
-                    >
-                      <div className='w-[40px] h-[40px] '>
-                        <img src={element.category_thumbnail} alt='nopic' className='w-full h-full object-cover' />
-                      </div>
-
-                      <span className='capitalize text-[15px]'>{element.category_name}</span>
-                    </div>
-                  )
-                })}
-            </div>
+          <div className='col-span-6 bg-yellow-500 rounded-lg pt-3   '>
+            <CategoryMain />
           </div>
-          {/* children */}
-          <div className='col-span-4 bg-yellow-500 rounded-lg pt-3   '>
-            <div className='flex gap-4  cursor-pointer '>
-              {ListCategory?.data?.data &&
-                ListCategory?.data?.data.map((element) => {
-                  return element.children.map((elChildren) => {
-                    return (
-                      <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2 '>
-                        <div
-                          onClick={() => handleClickCategory(elChildren.category_name)}
-                          className='w-[100px] h-[100px]'
-                        >
-                          <img
-                            src={elChildren.category_thumbnail}
-                            alt='anh'
-                            className='w-full h-full object-cover rounded-md border'
-                          />
-                        </div>
-                        <p className='text-center text-sm font-medium text-gray-700'>{elChildren.category_name}</p>
-                      </div>
-                    )
-                  })
-                })}
 
-              <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2  '>
-                <div className='w-[100px] h-[100px]  rounded-md border  flex justify-center items-center '>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    strokeWidth={1.5}
-                    stroke='currentColor'
-                    className='size-6 w-full '
-                  >
-                    <path strokeLinecap='round' strokeLinejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' />
-                  </svg>
-                </div>
-                <p className='text-center text-sm font-medium text-gray-700'>Xem tất cả</p>
-              </div>
-            </div>
-          </div>
           <div className='col-span-2 flex flex-col justify-between rounded-lg overflow-hidden  pt-3  mb-5'>
             <div className=''>
               <img
@@ -567,4 +518,62 @@ export default function Search(class1 = 'text-blue') {
   )
 }
 
-//    src='https://prod-cdn.pharmacity.io/e-com/images/static-website/pharmacity-logo.svg'
+// <div className='col-span-2 bg-yellow-500  pt-3 bordder border-r-2'>
+// <div className='flex flex-col rounded-lg'>
+//   {ListCategory?.data?.data &&
+//     ListCategory.data.data.map((element, index) => {
+//       return (
+//         <div
+//           className={`flex p-3 gap-2 text-black mb-3 mr-2 items-center rounded-lg font-medium hover:bg-[#EBFAFB] ${index === 0 ? 'bg-[#EBFAFB]' : ''}`}
+//         >
+//           <div className='w-[40px] h-[40px] '>
+//             <img src={element.category_thumbnail} alt='nopic' className='w-full h-full object-cover' />
+//           </div>
+
+//           <span className='capitalize text-[15px]'>{element.category_name}</span>
+//         </div>
+//       )
+//     })}
+// </div>
+// </div>
+// {/* children */}
+// <div className='col-span-4 bg-yellow-500 rounded-lg pt-3   '>
+// <div className='flex gap-4  cursor-pointer '>
+//   {ListCategory?.data?.data &&
+//     ListCategory?.data?.data.map((element) => {
+//       return element.children.map((elChildren) => {
+//         return (
+//           <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2 '>
+//             <div
+//               onClick={() => handleClickCategory(elChildren.category_name)}
+//               className='w-[100px] h-[100px]'
+//             >
+//               <img
+//                 src={elChildren.category_thumbnail}
+//                 alt='anh'
+//                 className='w-full h-full object-cover rounded-md border'
+//               />
+//             </div>
+//             <p className='text-center text-sm font-medium text-gray-700'>{elChildren.category_name}</p>
+//           </div>
+//         )
+//       })
+//     })}
+
+//   <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2  '>
+//     <div className='w-[100px] h-[100px]  rounded-md border  flex justify-center items-center '>
+//       <svg
+//         xmlns='http://www.w3.org/2000/svg'
+//         fill='none'
+//         viewBox='0 0 24 24'
+//         strokeWidth={1.5}
+//         stroke='currentColor'
+//         className='size-6 w-full '
+//       >
+//         <path strokeLinecap='round' strokeLinejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' />
+//       </svg>
+//     </div>
+//     <p className='text-center text-sm font-medium text-gray-700'>Xem tất cả</p>
+//   </div>
+// </div>
+// </div>

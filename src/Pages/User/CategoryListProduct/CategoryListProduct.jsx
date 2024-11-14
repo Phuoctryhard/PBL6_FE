@@ -8,7 +8,6 @@ import useQueryParams from '../../../hook/useSearchParam'
 import productAPI from '../../../Api/user/product'
 import { Link } from 'react-router-dom'
 
-import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import categoryAPI from '../../../Api/user/category'
@@ -19,6 +18,22 @@ import { useLocation } from 'react-router-dom'
 import { schemaPrice } from '../../../Component/ValidateScheme/Validate'
 import Loading from '../../../Component/Loading/Loading'
 import { generateNameId } from '../../../until/index.js'
+import anhloi from './anhloi.png'
+import {
+  Row,
+  Col,
+  Form,
+  Checkbox,
+  Divider,
+  InputNumber,
+  Button,
+  Rate,
+  Tabs,
+  Pagination,
+  Spin,
+  Empty,
+  Breadcrumb
+} from 'antd'
 export default function CategoryListProduct() {
   const location = useLocation()
   const queryParams = new URLSearchParams(location.search)
@@ -29,36 +44,40 @@ export default function CategoryListProduct() {
   const [filteredBrands, setFilteredBrands] = useState([])
   // state để lưu brands[]
   const [NameBrands, setNameBrands] = useState(brands || [])
+  // current hiện tại
+  const [paginate, setCurrent] = useState(1)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm({
-    resolver: yupResolver(schemaPrice)
-  })
-
-  const onSubmit = (data) => {
-    const searchParams = createSearchParams({
-      ...useQueryParameter,
-      price_max: data.price_max,
-      price_min: data.price_min
-    }).toString()
-    //console.log(searchParams) // Kiểm tra chuỗi query được tạo
-    navigate({
-      pathname: `/category`,
-      search: `?${searchParams}`
-    })
-  }
+  useEffect(() => {
+    if (paginate) {
+      setCurrent(queryParams.get('paginate'))
+    }
+  }, [paginate])
+  // const {
+  //   formState: { errors }
+  // } = useForm({
+  //   resolver: yupResolver(schemaPrice)
+  // })
+  const [form] = Form.useForm()
+  // const onSubmit = (data) => {
+  //   const searchParams = createSearchParams({
+  //     ...useQueryParameter,
+  //     price_max: data.price_max,
+  //     price_min: data.price_min
+  //   }).toString()
+  //   //console.log(searchParams) // Kiểm tra chuỗi query được tạo
+  //   navigate({
+  //     pathname: `/category`,
+  //     search: `?${searchParams}`
+  //   })
+  // }
 
   const navigate = useNavigate()
   const { categorySlug } = useParams()
-  //console.log(categorySlug)
   const useQueryParameter = useQueryParams()
   // useQueryParameter.category_name = categorySlug
-  useQueryParameter.paginate = 6
-  console.log(useQueryParameter)
-  const { data: productsData } = useQuery({
+  useQueryParameter.paginate = 1
+  // console.log(useQueryParameter)
+  const { data: productsData, isLoading } = useQuery({
     // queryKey: ['product', queryParams],
     // queryconfig như category hay order hay sort_by thay đổi thì nó useQuery lại
     queryKey: ['products', useQueryParameter],
@@ -77,7 +96,7 @@ export default function CategoryListProduct() {
   } else if (useQueryParameter.category_name == 'Thuốc không kê đơn') {
     idcategory = 3
   }
-  const { data: getCategorybyid, isLoading } = useQuery({
+  const { data: getCategorybyid } = useQuery({
     // queryKey: ['product', queryParams],
     // queryconfig như category hay order hay sort_by thay đổi thì nó useQuery lại
     queryKey: ['products', idcategory],
@@ -90,7 +109,6 @@ export default function CategoryListProduct() {
 
     enabled: !!idcategory // chỉ cho phép query khi 'idcategory' có giá trị
   })
-  // console.log(getCategorybyid?.data?.data.children)
 
   const handlePriceDes = () => {
     const searchParams = createSearchParams({
@@ -143,14 +161,13 @@ export default function CategoryListProduct() {
 
   const isChecked = (min, max) => {
     // So sánh đúng thứ tự max với price_max và min với price_min
-    return useQueryParameter?.price_max == max && useQueryParameter?.price_min == min
+    return useQueryParameter?.price_max === max && useQueryParameter?.price_min === min
   }
 
   // api brand[]
-  const { data: nameBrand, isSuccess } = useQuery({
+  const { data: nameBrand } = useQuery({
     queryKey: ['getNameBrand'],
-    queryFn: brandAPI.getNameBrand,
-    staleTime: 1000 * 60 * 5 // Dữ liệu được coi là mới trong 5 phút
+    queryFn: brandAPI.getNameBrand
   })
 
   const handleChangeBrand = (e) => {
@@ -160,11 +177,13 @@ export default function CategoryListProduct() {
     })
     setFilteredBrands(fillterBrand)
   }
-  useEffect(() => {
-    if (isSuccess && nameBrand?.data?.data) {
-      setFilteredBrands(nameBrand.data.data) // Lưu dữ liệu từ API vào state
-    }
-  }, [isSuccess, nameBrand])
+  // useEffect(() => {
+  //   if (nameBrand?.data?.data) {
+  //     setFilteredBrands(nameBrand.data.data) // Lưu dữ liệu từ API vào state
+  //     console.log('chnage brand 1 ')
+  //   }
+  //   console.log('chnage brand 1 ')
+  // }, [nameBrand?.data?.data])
 
   // xử lí xem them
   const handleShowMore = () => {
@@ -199,10 +218,50 @@ export default function CategoryListProduct() {
       return updateBrands // Update the state
     })
   }
-  if (isLoading) return <Loading />
+
+  const handleOnchangePage = (pagination) => {
+    console.log('check ', pagination.current, pagination.pageSize)
+    const searchParams = createSearchParams({
+      ...useQueryParameter,
+      paginate: +pagination.current
+    }).toString()
+    //console.log(searchParams) // Kiểm tra chuỗi query được tạo
+    navigate({
+      pathname: `/category`,
+      search: `?${searchParams}`
+    })
+  }
+  const onfinish = (values) => {
+    console.log(values)
+
+    var price_max = values.price_max.replace(',', '')
+    var price_min = values.price_min.replace(',', '')
+    console.log(+price_max)
+    console.log(+price_min)
+    if (values.price_max < 0) {
+      price_max = 0
+    }
+    if (values.price_min < 0) {
+      price_min = 0
+    }
+    if (+price_min >= 0 && +price_max >= 0) {
+      const searchParams = createSearchParams({
+        ...useQueryParameter,
+        price_min: +price_min,
+        price_max: +price_max
+      }).toString()
+      //console.log(searchParams) // Kiểm tra chuỗi query được tạo
+      navigate({
+        pathname: `/category`,
+        search: `?${searchParams}`
+      })
+    }
+  }
+
+  // if (isLoading) return <Loading />
   return (
     <div className=''>
-      <div className='px-24'>
+      <div className='px-24 py-6'>
         <div class='hidden bg-neutral-100 md:block  mb-4'>
           <div class='container '>
             <div>
@@ -223,9 +282,7 @@ export default function CategoryListProduct() {
 
                 <li class='h-5 text-sm'>
                   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'>
-                    <a href={`/category?category_name=${useQueryParameter?.category_name}`}>
-                      {useQueryParameter?.category_name}
-                    </a>
+                    <a href=''></a>
                   </span>
                 </li>
               </ul>
@@ -262,47 +319,69 @@ export default function CategoryListProduct() {
 
           <div className=' '>
             <p className=' font-semibold mt-5'>Khoảng giá</p>
-
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div class='relative flex-col mt-4'>
-                <div class='relative flex mt-4 '>
-                  <input
-                    min='0'
-                    className='w-full border text-neutral-900 rounded-lg focus:ring-neutral-500 focus:border-neutral-700 outline-none p-2.5 h-9 truncate border-neutral-700 text-base font-medium placeholder:text-neutral-700 md:text-sm pr-10'
+            <Form onFinish={onfinish} form={form}>
+              <Form.Item
+                name='price_min'
+                dependencies={['price_max']}
+                validateTrigger='onBlur'
+                rules={[{ required: true, message: 'Please input!' }]}
+              >
+                <div class='relative flex mt-4 text-center '>
+                  <InputNumber
+                    className='  py-1 text-neutral-900 rounded-lg focus:ring-neutral-500 focus:border-neutral-700 outline-none   truncate border-neutral-700 text-base font-medium placeholder:text-neutral-700 md:text-sm pr-10'
                     placeholder='Tối thiểu'
-                    type='text'
-                    {...register('price_min')}
-                  />
+                    min={0}
+                    style={{
+                      width: '100%'
+                    }}
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  ></InputNumber>
+                  <span class='absolute right-0 flex h-full items-center px-3 mr-5'>
+                    <span class='text-base font-normal text-neutral-700 md:text-sm'>₫</span>
+                  </span>
+                </div>
+              </Form.Item>
 
-                  <span class='absolute right-0 flex h-full items-center px-3'>
-                    <span class='text-base font-normal text-neutral-700 md:text-sm'>₫</span>
-                  </span>
-                </div>
-                <p className='text-red-600 mt-1 text-sm'>{errors.price_min?.message}</p>
-                <div class='relative flex mt-4 '>
-                  <input
-                    max='100000'
-                    className='w-full border text-neutral-900 rounded-lg focus:ring-neutral-500 focus:border-neutral-700 outline-none p-2.5 h-9 truncate border-neutral-700 text-base font-medium placeholder:text-neutral-700 md:text-sm pr-10'
+              <Form.Item
+                name='price_max'
+                min={0}
+                dependencies={['price_min']}
+                rules={[
+                  { required: true, message: 'Please input!' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || value > getFieldValue('price_min')) {
+                        return Promise.resolve()
+                      }
+                      return Promise.reject('Price Max should be greater than Price Min')
+                    }
+                  })
+                ]}
+              >
+                <div class='relative flex mt-4 text-center '>
+                  <InputNumber
+                    className=' py-1  text-neutral-900 rounded-lg focus:ring-neutral-500 focus:border-neutral-700 outline-none   truncate border-neutral-700 text-base font-medium placeholder:text-neutral-700 md:text-sm pr-10'
                     placeholder='Tối đa'
-                    type='number'
-                    {...register('price_max')}
+                    min={0}
+                    style={{
+                      width: '100%'
+                    }}
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   />
-                  <span class='absolute right-0 flex h-full items-center px-3'>
+                  <span class='absolute right-0 flex h-full items-center px-3 mr-5'>
                     <span class='text-base font-normal text-neutral-700 md:text-sm'>₫</span>
                   </span>
                 </div>
-                <p className='text-red-600 mt-1 text-sm'>{errors.price_max?.message}</p>
-              </div>
+              </Form.Item>
 
               <button
                 data-size='sm'
                 className='mt-4 relative justify-center outline-none font-semibold text-white bg-blue border-0 hover:bg-blue  text-sm px-4 py-2 h-9 items-center rounded-lg hidden md:block w-full'
-                type='submit'
+                onClick={() => form.submit()}
               >
-                <span>Áp dụng</span>
+                Áp dụng
               </button>
-            </form>
-
+            </Form>
             <div className='mt-5'>
               <input
                 type='radio'
@@ -313,7 +392,6 @@ export default function CategoryListProduct() {
               />
               <label> Dưới 100.000 đ</label>
             </div>
-
             <div className='mt-5'>
               <input
                 type='radio'
@@ -324,7 +402,6 @@ export default function CategoryListProduct() {
               />
               <label> 100.000 đ - 300.000 đ</label>
             </div>
-
             <div className='mt-5'>
               <input
                 type='radio'
@@ -335,7 +412,6 @@ export default function CategoryListProduct() {
               />
               <label> 300.000 đ - 500.000 đ</label>
             </div>
-
             <div className='mt-5'>
               <input
                 type='radio'
@@ -346,6 +422,7 @@ export default function CategoryListProduct() {
               />
               <label> Trên 500.000 đ</label>
             </div>
+
             <div className='mt-5  '>
               <div className='font-semibold'>Thương hiệu(1)</div>
               <div className='mt-4'>
@@ -356,125 +433,167 @@ export default function CategoryListProduct() {
                   onChange={handleChangeBrand}
                 />
               </div>
-              <div className='mt-4 mb-4 '>
-                {filteredBrands.length > 0 ? (
-                  filteredBrands.slice(0, visibleBrands).map((brand) => (
-                    <div className='flex mt-2'>
-                      <input
-                        type='checkbox'
-                        id={`${brand.brand_id}`}
-                        name='brand[]'
-                        value={brand.brand_name}
-                        onChange={(e) => handleCheckboxChange(e)}
-                        checked={NameBrands.includes(brand.brand_name)}
-                      />
+              <div className='mt-4 mb-4 overflow-y-scroll overflow-x-hidden h-[300px] '>
+                {filteredBrands.length == 0
+                  ? nameBrand?.data?.data.map((brand) => (
+                      <div className='flex mt-2'>
+                        <input
+                          type='checkbox'
+                          id={`${brand.brand_id}`}
+                          name='brand[]'
+                          value={brand.brand_name}
+                          onChange={(e) => handleCheckboxChange(e)}
+                          checked={NameBrands.includes(brand.brand_name)}
+                        />
 
-                      <label htmlFor={`${brand.brand_id}`} className='pl-2  truncate'>
-                        {brand.brand_name}
-                      </label>
-                    </div>
-                  ))
-                ) : (
-                  <></>
-                )}
+                        <label htmlFor={`${brand.brand_id}`} className='pl-2  truncate'>
+                          {brand.brand_name}
+                        </label>
+                      </div>
+                    ))
+                  : filteredBrands.map((brand) => (
+                      <div className='flex mt-2'>
+                        <input
+                          type='checkbox'
+                          id={`${brand.brand_id}`}
+                          name='brand[]'
+                          value={brand.brand_name}
+                          onChange={(e) => handleCheckboxChange(e)}
+                          checked={NameBrands.includes(brand.brand_name)}
+                        />
+
+                        <label htmlFor={`${brand.brand_id}`} className='pl-2  truncate'>
+                          {brand.brand_name}
+                        </label>
+                      </div>
+                    ))}
               </div>
-
-              {visibleBrands < filteredBrands.length && (
-                <button className='text-[#0070E0] w-full text-center my-5' onClick={handleShowMore}>
-                  Xem thêm
-                </button>
-              )}
             </div>
           </div>
         </div>
 
         <div className='col-span-10 '>
-          <div className='flex  px-3 pt-2  gap-x-2'>
-            <p className='p-3 font-medium'>Sắp xếp theo: </p>
-            <button
-              className='p-3  border-2 rounded-lg text-[#787878] hover:text-black'
-              onClick={() => handlePriceDes()}
-            >
-              Giảm giá dần{' '}
-            </button>
-            <button className='p-3  border-2 rounded-lg text-[#787878] hover:text-black' onClick={handlePriceAsc}>
-              Giá tăng dần{' '}
-            </button>
-          </div>
-          <div className='grid grid-cols-5 px-3 py-4  gap-3'>
-            {productsData?.data?.data?.data &&
-              productsData.data.data.data.map((element) => {
-                return (
-                  <div className='border border-1 shadow-lg rounded-lg overflow-hidden'>
-                    <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
-                      <img src={element.product_images} alt='' />
-                    </Link>
+          <Spin spinning={isLoading} delay={500} tip='Loading...'>
+            <div className='flex  px-3 pt-2  gap-x-2'>
+              <p className='p-3 font-medium'>Sắp xếp theo: </p>
+              <button
+                className='p-3  border-2 rounded-lg text-[#787878] hover:text-black'
+                onClick={() => handlePriceDes()}
+              >
+                Giảm giá dần{' '}
+              </button>
+              <button className='p-3  border-2 rounded-lg text-[#787878] hover:text-black' onClick={handlePriceAsc}>
+                Giá tăng dần{' '}
+              </button>
+            </div>
+            <div className='grid grid-cols-5 px-3 py-4  gap-3'>
+              {productsData?.data?.data?.data &&
+                productsData.data.data.data.map((element) => {
+                  console.log(element)
 
-                    <div className='p-3'>
-                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
-                        <h3 class='line-clamp-2  font-semibold text-base'>{element.product_name}</h3>
+                  return (
+                    <div className='border border-1 shadow-lg rounded-lg overflow-hidden'>
+                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
+                        <img src={element.product_images.length > 0 ? element.product_images[0] : anhloi} alt='' />
                       </Link>
-                      <del class='block h-5 text-sm font-semibold text-neutral-600 mt-2'>115.000 đ</del>
-                      <span class='mt-[2px] block h-6 text-base font-bold text-blue '>
-                        {element.product_price}₫/Chai
-                      </span>
-                      <div class='flex items-center py-1 text-sm'>
-                        <span class='p-icon inline-flex h-4 max-h-full w-4 min-w-[16px] max-w-full items-center align-[-0.125em] text-neutral-700'>
-                          <svg
-                            xmlns='http://www.w3.org/2000/svg'
-                            width='25'
-                            height='24'
-                            fill='none'
-                            viewBox='0 0 25 24'
-                          >
-                            <path
-                              fill='currentColor'
-                              d='M17.22 2a6.2 6.2 0 0 0-4.72 2.16A6.2 6.2 0 0 0 7.78 2a6.26 6.26 0 0 0-4.55 10.58l8.55 8.9a1 1 0 0 0 1.44 0l8.55-8.9h.01A6.26 6.26 0 0 0 17.22 2Z'
-                            ></path>
-                          </svg>
-                        </span>
-                        <span class='text-[16px] leading-[20px] mx-1 font-medium mt-1'>35.2k</span>
-                        <span class='text-neutral-600'>|</span>
-                        <span class='text-[16px] leading-[20px] mx-1 font-medium mt-1'>Đã bán 7.8k</span>
+
+                      <div className='p-3'>
+                        <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
+                          <h3 class='line-clamp-2  font-semibold text-base'>{element.product_name}</h3>
+                        </Link>
+                        {element.parent_category_name === 'Thuốc kê đơn' ? (
+                          <>
+                            <button
+                              className='text-center w-full mt-4 bg-blue rounded-lg p-2'
+                              onClick={() => {
+                                navigate(`/${generateNameId(element.product_name, element.product_id)}`)
+                              }}
+                            >
+                              Cần tư vấn
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <del class='block h-5 text-sm font-semibold text-neutral-600 mt-2'>115.000 đ</del>
+                            <div className='flex justify-between items-center'>
+                              <span>Sold: {element.product_sold}</span>
+                              <span class='mt-[2px] block h-6 text-base font-bold text-blue '>
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND'
+                                }).format(element.product_price ?? 0)}
+                              </span>
+                            </div>
+                            <div class='flex items-center py-1 text-sm'></div>
+                          </>
+                        )}
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-          </div>
+                  )
+                })}
+            </div>
+            {productsData?.data?.data?.data.length == 0 && (
+              <div style={{ width: '100%', margin: '0 auto' }}>
+                <Empty description='Không có dữ liệu' />
+              </div>
+            )}
+            <Row style={{ display: 'flex', justifyContent: 'center' }}>
+              <Pagination
+                current={paginate}
+                total={50}
+                pageSize={5}
+                responsive
+                onChange={(p, s) => handleOnchangePage({ current: p, pageSize: s })}
+              />
+            </Row>
+          </Spin>
         </div>
       </div>
     </div>
   )
 }
+// <form onSubmit={handleSubmit(onSubmit)}>
+//               <div class='relative flex-col mt-4'>
+//                 <div class='relative flex mt-4 '>
+//                   <input
+//                     min='0'
+//                     className='w-full border text-neutral-900 rounded-lg focus:ring-neutral-500 focus:border-neutral-700 outline-none p-2.5 h-9 truncate border-neutral-700 text-base font-medium placeholder:text-neutral-700 md:text-sm pr-10'
+//                     placeholder='Tối thiểu'
+//                     type='text'
+//                     {...register('price_min')}
+//                   />
 
-// <img src={element.product_images} alt='' />
-// <p className='text-blue p-3'>Thiết lập lại</p>
-// <div class='bg-neutral-100 h-3 mt-12'></div>
+//                   <span class='absolute right-0 flex h-full items-center px-3'>
+//                     <span class='text-base font-normal text-neutral-700 md:text-sm'>₫</span>
+//                   </span>
+//                 </div>
+//                 <p className='text-red-600 mt-1 text-sm'>{errors.price_min?.message}</p>
+//                 <div class='relative flex mt-4 '>
+//                   <input
+//                     max='100000'
+//                     className='w-full border text-neutral-900 rounded-lg focus:ring-neutral-500 focus:border-neutral-700 outline-none p-2.5 h-9 truncate border-neutral-700 text-base font-medium placeholder:text-neutral-700 md:text-sm pr-10'
+//                     placeholder='Tối đa'
+//                     type='number'
+//                     {...register('price_max')}
+//                   />
+//                   <span class='absolute right-0 flex h-full items-center px-3'>
+//                     <span class='text-base font-normal text-neutral-700 md:text-sm'>₫</span>
+//                   </span>
+//                 </div>
+//                 <p className='text-red-600 mt-1 text-sm'>{errors.price_max?.message}</p>
+//               </div>
 
-// <li class='h-5 text-sm'>
-//                   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
-//                     <a href='/cham-soc-sac-dep'>Chăm sóc sắc đẹp</a>
-//                   </span>
-//                   <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
-//                     <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-//                       <path
-//                         d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
-//                         fill='currentColor'
-//                       ></path>
-//                     </svg>
-//                   </span>
-//                 </li>
-//                 <li class='h-5 text-sm'>
-//                   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
-//                     <a href='/san-pham-chong-nang'>Sản phẩm chống nắng</a>
-//                   </span>
-//                   <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
-//                     <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-//                       <path
-//                         d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
-//                         fill='currentColor'
-//                       ></path>
-//                     </svg>
-//                   </span>
-//                 </li>
+//               <button
+//                 data-size='sm'
+//                 className='mt-4 relative justify-center outline-none font-semibold text-white bg-blue border-0 hover:bg-blue  text-sm px-4 py-2 h-9 items-center rounded-lg hidden md:block w-full'
+//                 type='submit'
+//               >
+//                 <span>Áp dụng</span>
+//               </button>
+//             </form>
+//{`/category?category_name=${useQueryParameter?.category_name}`}
+// {visibleBrands < filteredBrands.length && (
+//   <button className='text-[#0070E0] w-full text-center my-5' onClick={handleShowMore}>
+//     Xem thêm
+//   </button>
+// )}

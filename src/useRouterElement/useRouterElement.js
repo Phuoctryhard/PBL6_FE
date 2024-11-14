@@ -38,6 +38,10 @@ import UpdatePassword from '../Pages/User/Account/personal-info/components/Updat
 import { AuthContext } from '../context/app.context.jsx'
 import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
 
+import AdminLogin from '../Component/AdminLogin/AdminLogin.jsx'
+import Checkout from '../Pages/User/Checkout/Checkout.jsx'
+import Disease from '../Pages/User/Disease/Disease.jsx'
+import DetailDisease from '../Pages/User/Disease/DetailDisease/DetailDisease.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
 
@@ -103,6 +107,14 @@ export default function useRouterElement() {
           element: (
             <MainLayoutUser>
               <DetailProduct />
+            </MainLayoutUser>
+          )
+        },
+        {
+          path: '/Checkout',
+          element: (
+            <MainLayoutUser>
+              <Checkout />
             </MainLayoutUser>
           )
         },
@@ -354,9 +366,24 @@ export default function useRouterElement() {
               <Register />
             </RegisterLayout>
           )
-        },
-        {}
+        }
       ]
+    },
+    {
+      path: '/benh',
+      element: (
+        <MainLayoutUser>
+          <Disease />
+        </MainLayoutUser>
+      )
+    },
+    {
+      path: '/benh/:slug',
+      element: (
+        <MainLayoutUser>
+          <DetailDisease />
+        </MainLayoutUser>
+      )
     },
     {
       path: '/:idproduct',
@@ -366,6 +393,7 @@ export default function useRouterElement() {
         </MainLayoutUser>
       )
     },
+
     {
       path: '/',
       index: true,

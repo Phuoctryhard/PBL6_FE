@@ -1,0 +1,6 @@
+.disable-fixed {
+  * {
+    position: static !important; /* Loại bỏ `position: fixed` cho tất cả phần tử bên trong */
+    z-index: auto !important; /* Loại bỏ `z-index` để không đè lên header */
+  }
+}

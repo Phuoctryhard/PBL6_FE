@@ -10,7 +10,7 @@ export default function Header() {
 
         <div className='text-[#ee4d2d]'>
           <a
-            href='https://help.shopee.vn/vn/s'
+            href=''
             target='_blank'
             rel='noopener noreferrer'
             className='aSJqEv'

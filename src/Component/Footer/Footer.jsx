@@ -28,21 +28,8 @@ export default function Footer() {
                 Quy chế hoạt động
               </a>
             </li>
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/page/chinh-sach-doi-tra'>
-                Chính sách đổi trả
-              </a>
-            </li>
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/page/chinh-sach-giao-hang'>
-                Chính sách giao hàng
-              </a>
-            </li>
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/page/chinh-sach-bao-mat'>
-                Chính sách bảo mật
-              </a>
-            </li>
+            
+            
             <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
               <a target='_self' href='/page/phuong-thuc-thanh-toan'>
                 Chính sách thanh toán
@@ -58,11 +45,7 @@ export default function Footer() {
                 Câu hỏi thường gặp
               </a>
             </li>
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='https://www.pharmacity.vn/sitemaps/sitemaps.xml'>
-                Sitemap
-              </a>
-            </li>
+            
             <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
               <a target='_self' href='/goc-suc-khoe/benh-vien'>
                 Bệnh viện
@@ -92,11 +75,7 @@ export default function Footer() {
                 Doanh nghiệp
               </a>
             </li>
-            <li class='pb-2'>
-              <a target='' href='/shop/pharmacity'>
-                Nhãn hàng Pharmacity
-              </a>
-            </li>
+            
             <li class='pb-2'>
               <a target='' href='/cam-nang-mua-sam'>
                 Khuyến mãi HOT
@@ -198,34 +177,3 @@ export default function Footer() {
     </div>
   )
 }
-
-// <li class='pb-2'>
-//               <a target='' href='/thuc-pham-chuc-nang'>
-//                 Thực phẩm chức năng
-//               </a>
-//             </li>
-//             <li class='pb-2'>
-//               <a target='' href='/cham-soc-ca-nhan'>
-//                 Chăm sóc cá nhân
-//               </a>
-//             </li>
-//             <li class='pb-2'>
-//               <a target='' href='/me-va-be'>
-//                 Mẹ và Bé
-//               </a>
-//             </li>
-//             <li class='pb-2'>
-//               <a target='' href='/cham-soc-sac-dep'>
-//                 Chăm sóc sắc đẹp
-//               </a>
-//             </li>
-//             <li class='pb-2'>
-//               <a target='' href='/thiet-bi-y-te-2'>
-//                 Thiết bị y tế
-//               </a>
-//             </li>
-//             <li class='pb-2'>
-//               <a target='' href='/san-pham-tien-loi'>
-//                 Sản phẩm tiện lợi
-//               </a>
-//             </li>
