@@ -38,7 +38,6 @@ import UpdatePassword from '../Pages/User/Account/personal-info/components/Updat
 import { AuthContext } from '../context/app.context.jsx'
 import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
 
-import AdminLogin from '../Component/AdminLogin/AdminLogin.jsx'
 import Checkout from '../Pages/User/Checkout/Checkout.jsx'
 import Disease from '../Pages/User/Disease/Disease.jsx'
 import DetailDisease from '../Pages/User/Disease/DetailDisease/DetailDisease.jsx'
