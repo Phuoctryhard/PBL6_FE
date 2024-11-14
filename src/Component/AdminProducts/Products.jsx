@@ -11,6 +11,7 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
+import PurePanel from 'antd/es/tooltip/PurePanel'
 const { RangePicker } = DatePicker
 
 //#region theme for ant design components
@@ -72,8 +73,10 @@ const AdminProducts = () => {
   //Category data
   const [treeData, setTreeData] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('')
+
   const convertToTreeData = (data) => {
-    return data.map((item) => ({
+    const filterData = data.filter((item) => item.category_type === 'medicine')
+    return filterData.map((item) => ({
       title: item.category_name,
       label: item.category_name,
       value: item.category_name,
@@ -175,7 +178,7 @@ const AdminProducts = () => {
                 label: (
                   <Link
                     to={`/admin/products/${record.product_id}`}
-                    className='flex items-center gap-x-2 justify-center'
+                    className='flex items-center gap-x-2 justify-start w-full'
                   >
                     <Eye size='15' color='green' /> <span>View</span>
                   </Link>
@@ -186,9 +189,9 @@ const AdminProducts = () => {
                 label: (
                   <Link
                     to={`/admin/products/update/${record.product_id}`}
-                    className='flex items-center gap-x-2 justify-center'
+                    className='flex items-center gap-x-2 justify-start w-full'
                   >
-                    <Edit size='15' color='green' /> <span>Update</span>
+                    <Edit size='15' color='#bc9143' /> <span>Update</span>
                   </Link>
                 )
               },
@@ -206,7 +209,7 @@ const AdminProducts = () => {
                   >
                     <button
                       type='button'
-                      className='flex items-center gap-x-2 justify-center'
+                      className='flex items-center gap-x-2 w-full'
                       onClick={(e) => e.stopPropagation()}
                     >
                       <DeleteOutlined className='text-[15px] text-[red]' /> <span>Delete</span>
@@ -236,23 +239,6 @@ const AdminProducts = () => {
       pageSize: 8
     }
   })
-
-  // Custom Pagination
-  const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
-    <div className='flex justify-between items-center mt-3'>
-      <span className='inline-block text-[14px]'>
-        Showing {current - 1 < 1 ? 1 : (current - 1) * pageSize + 1} to{' '}
-        {current * pageSize <= total ? current * pageSize : total} of {total} entries
-      </span>
-      <Pagination
-        total={total}
-        current={current}
-        pageSize={pageSize}
-        onChange={onChange}
-        pageSizeOptions={pageSizeOptions || ['8', '10', '20', '30', '40', '50', '100']}
-      />
-    </div>
-  )
 
   // Handle table change
   const handleTableChange = (pagination, filters, sorter) => {
@@ -318,9 +304,6 @@ const AdminProducts = () => {
     }
     const results = data.filter((item) => {
       const matchesProductName = item.product_name.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesCategoryName = selectedCategory
-        ? item.category_name.toLowerCase().includes(selectedCategory.toLowerCase())
-        : true
       const matchesBrandName = selectedBrand
         ? item.brand_name.toLowerCase().includes(selectedBrand.toLowerCase())
         : true
@@ -329,11 +312,10 @@ const AdminProducts = () => {
           ? formatDate(item.product_created_at) >= formatDate(selectedFrom) &&
             formatDate(item.product_created_at) <= formatDate(selectedTo)
           : true
-
-      return matchesProductName && matchesCategoryName && matchesBrandName && matchesDateRange
+      return matchesProductName && matchesBrandName && matchesDateRange
     })
 
-    const tableData = results.sort((a, b) => new Date(b.product_created_at) - new Date(a.product_created_at))
+    const tableData = results
     setFilterData(tableData)
     setTableParams({
       ...tableParams,
@@ -368,20 +350,18 @@ const AdminProducts = () => {
             setLoading(false)
             return
           }
-          const tableData = data
-            .map((product) => ({
-              product_id: product.product_id,
-              product_name: product.product_name,
-              product_price: product.product_price,
-              product_quantity: product.product_quantity,
-              product_sold: product.product_sold,
-              category_name: product.category_name,
-              brand_name: product.brand_name,
-              product_is_delete: product.product_is_delete,
-              product_created_at: product.product_created_at,
-              product_updated_at: product.product_updated_at
-            }))
-            .sort((a, b) => new Date(b.product_created_at) - new Date(a.product_created_at))
+          const tableData = data.map((product) => ({
+            product_id: product.product_id,
+            product_name: product.product_name,
+            product_price: product.product_price,
+            product_quantity: product.product_quantity,
+            product_sold: product.product_sold,
+            category_name: product.category_name,
+            brand_name: product.brand_name,
+            product_is_delete: product.product_is_delete,
+            product_created_at: product.product_created_at,
+            product_updated_at: product.product_updated_at
+          }))
           setFilterData(tableData)
           setData(tableData)
           setTableParams({
@@ -405,6 +385,7 @@ const AdminProducts = () => {
   //page size change
   useEffect(() => {
     fetchProducts({
+      sortlatest: true,
       search: searchValue
     })
   }, [])
@@ -415,7 +396,6 @@ const AdminProducts = () => {
       searchProducts()
     }
   }, [
-    selectedCategory,
     searchValue,
     selectedBrand,
     tableParams.pagination?.current,
@@ -426,6 +406,26 @@ const AdminProducts = () => {
     tableParams.pagination?.pageSize,
     selectedTo
   ])
+
+  useEffect(() => {
+    if (selectedCategory) {
+      fetchProducts({
+        sortlatest: true,
+        search: searchValue,
+        category_name: selectedCategory
+      })
+    } else {
+      fetchProducts({
+        sortlatest: true,
+        search: searchValue
+      })
+    }
+  }, [selectedCategory])
+
+  useEffect(() => {
+    if (data) searchProducts()
+  }, [data])
+
   //#endregion
 
   //#region Message API and response state(status, message result) of fetch API
@@ -447,6 +447,7 @@ const AdminProducts = () => {
       if ([200, 201, 202, 204].includes(status)) {
         openMessage('success', `${type} product success`, 3)
         fetchProducts({
+          sortlatest: true,
           search: searchValue
         })
         setResponseState({ status: 0, messageResult: '', type: null })
@@ -462,7 +463,7 @@ const AdminProducts = () => {
     <section className='max-w-[100%] h-full'>
       {contextHolder}
       <header className='flex justify-between animate-[slideDown_1s_ease] w-full'>
-        <div className='flex flex-col gap-3 w-[50%]'>
+        <div className='flex flex-col gap-1 w-[50%]'>
           <BreadCrumbs
             items={[
               { title: 'Inventory' },
@@ -478,9 +479,9 @@ const AdminProducts = () => {
           <p>List of products available for sales</p>
         </div>
         <Link to='/admin/products/add-product' tabIndex={-1}>
-          <button className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'>
+          <button className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'>
+            Add new
             <Add size='20' />
-            Add new product
           </button>
         </Link>
       </header>
@@ -495,11 +496,19 @@ const AdminProducts = () => {
               autoFocus
               onChange={(e) => {
                 setSearchValue(e.target.value)
+                if (e.target.value === '') {
+                  fetchProducts({
+                    sortlatest: true,
+                    search: '',
+                    category_name: selectedCategory
+                  })
+                }
               }}
             />
             <button
               onClick={() => {
                 fetchProducts({
+                  sortlatest: true,
                   search: searchValue
                 })
               }}

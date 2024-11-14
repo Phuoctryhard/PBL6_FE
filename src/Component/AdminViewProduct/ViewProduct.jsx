@@ -1,13 +1,13 @@
 import { Link, useParams } from 'react-router-dom'
-import { Image, Tooltip } from 'antd'
+import { Image, Tooltip, Modal } from 'antd'
 import { Edit } from 'iconsax-react'
 import { useState, useEffect, useRef } from 'react'
 import './ViewProduct.css'
 import { ProductsAPI } from '../../Api/admin'
 import BreadCrumbs from '../AdminBreadCrumbs'
+import { CloseOutlined } from '@ant-design/icons'
 let currentSlide = 0
 const ViewProduct = () => {
-  const [showTooltipHeader, setShowTooltipHeader] = useState(false)
   const { productID } = useParams()
   const [productName, setProductName] = useState('')
   const [brand, setBrand] = useState('')
@@ -48,6 +48,7 @@ const ViewProduct = () => {
     const response = await ProductsAPI.getProductByID(productID)
     const data = await response.json()
     const product = data['data']
+    console.log(data)
     setProductName(product.product_name !== null ? product.product_name : '...')
     setCategory(product.category_id !== null ? product.category_name : '...')
     setBrand(product.brand_id !== null ? product.brand_name : '...')
@@ -113,6 +114,11 @@ const ViewProduct = () => {
     container.scrollBy({ left: containerWidth, behavior: 'smooth' })
   }
 
+  const [openModalView, setOpenModalView] = useState(false)
+  const handleCancelPreview = () => {
+    setOpenModalView(false)
+  }
+
   useEffect(() => {
     fetchProducts()
     const container = thumbnailRef.current
@@ -125,7 +131,7 @@ const ViewProduct = () => {
   return (
     <section className='max-w-[100%] h-max flex flex-col mb-6'>
       <header className='flex justify-between animate-[slideDown_1s_ease] w-full items-center'>
-        <div className='w-[50%]'>
+        <div className='w-[70%]'>
           <BreadCrumbs
             items={[
               { title: 'Inventory' },
@@ -144,10 +150,10 @@ const ViewProduct = () => {
                     trigger='hover'
                     overlayStyle={{ maxWidth: '800px', whiteSpace: 'normal' }}
                   >
-                    <Link to={`/admin/products/${productID}`} tabIndex={-1} className='w-full'>
-                      <span className='w-[50%] text-ellipsis overflow-hidden whitespace-nowrap inline-block'>
-                        {productName}
-                      </span>
+                    <Link to={`/admin/products/${productID}`} tabIndex={-1}>
+                      <div className='max-w-[350px] flex'>
+                        <span className='text-ellipsis overflow-hidden whitespace-nowrap'>{productName}</span>
+                      </div>
                     </Link>
                   </Tooltip>
                 )
@@ -156,9 +162,9 @@ const ViewProduct = () => {
           />
         </div>
         <Link to={`/admin/products/update/${productID}`} tabIndex={-1}>
-          <button className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#db3545] rounded-[4px] text-[#FFFFFF] flex items-center font-bold text-[14px] gap-x-2 w-full'>
-            <Edit className='text-[20px]' />
+          <button className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'>
             <span>Update Product</span>
+            <Edit size={20} />
           </button>
         </Link>
       </header>
@@ -351,10 +357,42 @@ const ViewProduct = () => {
                   <p className='text-[#1D242E]'>{productUses}</p>
                 </div>
               </div>
-              <div className='group__row'>
-                <div className='group__detail'>
-                  <p className='text-[#1D242E] font-medium'>Product Description</p>
-                  <p className='text-[#1D242E]'>{productDescription}</p>
+              <Modal title='' centered open={openModalView} width={'100vw'} footer={false} closeIcon={null}>
+                <div className='w-full flex flex-col gap-3'>
+                  <h1 className='text-black text-2xl font-semibold mx-auto'>View Product Description</h1>
+                  <div
+                    className='ql-editor flex flex-col gap-4 w-full'
+                    dangerouslySetInnerHTML={{
+                      __html: productDescription
+                    }}
+                  ></div>
+                  <button
+                    type='button'
+                    onClick={handleCancelPreview}
+                    className='p-2 w-16 h-16 rounded-[50%] bg-[#66b5a2] sticky bottom-8 animate-bounce ml-auto'
+                  >
+                    <CloseOutlined className='text-white text-2xl' />
+                  </button>
+                </div>
+              </Modal>
+              <div className='group__row !p-0'>
+                <div className='group__detail !gap-0'>
+                  <div className='w-full flex justify-between items-center px-[30px] py-[15px]'>
+                    <p className='text-[#1D242E] font-medium'>Product Description</p>
+                    <button
+                      type='button'
+                      className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+                      onClick={() => setOpenModalView(true)}
+                    >
+                      View Description
+                    </button>
+                  </div>
+                  <div
+                    className='ql-editor viewProduct border-t-[2px] border-t-solid border-t-[#e7ebee]'
+                    dangerouslySetInnerHTML={{
+                      __html: productDescription
+                    }}
+                  ></div>
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
-import { Select, ConfigProvider, Image, Tooltip, message, Spin, TreeSelect } from 'antd'
+import { Select, ConfigProvider, Image, Tooltip, message, Spin, Modal } from 'antd'
 import { DocumentUpload, ProgrammingArrows } from 'iconsax-react'
-import { DeleteOutlined } from '@ant-design/icons'
+import { CloseOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/app.context'
 import './AddProduct.css'
 import { ProductsAPI, CategoriesAPI, BrandsAPI } from '../../Api/admin'
-import BreadCrumbs from '../AdminBreadCrumbs'
+import { AdminEditor, BreadCrumbs } from '../'
 const filterTheme = {
   token: {
     colorTextQuaternary: '#1D242E',
@@ -22,7 +22,7 @@ const filterTheme = {
   },
   components: {
     Select: {
-      selectorBg: '#e3ebf3',
+      selectorBg: '#f7f8fa',
       activeBorderColor: '#1D242E',
       hoverBorderColor: '#1D242E',
       optionActiveBg: 'rgb(0, 143, 153, 0.3)',
@@ -45,40 +45,40 @@ const AddProduct = () => {
     logout()
     navigate('/admin/login')
   }
-  const [productID, setProductID] = useState('')
-  const [errorProductID, setErrorProductID] = useState('')
+
   const [productName, setProductName] = useState('')
-  const [errorProductName, setErrorProductName] = useState('')
+  const [productSlug, setProductSlug] = useState('')
   const [categories, setCategories] = useState([])
   const [category, setCategory] = useState('')
-  const [errorCategory, setErrorCategory] = useState('')
   const [brands, setBrands] = useState([])
   const [brand, setBrand] = useState('')
-  const [errorBrand, setErrorBrand] = useState('')
   const [productPrice, setProductPrice] = useState('')
-  const [errorProductPrice, setErrorProductPrice] = useState('')
   const [productDiscount, setProductDiscount] = useState('')
-  const [errorProductDiscount, setErrorProductDiscount] = useState('')
-  const [productPackage, setProductPackage] = useState('')
   const [productIngredient, setProductIngredient] = useState('')
   const [productDosageForm, setProductDosageForm] = useState('')
-  const [errorProductDosageForm, setErrorProductDosageForm] = useState('')
+  const [productPackage, setProductPackage] = useState('')
   const [productSpecification, setProductSpecification] = useState('')
-  const [errorProductSpecification, setErrorProductSpecification] = useState('')
   const [productManufacturer, setProductManufacturer] = useState('')
-  const [errorProductManufacturer, setErrorProductManufacturer] = useState('')
   const [productPlaceOfManufacture, setProductPlaceOfManufacture] = useState('')
-  const [errorProductPlaceOfManufacture, setErrorProductPlaceOfManufacture] = useState('')
+  const [productUses, setProductUses] = useState('')
+  const [productDescription, setProductDescription] = useState('')
+  const [openModalView, setOpenModalView] = useState(false)
   const [uploadImages, setUploadImages] = useState([])
+
+  const [errorCategory, setErrorCategory] = useState('')
+  const [errorProductName, setErrorProductName] = useState('')
+  const [errorProductSlug, setErrorProductSlug] = useState('')
+  const [errorBrand, setErrorBrand] = useState('')
+  const [errorProductPrice, setErrorProductPrice] = useState('')
+  const [errorProductDiscount, setErrorProductDiscount] = useState('')
   const thumbnailRef = useRef()
   const [showThumbnailLeft, setShowThumbnailLeft] = useState(false)
   const [showThumbnailRight, setShowThumbnailRight] = useState(true)
   const [files, setFiles] = useState([])
   const [errorFiles, setErrorFiles] = useState('')
-  const [productUses, setProductUses] = useState('')
-  const [errorProductUses, setErrorProductUses] = useState('')
-  const [productDescription, setProductDescription] = useState('')
-  const [errorProductDescription, setErrorProductDescription] = useState('')
+
+  const [editorSelect, setEditorSelect] = useState('')
+  const [editorFocus, setEditorFocus] = useState(false)
 
   const token = localStorage.getItem('accesstoken')
   const [messageResult, setMessageResult] = useState()
@@ -94,26 +94,8 @@ const AddProduct = () => {
     })
   }
 
-  const fetchExistingIDs = async () => {
-    const response = await ProductsAPI.getProductsNames()
-    const res = await response.json()
-    return res['data'].map((product) => product.product_id)
-  }
-
-  const handleErrorProductID = async (value) => {
-    if (value === '') {
-      setErrorProductID('This field cannot be empty.')
-      return false
-    } else if (!/^[0-9]\d*$/.test(value)) {
-      setErrorProductID('Please enter a positive integer')
-      return false
-    }
-    const existingIDs = await fetchExistingIDs()
-    if (existingIDs.includes(parseInt(value, 10))) {
-      setErrorProductID('This ID already exists.')
-      return false
-    }
-    return true
+  const handleCancelPreview = () => {
+    setOpenModalView(false)
   }
 
   const handleErrorProductName = async (value) => {
@@ -122,6 +104,14 @@ const AddProduct = () => {
       return false
     } else if (value.length < 3 || value.length > 100) {
       setErrorProductName('Name must be between 3 and 100 characters long.')
+      return false
+    }
+    return true
+  }
+
+  const handleErrorSlug = (value) => {
+    if (value === '') {
+      setErrorProductSlug('This field cannot be empty.')
       return false
     }
     return true
@@ -147,7 +137,7 @@ const AddProduct = () => {
     if (value === '') {
       setErrorProductPrice('This field cannot be empty.')
       return false
-    } else if (!/^[1-9]\d*$/.test(value)) {
+    } else if (!/^[1-9]\d*(\.\d+)?$/.test(value)) {
       setErrorProductPrice('Please enter a positive number')
       return false
     }
@@ -155,11 +145,9 @@ const AddProduct = () => {
   }
 
   const handleErrorProductDiscount = (value) => {
-    if (value === '') {
-      setErrorProductDiscount('This field cannot be empty.')
-      return false
-    } else if (!/^[0-9]\d*$/.test(value)) {
-      setErrorProductDiscount('Please enter a positive number')
+    if (value === '') return true
+    if (!/^[0-9]\d*$/.test(value)) {
+      setErrorProductDiscount('Please enter 0 or a positive integer number')
       return false
     } else if (parseFloat(value) > 100) {
       setErrorProductDiscount('Please enter a number less than or equal to 100')
@@ -168,59 +156,7 @@ const AddProduct = () => {
     return true
   }
 
-  const handleErrorDosageForm = (value) => {
-    if (value === '') {
-      setErrorProductDosageForm('This field cannot be empty.')
-      return false
-    }
-    return true
-  }
-
-  const handleErrorSpecification = (value) => {
-    if (value === '') {
-      setErrorProductSpecification('This field cannot be empty.')
-      return false
-    }
-    return true
-  }
-
-  const handleErrorManufacturer = (value) => {
-    if (value === '') {
-      setErrorProductManufacturer('This field cannot be empty.')
-      return false
-    }
-    return true
-  }
-
-  const handleErrorPlaceOfManufacture = (value) => {
-    if (value === '') {
-      setErrorProductPlaceOfManufacture('This field cannot be empty.')
-      return false
-    }
-    return true
-  }
-
-  const handleErrorProductUses = (value) => {
-    if (value === '') {
-      setErrorProductUses('This field cannot be empty.')
-      return false
-    }
-    return true
-  }
-
-  const handleErrorProductDescription = (value) => {
-    if (value === '') {
-      setErrorProductDescription('This field cannot be empty.')
-      return false
-    }
-    return true
-  }
-
   const handleErrorFileUpload = (values) => {
-    if (values.length === 0) {
-      setErrorFiles('Please upload at least one image')
-      return false
-    }
     if (values.length > 3) {
       setErrorFiles('You can only upload up to 3 images')
       return false
@@ -237,6 +173,11 @@ const AddProduct = () => {
   const handleUploadImages = (event) => {
     if (event.target.files) {
       const files = Array.from(event.target.files)
+      if (files.length > 2) {
+        setStatus(422)
+        setMessageResult('You can only upload up to 2 images')
+        return
+      }
       const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
       const validFiles = []
       const filesArray = []
@@ -360,36 +301,52 @@ const AddProduct = () => {
   }
 
   const handleValidation = () => {
-    const isValidProductID = handleErrorProductID(productID)
     const isValidProductName = handleErrorProductName(productName)
     const isValidCategory = handleErrorCategory(category)
+    const isValidProductSlug = handleErrorSlug(productSlug)
     const isValidBrand = handleErrorBrand(brand)
     const isValidProductPrice = handleErrorProductPrice(productPrice)
     const isValidProductDiscount = handleErrorProductDiscount(productDiscount)
     const isValidFileUpload = handleErrorFileUpload(uploadImages)
-    const isValidProductDosageForm = handleErrorDosageForm(productDosageForm)
-    const isValidProductSpecification = handleErrorSpecification(productSpecification)
-    const isValidProductManufacturer = handleErrorManufacturer(productManufacturer)
-    const isValidProductPlaceOfManufacture = handleErrorPlaceOfManufacture(productPlaceOfManufacture)
-    const isValidProductUses = handleErrorProductUses(productUses)
-    const isValidProductDescription = handleErrorProductDescription(productDescription)
     if (
-      !isValidProductID ||
       !isValidProductName ||
       !isValidCategory ||
       !isValidBrand ||
       !isValidProductPrice ||
       !isValidProductDiscount ||
       !isValidFileUpload ||
-      !isValidProductDosageForm ||
-      !isValidProductSpecification ||
-      !isValidProductManufacturer ||
-      !isValidProductPlaceOfManufacture ||
-      !isValidProductUses ||
-      !isValidProductDescription
+      !isValidProductSlug
     ) {
       setStatus(422)
       setMessageResult('Invalid data. Please check your input.')
+      return false
+    }
+    return true
+  }
+
+  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
+    if (!response.ok) {
+      const content_type = response.headers.get('content-type')
+      if (content_type && content_type.includes('application/json')) {
+        const res = await response.json()
+        if (response.status === 401) {
+          handleUnauthorized()
+        } else {
+          if (res.message) {
+            setMessageResult(res.message)
+            setStatus(response.status)
+          } else if (res.messages) {
+            setMessageResult(res.messages.join('. '))
+            setStatus(response.status)
+          } else {
+            setStatus(400)
+            setMessageResult(defaultErrorText)
+          }
+        }
+      } else {
+        setStatus(response.status)
+        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
+      }
       return false
     }
     return true
@@ -410,39 +367,26 @@ const AddProduct = () => {
       formData.append('product_images[]', file)
     })
 
-    formData.append('product_id', productID)
     formData.append('product_name', productName)
+    formData.append('product_slug', productSlug)
     formData.append('category_id', category)
     formData.append('brand_id', brand)
     formData.append('product_price', productPrice)
-    formData.append('product_discount', productDiscount)
+    if (productDiscount) formData.append('product_discount', productDiscount)
     if (productPackage) formData.append('package', productPackage)
     if (productIngredient) formData.append('ingredient', productIngredient)
-    formData.append('dosage_form', productDosageForm)
-    formData.append('specification', productSpecification)
-    formData.append('manufacturer', productManufacturer)
-    formData.append('place_of_manufacture', productPlaceOfManufacture)
-    formData.append('product_uses', productUses)
-    formData.append('product_description', productDescription)
+    if (productDosageForm) formData.append('dosage_form', productDosageForm)
+    if (productSpecification) formData.append('specification', productSpecification)
+    if (productManufacturer) formData.append('manufacturer', productManufacturer)
+    if (productPlaceOfManufacture) formData.append('place_of_manufacture', productPlaceOfManufacture)
+    if (productUses) formData.append('product_uses', productUses)
+    if (productDescription) formData.append('product_description', productDescription)
 
     try {
       const response = await ProductsAPI.addProducts(formData, token)
-      if (!response.ok) {
+      const isResponseOK = await handleResponse(response, 'Add product failed')
+      if (!isResponseOK) {
         setSubmitLoading(false)
-        const res = await response.json()
-        let { messages } = res
-        if (Array.isArray(messages)) {
-          messages = messages.join(', ')
-        }
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else if (response.status === 422) {
-          setStatus(422)
-          setMessageResult(`Invalid data: ${messages}`)
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Add product failed: ${messages}`)
-        }
         return
       }
       setStatus(response.status)
@@ -539,6 +483,7 @@ const AddProduct = () => {
       container.removeEventListener('scroll', checkThumbnailTranslate)
     }
   }, [])
+
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
       toast.success(messageResult, { autoClose: 3000 })
@@ -556,7 +501,7 @@ const AddProduct = () => {
     <section className='max-w-[100%] h-full flex flex-col'>
       {contextHolder}
       <header className='flex justify-between animate-[slideDown_1s_ease]'>
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col gap-1'>
           <BreadCrumbs
             items={[
               { title: 'Inventory' },
@@ -580,321 +525,258 @@ const AddProduct = () => {
             All fields marked with (<span className='text-[red]'>*</span>) are required, except those that are optional.
           </p>
         </div>
-        <div className='flex gap-x-3 max-w-[50%]'>
-          <label
-            htmlFor='imageUpload'
-            className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#16a2b8] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
-            onClick={() => setErrorFiles('')}
-          >
-            <span className='flex items-center justify-center gap-x-2 whitespace-nowrap'>
-              <DocumentUpload />
-              upload
-            </span>
-          </label>
-          <button
-            onClick={() => {
-              handleDeleteImage(currentSlide)
-            }}
-            className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#db3545] rounded-[4px] text-[#FFFFFF] flex items-center font-bold text-[14px] gap-x-2'
-          >
-            <DeleteOutlined className='text-[20px]' />
-            <span className='whitespace-nowrap'>Delete Current Image</span>
-          </button>
-          <label
-            htmlFor='imageChangeUpload'
-            className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#007bff] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
-            onClick={() => setErrorFiles('')}
-          >
-            <span className='flex items-center justify-center gap-x-2 whitespace-nowrap'>
-              <ProgrammingArrows />
-              Change Current Image
-            </span>
-          </label>
-        </div>
       </header>
-      <div className='Container'>
+      <div className='my-8 p-8 bg-[#fff] rounded-xl border border-solid border-[#e8ebed]'>
         <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
         <form
           action='#'
-          className='AddForm mt-6 w-[100%] text-base flex flex-col'
+          className='AddForm w-[100%] text-base flex flex-col'
           autoComplete='off'
           onSubmit={handleSubmit}
         >
-          <div className='flex w-full justify-between gap-x-12 animate-[slideUp_1s_ease]'>
-            <div className='max-w-[48%] grow'>
-              <div className='AddForm__row'>
-                <div className='AddForm__group'>
-                  <label htmlFor='product_id'>
-                    <span className='text-[red]'>* </span>ID
-                  </label>
-                  <input
-                    type='text'
-                    id='product_id'
-                    name='product_id'
-                    value={productID}
-                    placeholder='1234'
-                    className='AddForm__input'
-                    onChange={(e) => setProductID(e.target.value)}
-                    onFocus={() => setErrorProductID('')}
-                  />
-                  <p className='error_message'>{errorProductID}</p>
-                </div>
-                <div className='AddForm__group'>
-                  <label htmlFor='product_name'>
-                    <span className='text-[red]'>* </span>Name
-                  </label>
-                  <input
-                    type='text'
-                    id='product_name'
-                    name='product_name'
-                    placeholder='Minh dep trai'
-                    className='AddForm__input'
-                    onFocus={() => setErrorProductName('')}
-                    onChange={(e) => setProductName(e.target.value)}
-                    value={productName}
-                  />
-                  <p className='error_message'>{errorProductName}</p>
-                </div>
-              </div>
-              <div className='AddForm__row'>
-                <div className='AddForm__group'>
-                  <label htmlFor='Category'>
-                    <span className='text-[red]'>* </span>Category
-                  </label>
-                  <ConfigProvider theme={filterTheme}>
-                    <Select
-                      suffixIcon={null}
-                      allowClear
-                      showSearch
-                      placeholder='Select Category'
-                      placement='bottomLeft'
-                      options={categories}
-                      filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
-                      onDropdownVisibleChange={() => setErrorCategory('')}
-                      className='AddForm__select'
-                      onChange={(value) => {
-                        setCategory(value)
-                      }}
-                    />
-                  </ConfigProvider>
-                  <p className='error_message'>{errorCategory}</p>
-                </div>
-                <div className='AddForm__group'>
-                  <label htmlFor='Brand'>
-                    <span className='text-[red]'>* </span>Brand
-                  </label>
-                  <ConfigProvider theme={filterTheme}>
-                    <Select
-                      suffixIcon={null}
-                      id='Brand'
-                      options={brands}
-                      placeholder='Select brand'
-                      className='AddForm__select'
-                      allowClear
-                      showSearch
-                      filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
-                      onDropdownVisibleChange={() => setErrorBrand('')}
-                      onChange={(value) => {
-                        setBrand(value)
-                      }}
-                    />
-                  </ConfigProvider>
-                  <p className='error_message'>{errorBrand}</p>
+          <div className='flex w-full justify-between gap-8 animate-[slideUp_1s_ease]'>
+            <div className='w-full max-w-[50%] flex-[1_1_50%] flex flex-col gap-8'>
+              <div className='w-full flex flex-col p-8 border border-[#e8ebed] border-solid rounded-xl bg-[#fff]'>
+                <h2 className='text-lg text-black font-medium pb-8 text-center'>Product basic information</h2>
+                <div className='flex flex-col gap-8'>
+                  <div className='AddForm__row'>
+                    <div className='AddForm__group'>
+                      <label htmlFor='product_name'>
+                        <span className='text-[red]'>* </span>Name
+                      </label>
+                      <input
+                        type='text'
+                        id='product_name'
+                        name='product_name'
+                        placeholder='Minh dep trai'
+                        className='AddForm__input'
+                        onFocus={() => setErrorProductName('')}
+                        onChange={(e) => setProductName(e.target.value)}
+                        value={productName}
+                      />
+                      <p className='error_message'>{errorProductName}</p>
+                    </div>
+                  </div>
+                  <div className='AddForm__row'>
+                    <div className='AddForm__group'>
+                      <label htmlFor='product_slug'>
+                        <span className='text-[red]'>* </span>Slug
+                      </label>
+                      <input
+                        type='text'
+                        id='product_slug'
+                        name='product_slug'
+                        value={productSlug}
+                        placeholder='thuoc-cam-cum'
+                        className='AddForm__input'
+                        onChange={(e) => setProductSlug(e.target.value)}
+                        onFocus={() => setErrorProductSlug('')}
+                      />
+                      <p className='error_message'>{errorProductSlug}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className='AddForm__row'>
-                <div className='AddForm__group'>
-                  <label htmlFor='product_price'>
-                    <span className='text-[red]'>* </span>Price
-                  </label>
-                  <input
-                    type='text'
-                    id='product_price'
-                    name='product_price'
-                    placeholder='4000000'
-                    className='AddForm__input'
-                    value={productPrice}
-                    onChange={(e) => setProductPrice(e.target.value)}
-                    onFocus={() => setErrorProductPrice('')}
-                  />
-                  <p className='error_message'>{errorProductPrice}</p>
-                </div>
-                <div className='AddForm__group'>
-                  <label htmlFor='product_discount'>
-                    <span className='text-[red]'>* </span>Discount
-                  </label>
-                  <input
-                    type='text'
-                    id='product_discount'
-                    name='product_discount'
-                    placeholder='20'
-                    className='AddForm__input'
-                    value={productDiscount}
-                    onChange={(e) => setProductDiscount(e.target.value)}
-                    onFocus={() => setErrorProductDiscount('')}
-                  />
-                  <p className='error_message'>{errorProductDiscount}</p>
-                </div>
-              </div>
-              <div className='AddForm__row'>
-                <div className='AddForm__group'>
-                  <label htmlFor='package'>Package</label>
-                  <input
-                    type='text'
-                    id='package'
-                    name='package'
-                    placeholder='Package 1'
-                    className='AddForm__input'
-                    value={productPackage}
-                    onChange={(e) => setProductPackage(e.target.value)}
-                  />
-                </div>
-                <div className='AddForm__group'>
-                  <label htmlFor='ingredient'>Ingredient</label>
-                  <input
-                    type='text'
-                    id='ingredient'
-                    name='ingredient'
-                    placeholder='Azithromycin 200mg'
-                    className='AddForm__input'
-                    onChange={(e) => setProductIngredient(e.target.value)}
-                    value={productIngredient}
-                  />
+              <div className='w-full flex flex-col p-8 border border-[#e8ebed] border-solid rounded-xl bg-[#fff]'>
+                <h2 className='text-lg text-black font-medium pb-8 text-center'>Category and brand</h2>
+                <div className='flex flex-col gap-8'>
+                  <div className='AddForm__row'>
+                    <div className='AddForm__group'>
+                      <label htmlFor='Category'>
+                        <span className='text-[red]'>* </span>Category
+                      </label>
+                      <ConfigProvider theme={filterTheme}>
+                        <Select
+                          suffixIcon={null}
+                          allowClear
+                          showSearch
+                          placeholder='Select Category'
+                          placement='bottomLeft'
+                          value={category || undefined}
+                          options={categories}
+                          filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
+                          onDropdownVisibleChange={() => setErrorCategory('')}
+                          className='AddForm__select'
+                          onChange={(value) => {
+                            setCategory(value)
+                          }}
+                        />
+                      </ConfigProvider>
+                      <p className='error_message'>{errorCategory}</p>
+                    </div>
+                  </div>
+                  <div className='AddForm__row'>
+                    <div className='AddForm__group'>
+                      <label htmlFor='Brand'>
+                        <span className='text-[red]'>* </span>Brand
+                      </label>
+                      <ConfigProvider theme={filterTheme}>
+                        <Select
+                          suffixIcon={null}
+                          id='Brand'
+                          options={brands}
+                          placeholder='Select brand'
+                          className='AddForm__select'
+                          allowClear
+                          value={brand || undefined}
+                          showSearch
+                          filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
+                          onDropdownVisibleChange={() => setErrorBrand('')}
+                          onChange={(value) => {
+                            setBrand(value)
+                          }}
+                        />
+                      </ConfigProvider>
+                      <p className='error_message'>{errorBrand}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className='AddForm__row'>
-                <div className='AddForm__group'>
-                  <label htmlFor='dosage_form'>
-                    <span className='text-[red]'>* </span>Dosage form
-                  </label>
-                  <input
-                    type='text'
-                    id='dosage_form'
-                    name='dosage_form'
-                    placeholder='Bột pha hỗn dịch uống'
-                    className='AddForm__input'
-                    onChange={(e) => setProductDosageForm(e.target.value)}
-                    onFocus={() => setErrorProductDosageForm('')}
-                    value={productDosageForm}
-                  />
-                  <p className='error_message'>{errorProductDosageForm}</p>
-                </div>
-                <div className='AddForm__group'>
-                  <label htmlFor='specification'>
-                    <span className='text-[red]'>* </span>Specification
-                  </label>
-                  <input
-                    type='text'
-                    id='specification'
-                    name='specification'
-                    placeholder='Điều trị nhiễm khuẩn'
-                    className='AddForm__input'
-                    onChange={(e) => setProductSpecification(e.target.value)}
-                    onFocus={() => setErrorProductSpecification('')}
-                    value={productSpecification}
-                  />
-                  <p className='error_message'>{errorProductSpecification}</p>
-                </div>
-              </div>
-              <div className='AddForm__row'>
-                <div className='AddForm__group'>
-                  <label htmlFor='manufacturer'>
-                    <span className='text-[red]'>* </span>Manufacturer
-                  </label>
-                  <input
-                    type='text'
-                    id='manufacturer'
-                    name='manufacturer'
-                    placeholder='Công ty cổ phần dược phẩm Việt Nam'
-                    className='AddForm__input'
-                    onChange={(e) => setProductManufacturer(e.target.value)}
-                    onFocus={() => setErrorProductManufacturer('')}
-                    value={productManufacturer}
-                  />
-                  <p className='error_message'>{errorProductManufacturer}</p>
-                </div>
-                <div className='AddForm__group'>
-                  <label htmlFor='place_of_manufacture'>
-                    <span className='text-[red]'>* </span>Place of manufacture
-                  </label>
-                  <input
-                    type='text'
-                    id='place_of_manufacture'
-                    name='place_of_manufacture'
-                    placeholder='Việt Nam'
-                    className='AddForm__input'
-                    onChange={(e) => setProductPlaceOfManufacture(e.target.value)}
-                    onFocus={() => setErrorProductPlaceOfManufacture('')}
-                    value={productPlaceOfManufacture}
-                  />
-                  <p className='error_message'>{errorProductPlaceOfManufacture}</p>
+              <div className='w-full flex flex-col p-8 border border-[#e8ebed] border-solid rounded-xl bg-[#fff]'>
+                <h2 className='text-lg text-black font-medium pb-8 text-center'>Price and discount</h2>
+                <div className='flex flex-col gap-8'>
+                  <div className='AddForm__row'>
+                    <div className='AddForm__group'>
+                      <label htmlFor='product_price'>
+                        <span className='text-[red]'>* </span>Price
+                      </label>
+                      <input
+                        type='text'
+                        id='product_price'
+                        name='product_price'
+                        placeholder='4000000'
+                        className='AddForm__input'
+                        value={productPrice}
+                        onChange={(e) => setProductPrice(e.target.value)}
+                        onFocus={() => setErrorProductPrice('')}
+                      />
+                      <p className='error_message'>{errorProductPrice}</p>
+                    </div>
+                  </div>
+                  <div className='AddForm__row'>
+                    <div className='AddForm__group'>
+                      <label htmlFor='product_discount'>Discount</label>
+                      <input
+                        type='text'
+                        id='product_discount'
+                        name='product_discount'
+                        placeholder='20'
+                        className='AddForm__input'
+                        value={productDiscount}
+                        onChange={(e) => setProductDiscount(e.target.value)}
+                        onFocus={() => setErrorProductDiscount('')}
+                      />
+                      <p className='error_message'>{errorProductDiscount}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className='max-w-[48%] bg-[transparent] grow flex flex-col gap-y-1'>
-              <label htmlFor=''>
-                <span className='text-[red]'>* </span>Image (.jpg, .jpeg, .png, .gif, .svg)
-              </label>
-              <Tooltip title={errorFiles} open={errorFiles === '' ? false : true} placement='top' align='center'>
-                <div className='slider__container'>
-                  <div className='slides'>
-                    {uploadImages.length === 0 ? (
-                      <div className='slide flex justify-center items-center relative w-full'>
-                        <Image
-                          src='/assets/images/default-image.jpg'
-                          alt='Default Preview'
-                          width='100%'
-                          height='350px'
-                          preview={false}
-                        />
-                      </div>
-                    ) : (
-                      <Image.PreviewGroup items={uploadImages.map((image) => ({ src: image }))}>
-                        {uploadImages.map((image, index) => (
-                          <div key={index} className='slide flex justify-center'>
-                            <Image src={image} alt='Preview' className='object-cover' width='100%' height='350px' />
-                          </div>
-                        ))}
-                      </Image.PreviewGroup>
-                    )}
+            <div className='w-full max-w-[50%] bg-[transparent]'>
+              <div className='flex flex-col gap-2 sticky top-0 w-full'>
+                <div className='flex justify-between items-center w-full'>
+                  <label htmlFor='imageUpload'>Image (.jpg, .jpeg, .png, .gif, .svg)</label>
+                  <div className='flex gap-4'>
+                    <label
+                      htmlFor='imageUpload'
+                      className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#16a2b8] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
+                      onClick={() => setErrorFiles('')}
+                    >
+                      <span className='flex items-center justify-center'>
+                        <DocumentUpload />
+                      </span>
+                    </label>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        handleDeleteImage(currentSlide)
+                      }}
+                      className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#db3545] rounded-[4px] text-[#FFFFFF] flex items-center font-bold text-[14px] gap-x-2'
+                    >
+                      <DeleteOutlined className='text-[20px]' />
+                    </button>
+                    <label
+                      htmlFor='imageChangeUpload'
+                      className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#007bff] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
+                      onClick={() => setErrorFiles('')}
+                    >
+                      <span className='flex items-center justify-center gap-x-2 whitespace-nowrap'>
+                        <ProgrammingArrows />
+                      </span>
+                    </label>
                   </div>
-                  <button type='button' className='prev' onClick={() => moveSlide(-1)}>
-                    &#10094;
-                  </button>
-                  <button type='button' className='next' onClick={() => moveSlide(1)}>
-                    &#10095;
-                  </button>
                 </div>
-              </Tooltip>
-              <div className='thumbnail__container'>
-                <div className='thumbnails' ref={thumbnailRef}>
-                  {showThumbnailLeft && (
-                    <button className='thumbnail__arrow thumbnail__left' onClick={scrollThumbnailLeft} type='button'>
-                      &lt;
-                    </button>
-                  )}
-                  {uploadImages.length === 0 ? (
-                    <img
-                      src='/assets/images/default-image.jpg'
-                      alt='Thumbnail'
-                      className='thumbnail max-w-[85px] h-[85px] object-cover'
-                    />
-                  ) : (
-                    uploadImages.map((image, index) => (
-                      <img
-                        key={index}
-                        src={image}
-                        alt='Thumbnail'
-                        className='thumbnail max-w-[85px] h-[85px] object-cover'
-                        onClick={() => moveToSlide(index)}
-                      />
-                    ))
-                  )}
-                  {showThumbnailRight && (
-                    <button className='thumbnail__arrow thumbnail__right' onClick={scrollThumbnailRight} type='button'>
-                      &gt;
-                    </button>
-                  )}
+                <div className='flex flex-col gap-1 '>
+                  <Tooltip title={errorFiles} open={errorFiles === '' ? false : true} placement='top' align='center'>
+                    <div className='slider__container'>
+                      <div className='slides'>
+                        {uploadImages.length === 0 ? (
+                          <div className='slide flex justify-center items-center relative w-full'>
+                            <Image
+                              src='/assets/images/default-image.png'
+                              alt='Default Preview'
+                              width='100%'
+                              height='350px'
+                              className='object-cover'
+                            />
+                          </div>
+                        ) : (
+                          <Image.PreviewGroup items={uploadImages.map((image) => ({ src: image }))}>
+                            {uploadImages.map((image, index) => (
+                              <div key={index} className='slide flex justify-center'>
+                                <Image src={image} alt='Preview' className='object-cover' width='100%' height='350px' />
+                              </div>
+                            ))}
+                          </Image.PreviewGroup>
+                        )}
+                      </div>
+                      <button type='button' className='prev' onClick={() => moveSlide(-1)}>
+                        &#10094;
+                      </button>
+                      <button type='button' className='next' onClick={() => moveSlide(1)}>
+                        &#10095;
+                      </button>
+                    </div>
+                  </Tooltip>
+                  <div className='thumbnail__container'>
+                    <div className='thumbnails' ref={thumbnailRef}>
+                      {showThumbnailLeft && (
+                        <button
+                          className='thumbnail__arrow thumbnail__left'
+                          onClick={scrollThumbnailLeft}
+                          type='button'
+                        >
+                          &lt;
+                        </button>
+                      )}
+                      {uploadImages.length === 0 ? (
+                        <img
+                          src='/assets/images/default-image.png'
+                          alt='Thumbnail'
+                          className='thumbnail max-w-[85px] h-[85px] object-cover'
+                        />
+                      ) : (
+                        uploadImages.map((image, index) => (
+                          <img
+                            key={index}
+                            src={image}
+                            alt='Thumbnail'
+                            className='thumbnail max-w-[85px] h-[85px] object-cover'
+                            onClick={() => moveToSlide(index)}
+                          />
+                        ))
+                      )}
+                      {showThumbnailRight && (
+                        <button
+                          className='thumbnail__arrow thumbnail__right'
+                          onClick={scrollThumbnailRight}
+                          type='button'
+                        >
+                          &gt;
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
               <input
@@ -914,48 +796,170 @@ const AddProduct = () => {
               />
             </div>
           </div>
-          <div className='flex gap-x-12 justify-between flex-col'>
-            <div className='AddForm__row w-full'>
-              <div className='relative w-full flex flex-col'>
-                <label htmlFor='product_uses'>
-                  <span className='text-[red]'>* </span>Product Uses
-                </label>
-                <textarea
-                  id='product_uses'
-                  name='product_uses'
-                  rows={6}
-                  placeholder='Mọi thông tin trên đây chỉ mang tính chất tham khảo. Vui lòng đọc kĩ thông tin chi tiết ở tờ hướng dẫn sử dụng của sản phẩm.'
-                  className='AddForm__textarea'
-                  onChange={(e) => setProductUses(e.target.value)}
-                  onFocus={() => setErrorProductUses('')}
-                  value={productUses}
-                />
-                <p className='error_message'>{errorProductUses}</p>
+          <div className='w-full flex flex-col p-8 border border-[#e8ebed] border-solid rounded-xl bg-[#fff] my-8'>
+            <h2 className='text-lg text-black font-medium pb-8 text-center'>Product Detail</h2>
+            <div className='flex flex-col gap-8'>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
+                  <label htmlFor='package'>Package</label>
+                  <input
+                    type='text'
+                    id='package'
+                    name='package'
+                    placeholder='Package 1'
+                    className='AddForm__input'
+                    value={productPackage}
+                    onChange={(e) => setProductPackage(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
-            <div className='AddForm__row w-full'>
-              <div className='relative w-full flex flex-col'>
-                <label htmlFor='product_description'>
-                  <span className='text-[red]'>* </span>Product Description
-                </label>
-                <textarea
-                  id='product_description'
-                  name='product_description'
-                  rows={6}
-                  placeholder='Mọi thông tin trên đây chỉ mang tính chất tham khảo. Vui lòng đọc kĩ thông tin chi tiết ở tờ hướng dẫn sử dụng của sản phẩm.'
-                  className='AddForm__textarea'
-                  onChange={(e) => {
-                    setProductDescription(e.target.value)
-                  }}
-                  onFocus={() => setErrorProductDescription('')}
-                  value={productDescription}
-                />
-                <p className='error_message'>{errorProductDescription}</p>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
+                  <label htmlFor='ingredient'>Ingredient</label>
+                  <input
+                    type='text'
+                    id='ingredient'
+                    name='ingredient'
+                    placeholder='Azithromycin 200mg'
+                    className='AddForm__input'
+                    onChange={(e) => setProductIngredient(e.target.value)}
+                    value={productIngredient}
+                  />
+                </div>
+              </div>
+              <div className='AddForm__row '>
+                <div className='AddForm__group'>
+                  <label htmlFor='dosage_form'>Dosage form</label>
+                  <input
+                    type='text'
+                    id='dosage_form'
+                    name='dosage_form'
+                    placeholder='Bột pha hỗn dịch uống'
+                    className='AddForm__input'
+                    onChange={(e) => setProductDosageForm(e.target.value)}
+                    value={productDosageForm}
+                  />
+                </div>
+              </div>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
+                  <label htmlFor='specification'>Specification</label>
+                  <input
+                    type='text'
+                    id='specification'
+                    name='specification'
+                    placeholder='Điều trị nhiễm khuẩn'
+                    className='AddForm__input'
+                    onChange={(e) => setProductSpecification(e.target.value)}
+                    value={productSpecification}
+                  />
+                </div>
+              </div>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
+                  <label htmlFor='manufacturer'>Manufacturer</label>
+                  <input
+                    type='text'
+                    id='manufacturer'
+                    name='manufacturer'
+                    placeholder='Công ty cổ phần dược phẩm Việt Nam'
+                    className='AddForm__input'
+                    onChange={(e) => setProductManufacturer(e.target.value)}
+                    value={productManufacturer}
+                  />
+                </div>
+              </div>
+              <div className='AddForm__row'>
+                <div className='AddForm__group'>
+                  <label htmlFor='place_of_manufacture'>Place of manufacture</label>
+                  <input
+                    type='text'
+                    id='place_of_manufacture'
+                    name='place_of_manufacture'
+                    placeholder='Việt Nam'
+                    className='AddForm__input'
+                    onChange={(e) => setProductPlaceOfManufacture(e.target.value)}
+                    value={productPlaceOfManufacture}
+                  />
+                </div>
+              </div>
+              <div className='AddForm__row w-full'>
+                <div className='relative w-full flex flex-col'>
+                  <label htmlFor='product_uses'>Product Uses</label>
+                  <textarea
+                    id='product_uses'
+                    name='product_uses'
+                    rows={6}
+                    placeholder='Mọi thông tin trên đây chỉ mang tính chất tham khảo. Vui lòng đọc kĩ thông tin chi tiết ở tờ hướng dẫn sử dụng của sản phẩm.'
+                    className='AddForm__textarea'
+                    onChange={(e) => setProductUses(e.target.value)}
+                    value={productUses}
+                  />
+                </div>
+              </div>
+              <Modal title='' centered open={openModalView} width={'100vw'} footer={false} closeIcon={null}>
+                <div className='w-full flex flex-col gap-3'>
+                  <h1 className='text-black text-2xl font-semibold mx-auto'>Preview Product Description</h1>
+                  <div
+                    className='ql-editor flex flex-col gap-4 w-full'
+                    dangerouslySetInnerHTML={{
+                      __html: productDescription
+                    }}
+                  ></div>
+                  <button
+                    type='button'
+                    onClick={handleCancelPreview}
+                    className='p-2 w-16 h-16 rounded-[50%] bg-[#66b5a2] sticky bottom-8 animate-bounce ml-auto'
+                  >
+                    <CloseOutlined className='text-white text-2xl' />
+                  </button>
+                </div>
+              </Modal>
+              <div className='AddForm__row w-full'>
+                <div className='relative w-full flex flex-col gap-2'>
+                  <div className='w-full flex justify-between items-center'>
+                    <label htmlFor='product_description'>Product Description</label>
+                    <button
+                      type='button'
+                      className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+                      onClick={() => setOpenModalView(true)}
+                    >
+                      View Description
+                    </button>
+                  </div>
+                  <div
+                    className='h-[400px] w-full'
+                    id='product_description'
+                    tabIndex={0}
+                    onFocus={() => {
+                      setEditorSelect('product_description')
+                      setEditorFocus(true)
+                    }}
+                    onBlur={() => {
+                      setEditorFocus(false)
+                      setEditorSelect(null)
+                    }}
+                  >
+                    <AdminEditor
+                      defaultValue={productDescription}
+                      idEditor='product_description'
+                      onChange={setProductDescription}
+                      placeHolder='Thành phần
+Hoạt chất: Levocetirizin dihydroclorid 10mg
+Tá dược: Lactose monohydrat, cellulose vi tinh thi (M101), povidon (kollidon 30), croscarmelose natri, magnesi stearat, HPMC E6, talc, titan dioxyd, PEG 4000, polysorbat 80, dầu thầu dầu.'
+                      editorSelect={editorSelect}
+                      editorFocus={editorFocus}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           <div className='AddForm__row button__group mt-2'>
-            <button type='submit' className='AddForm__SubmitButton'>
+            <button
+              type='submit'
+              className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+            >
               Submit
             </button>
             <button type='button' className='AddForm__CancelButton' onClick={() => window.history.back()}>

@@ -19,7 +19,11 @@ import {
   AdminCustomer,
   AdminResetPassword,
   AdminOrders,
-  AdminIllness
+  AdminIllness,
+  AdminAddIllness,
+  AdminUpdateIllness,
+  AdminViewOrder,
+  AdminDelivery
 } from '../Component'
 import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
 import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
@@ -233,21 +237,36 @@ export default function useRouterElement() {
       path: '/admin/orders',
       element: (
         <AdminMainLayout scrollBar='simpleBar'>
-          <AdminOrders />
+          <Outlet />
+        </AdminMainLayout>
+      ),
+      children: [
+        {
+          path: '',
+          element: <AdminOrders />
+        },
+        {
+          path: ':id',
+          element: <AdminViewOrder />
+        }
+      ]
+    },
+
+    {
+      path: '/admin/payments',
+      element: (
+        <AdminMainLayout scrollBar='simpleBar'>
+          <div className='col-span-3 bg-gray-light  '>
+            <h1>payment</h1>
+          </div>
         </AdminMainLayout>
       )
     },
     {
-      path: '/admin/reports',
+      path: '/admin/deliveries',
       element: (
         <AdminMainLayout scrollBar='simpleBar'>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>User reports</div>
-            </div>
-          </div>
+          <AdminDelivery />
         </AdminMainLayout>
       )
     },
@@ -298,41 +317,41 @@ export default function useRouterElement() {
         </AdminMainLayout>
       )
     },
-    {
-      path: '/admin/posts',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>Post</div>
-            </div>
-          </div>
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/comment_review',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>comment_review</div>
-            </div>
-          </div>
-        </AdminMainLayout>
-      )
-    },
+    // {
+    //   path: '/admin/comment_review',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <div className='col-span-3 bg-gray-light  '>
+    //         {/* Scrollable content */}
+    //         <div className=''>
+    //           {/* Adjust the height according to your header's height */}
+    //           <div className='h-[1000px] flex items-center justify-center'>comment_review</div>
+    //         </div>
+    //       </div>
+    //     </AdminMainLayout>
+    //   )
+    // },
     {
       path: '/admin/disease',
       element: (
         <AdminMainLayout scrollBar='simpleBar'>
-          <AdminIllness />
+          <Outlet />
         </AdminMainLayout>
-      )
+      ),
+      children: [
+        {
+          path: '',
+          element: <AdminIllness />
+        },
+        {
+          path: 'add',
+          element: <AdminAddIllness />
+        },
+        {
+          path: 'update/:id',
+          element: <AdminUpdateIllness />
+        }
+      ]
     },
     {
       path: '/admin/setting',

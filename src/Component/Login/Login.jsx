@@ -1,7 +1,6 @@
 import React, { useContext } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import anh from './_480f2c92-d896-48ef-978c-6c37301968f7.png'
 import { schemaLogin } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -43,20 +42,23 @@ export default function Login() {
     })
   })
   return (
-    <div className=' '>
-      <div className=' lg:grid-cols-6 bg-blue grid h-full'>
-        <div className=' hidden lg:flex lg:flex-col lg:justify-center lg:items-center lg:col-start-1 lg:col-span-3 '>
-          <div className='w-[200px] mb-10 rounded-sm '>
-            <img src={anh} alt='' className='rounded-sm' />
+    <div className='h-full'>
+      <div className='bg-[rgb(39,107,68,0.4)] grid min-h-[calc(100vh-84px)] lg:grid-cols-6 lg:gap-[7.5rem] gap-0'>
+        <div className='hidden lg:flex lg:flex-col lg:justify-center lg:items-end lg:col-start-1 lg:col-span-3'>
+          <div className='flex flex-col justify-center items-center'>
+            <div className='w-[350px] mb-7 rounded-sm '>
+              <img src='/assets/images/Logo_Pbl6.png' alt='Logo' className='rounded-sm w-full object-cover' />
+            </div>
+            <div className='flex flex-col gap-6 justify-center items-center'>
+              <span className='text-2xl text-lime-700 font-semibold'>Nền tảng thương mại điện tử</span>
+              <span className='text-2xl text-lime-700 font-semibold'>Mua sắm dễ dàng, tiện lợi và an toàn</span>
+            </div>
           </div>
-          <div className='text-2xl text-white '>Nền Tảng thương mại điện tử </div>
-          <div className='text-2xl mt-2 text-white'>yêu thích ở Đông Nam Á và Đài Loan</div>
         </div>
-        <div className='col-start-4 col-span-2 p-7'>
-          <div className=' bg-white  rounded shadow-sm '>
-            <form action='' className=' bg-white rounded shadow-sm p-7' onSubmit={onSubmit} noValidate>
-              <div className='text-3xl '>Đăng Nhập</div>
-              {/* Nên có 1 thẻ div bao bọc input : để có message báo lỗi đặt trong thẻ dĩ luôn  */}
+        <div className='col-start-1 col-span-6 p-7 flex justify-center items-center lg:justify-start lg:col-start-4 lg:col-span-3'>
+          <div className='bg-white rounded shadow-sm w-full max-w-[35rem] lg:max-w-[26rem]'>
+            <form action='' className=' bg-white rounded-xl shadow-sm p-7' onSubmit={onSubmit} noValidate>
+              <div className='text-3xl text-center'>Đăng Nhập</div>
               <div className='mt-8'>
                 <input
                   placeholder='Email'
@@ -67,7 +69,7 @@ export default function Login() {
                 />
                 <div className='mt-1 text-red-600 text-sm min-h-[1.5rem]'>{errors.email?.message}</div>
               </div>
-              <div className='mt-8'>
+              <div className='mt-2'>
                 <input
                   placeholder='Password'
                   type='password'
@@ -78,17 +80,12 @@ export default function Login() {
                 />
                 <div className='mt-1 text-red-600 text-sm min-h-[1.5rem]'>{errors.password?.message}</div>
               </div>
-
-              <div className='mt-10'>
-                {/* w-full: 100% */}
-                <button
-                  className='w-full text-center bg-orange py-4 px-2 uppercase rounded-sm text-white hover:bg-red-600'
-                  // loginMutation.isPending được sử dụng để kiểm tra xem mutation (đăng nhập) có đang trong quá trình xử lý không. Nếu isPending là true thì disabled
-                >
+              <div className='mt-2'>
+                <button className='w-full text-center bg-orange py-4 px-2 uppercase rounded-sm text-white hover:bg-opacity-90'>
                   Đăng nhập
                 </button>
               </div>
-              <div className='mt-5 flex justify-between text-[#05a]'>
+              <div className='mt-5 flex justify-between text-[#05a] text-sm flex-wrap gap-2 text-center'>
                 <span>Quên mật khẩu</span>
                 <span>Đăng nhập với SMS</span>
               </div>
@@ -98,8 +95,8 @@ export default function Login() {
                 <div className='h-[1px] grow bg-gray-200'></div>
               </div>
               <div className='mt-8 text-center'>
-                <div className='flex items-center justify-center'>
-                  <span className=' text-slate-400'>Bạn chưa có tài khoản Pharmacity? </span>
+                <div className='flex items-center justify-center gap-[0.5rem] flex-wrap'>
+                  <span className='text-slate-400'>Bạn chưa có tài khoản? </span>
                   <Link to='/Register' className='text-red-600 ml-1'>
                     Đăng Kí
                   </Link>

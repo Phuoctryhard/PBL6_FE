@@ -205,7 +205,7 @@ const Customer = () => {
                       <button
                         tabIndex={-1}
                         type='button'
-                        className='flex items-center gap-x-2 justify-center'
+                        className='flex items-center gap-x-2 justify-start w-full'
                         onClick={(e) => e.stopPropagation()}
                       >
                         <DeleteOutlined className='text-[14px] text-[red]' />
@@ -226,7 +226,7 @@ const Customer = () => {
                     >
                       <button
                         type='button'
-                        className='flex items-center gap-x-2 justify-center'
+                        className='flex items-center gap-x-2 justify-start w-full'
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Refresh className='text-[green]' size={15} /> <span>Restore</span>
@@ -319,25 +319,12 @@ const Customer = () => {
         return
       }
       const res = await response.json()
-      const resData = res.data.data
+      const resData = res.data
       const tableData = resData
         .map((item) => ({
+          ...item,
           key: item.user_id,
-          user_id: item.user_id,
-          user_fullname: item.user_fullname,
-          email: item.email,
-          user_phone: item.user_phone === null ? 'N/A' : item.user_phone,
-          user_birthday: item.user_birthday,
-          user_gender: item.user_gender,
-          user_avatar: item.user_avatar,
-          user_weight: item.user_weight,
-          user_height: item.user_height,
-          user_ibm: item.user_ibm,
-          user_is_block: item.user_is_block,
-          user_is_delete: item.user_is_delete,
-          email_verified_at: item.email_verified_at,
-          user_created_at: item.user_created_at,
-          user_updated_at: item.user_updated_at
+          user_phone: item.user_phone === null ? 'N/A' : item.user_phone
         }))
         .sort((a, b) => new Date(b.user_created_at) - new Date(a.user_created_at))
       setData(tableData)
@@ -382,7 +369,10 @@ const Customer = () => {
       return ''
     }
     const result = data.filter((item) => {
-      const matchesName = item.user_fullname.toLowerCase().includes(searchValue.toLowerCase())
+      const matchInfo =
+        item.user_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item?.email.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item?.user_phone.toLowerCase().includes(searchValue.toLowerCase())
       const matchesGender = (selectedGender === null) | (item.user_gender === selectedGender)
       const matchesBlock = (selectedBlock === null) | (item.user_is_block === selectedBlock)
       const matchesStatus = (selectedStatus === null) | (item.user_is_delete === selectedStatus)
@@ -390,7 +380,7 @@ const Customer = () => {
         ? formatDate(item.user_created_at) >= formatDate(selectedFrom) &&
           formatDate(item.user_created_at) <= formatDate(selectedTo)
         : true
-      return matchesName && matchesGender && matchesDateRange && matchesBlock && matchesStatus
+      return matchInfo && matchesGender && matchesDateRange && matchesBlock && matchesStatus
     })
     const tableData = result
     setFilterData(tableData)
@@ -503,8 +493,8 @@ const Customer = () => {
     <section className='w-full h-full'>
       <header className='flex justify-between animate-slideDown'>
         <div className='flex flex-col gap-1'>
-          <BreadCrumbs items={[{ title: 'Users' }, { title: `List of customers (${filterData?.length})` }]} />
-          <p>List of customer available in system</p>
+          <BreadCrumbs items={[{ title: 'Managers' }, { title: `List of users (${filterData?.length})` }]} />
+          <p>List of users available in system</p>
         </div>
       </header>
       <div className='p-5 my-6 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp flex flex-col gap-4'>
@@ -512,7 +502,7 @@ const Customer = () => {
           <div className='flex items-center w-[250px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
-              placeholder='Search for customer'
+              placeholder='Search for users'
               className='border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px] focus:border-[#1D242E]'
               value={searchValue}
               autoFocus

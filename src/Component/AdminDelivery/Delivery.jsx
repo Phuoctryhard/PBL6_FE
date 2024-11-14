@@ -1,4 +1,3 @@
-import { BrandsAPI } from '../../Api/admin'
 import { Add, SearchNormal, Edit, Eye, Refresh } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -10,9 +9,10 @@ import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '../../context/app.context'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
+import { AdminDeliveryAPI } from '../../Api/admin'
 const { RangePicker } = DatePicker
 
-const Brands = () => {
+const Delivery = () => {
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
@@ -60,42 +60,45 @@ const Brands = () => {
     return `${formattedDate}`
   }
 
-  //Table columns
+  //table column
   const columns = [
     {
       title: '#',
-      dataIndex: 'brand_id',
-      key: 'brand_id',
-      width: '10%',
-      sorter: (a, b) => a.brand_id - b.brand_id,
+      dataIndex: 'delivery_method_id',
+      key: 'delivery_method_id',
+      sorter: (a, b) => a.delivery_method_id - b.delivery_method_id,
       ellipsis: true
     },
     {
       title: 'Name',
-      dataIndex: 'brand_name',
-      key: 'brand_name',
-      sorter: (a, b) => a.brand_name.localeCompare(b.brand_name),
+      dataIndex: 'delivery_method_name',
+      key: 'delivery_method_name',
+      sorter: (a, b) => a.delivery_method_name.localeCompare(b.delivery_method_name),
       ellipsis: true,
       render: (text, record) => (
         <div className='flex items-center gap-x-2 justify-start'>
-          <img src={record.brand_logo} alt={text} className='w-[48px] h-[48px] object-cover rounded-full' />
+          <img src={record.delivery_method_logo} alt={text} className='w-12 h-12 object-cover rounded-full' />
           <span>{text}</span>
         </div>
       )
     },
     {
-      title: 'Create at',
-      dataIndex: 'brand_created_at',
-      key: 'brand_created_at',
-      sorter: (a, b) => new Date(a.brand_created_at) - new Date(b.brand_created_at),
-      ellipsis: true,
-      render: (text) => <span className='text-[14px]'>{DateFormat(text)}</span>
+      title: 'Fee',
+      dataIndex: 'delivery_fee',
+      key: 'delivery_fee',
+      sorter: (a, b) => a.delivery_fee - b.delivery_fee,
+      ellipsis: true
     },
     {
       title: 'Status',
-      dataIndex: 'brand_is_delete',
-      key: 'brand_is_delete',
-      width: '10%',
+      dataIndex: 'delivery_is_active',
+      key: 'delivery_is_active',
+      sorter: (a, b) => a.delivery_is_active - b.delivery_is_active,
+      filters: [
+        { text: 'Active', value: 0 },
+        { text: 'Deleted', value: 1 }
+      ],
+      onFilter: (value, record) => record.delivery_is_active === value,
       render: (text) => (
         <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
       )
@@ -114,14 +117,7 @@ const Brands = () => {
               {
                 key: '1',
                 label: (
-                  <button
-                    type='button'
-                    className='flex items-center gap-x-2 justify-start w-full'
-                    onClick={() => {
-                      setOpenModalView(true)
-                      setSelectedBrandData(record)
-                    }}
-                  >
+                  <button type='button' className='flex items-center gap-x-2 justify-start w-full' onClick={() => {}}>
                     <Eye size='15' color='green' /> <span>View</span>
                   </button>
                 )
@@ -134,12 +130,12 @@ const Brands = () => {
                     className='flex items-center gap-x-2 justify-start w-full'
                     onClick={() => {
                       setOpenModal(true)
-                      setSelectedBrand(record.brand_id)
-                      setBrandName(record.brand_name)
-                      setBrandDescription(record.brand_description)
-                      setLogo(record.brand_logo)
-                      setBrandSlug(record.brand_slug)
                       setTypeModal('update')
+                      setDeliverySelected(record.delivery_method_id)
+                      setDeliveryName(record.delivery_method_name)
+                      setDeliveryFee(record.delivery_fee)
+                      setDeliveryDescription(record.delivery_method_description)
+                      setDeliveryLogo(record?.delivery_method_logo)
                     }}
                   >
                     <Edit size='15' color='#bc9143' /> <span>Update</span>
@@ -149,13 +145,15 @@ const Brands = () => {
               {
                 key: '3',
                 label:
-                  record.brand_is_delete === 0 ? (
+                  record.delivery_is_active === 0 ? (
                     <Popconfirm
                       align={{ offset: [20, 20] }}
                       placement='bottomRight'
-                      title={`Delete record ${record.brand_id}`}
+                      title={`Delete record ${record.delivery_method_id}`}
                       description='Are you sure to delete this record?'
-                      onConfirm={() => handleDeleteBrand(record.brand_id)}
+                      onConfirm={() => {
+                        handleDeleteDelivery(record.delivery_method_id)
+                      }}
                       okText='Delete'
                       cancelText='Cancel'
                     >
@@ -171,10 +169,10 @@ const Brands = () => {
                     <Popconfirm
                       align={{ offset: [20, 20] }}
                       placement='bottomRight'
-                      title={`Restore record ${record.brand_id}`}
+                      title={`Restore record ${record.delivery_method_id}`}
                       description='Are you sure to restore this record?'
                       onConfirm={() => {
-                        handleRestoreBrand(record.brand_id)
+                        handleRestoreDelivery(record.delivery_method_id)
                       }}
                       okText='Restore'
                       cancelText='Cancel'
@@ -223,204 +221,6 @@ const Brands = () => {
     setTableParams(params)
     setLoading(false)
   }
-
-  const searchBrand = () => {
-    const formatDate = (date) => {
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-        const [day, month, year] = date.split('/')
-        return `${year}-${month}-${day}`
-      }
-
-      // Check if the date is in ISO 8601 format
-      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
-      }
-
-      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
-      if (Date.parse(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
-      }
-      return ''
-    }
-    const result = data.filter((item) => {
-      const matchesBrandName = item.brand_name.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesDateRange =
-        selectedFrom && selectedTo
-          ? formatDate(item.brand_created_at) >= formatDate(selectedFrom) &&
-            formatDate(item.brand_created_at) <= formatDate(selectedTo)
-          : true
-      return matchesBrandName && matchesDateRange
-    })
-    const tableData = result.sort((a, b) => new Date(b.brand_created_at) - new Date(a.brand_created_at))
-    setFilterData(tableData)
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        total: result.length
-      }
-    })
-  }
-
-  const fetchBrands = async (params) => {
-    setLoading(true)
-    const query = qs.stringify({
-      ...params
-    })
-    try {
-      const response = await BrandsAPI.searchBrands(query)
-      if (!response.ok) {
-        setStatus(response.status)
-        setMessageResult(`Error fetching categories: with status ${response.status}`)
-        setLoading(false)
-        return
-      }
-      const result = await response.json()
-      const data = result.data
-      const tableData = data
-        .map((item) => ({
-          key: item.brand_id,
-          brand_name: item.brand_name,
-          brand_slug: item.brand_slug,
-          brand_logo: item.brand_logo,
-          brand_description: item.brand_description,
-          brand_is_delete: item.brand_is_delete,
-          brand_created_at: item.brand_created_at,
-          brand_updated_at: item.brand_updated_at,
-          brand_id: item.brand_id
-        }))
-        .sort((a, b) => new Date(b.brand_updated_at) - new Date(a.brand_updated_at))
-      setFilterData(tableData)
-      setData(tableData)
-      setTableParams({
-        ...tableParams,
-        pagination: {
-          ...tableParams.pagination,
-          total: data.length
-        }
-      })
-      setLoading(false)
-    } catch (e) {
-      setLoading(false)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchBrands({
-      search: searchValue
-    })
-  }, [])
-
-  useEffect(() => {
-    if (data) {
-      searchBrand()
-    }
-  }, [
-    searchValue,
-    tableParams.pagination?.current,
-    tableParams?.sortOrder,
-    tableParams?.sortField,
-    tableParams.pagination?.pageSize,
-    JSON.stringify(tableParams.filters),
-    selectedFrom,
-    selectedTo
-  ])
-  //#endregion
-
-  //#region Modal add or update
-  //Modal setting
-  const [openModal, setOpenModal] = useState(false)
-  const [typeModal, setTypeModal] = useState('add')
-
-  //#region Form data
-  const [brandName, setBrandName] = useState('')
-  const [errorBrandName, setErrorBrandName] = useState('')
-  const [brandSlug, setBrandSlug] = useState('')
-  const [errorSlug, setErrorSlug] = useState('')
-  const [brandDescription, setBrandDescription] = useState('')
-  const [selectedBrand, setSelectedBrand] = useState(null) // brand ID
-  const [selectedBrandData, setSelectedBrandData] = useState(null) // brand record data
-  const [Logo, setLogo] = useState(null)
-  const fileInputRef = useRef(null)
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [errorFileUpload, setErrorFileUpload] = useState('')
-
-  //handle drag and drop image file
-  const [dragging, setDragging] = useState(false)
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    setDragging(true)
-  }
-
-  const handleDragLeave = () => {
-    setDragging(false)
-  }
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setDragging(false)
-    const droppedFile = e.dataTransfer.files[0]
-    if (droppedFile && droppedFile.type.startsWith('image/')) {
-      setSelectedFile(droppedFile)
-      setLogo(URL.createObjectURL(droppedFile))
-      fileInputRef.current.value = null
-    }
-  }
-
-  //handle upload logo
-  const handleUploadLogo = (e) => {
-    const file = e.target.files[0]
-    const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
-    if (file && validExtensions.includes(file.type)) {
-      setLogo(URL.createObjectURL(file))
-      setSelectedFile(file)
-      fileInputRef.current.value = null
-    } else {
-      setStatus(422)
-      setMessageResult(`File ${file.name} is not a valid image file.`)
-    }
-  }
-
-  //handle clear logo
-  const handleClearLogo = (e) => {
-    e.stopPropagation()
-    setLogo(null)
-    setSelectedFile(null)
-  }
-
-  //handle error brand name
-  const CheckBrandNameExist = (name) => {
-    const check = data.find((item) => {
-      if (typeModal === 'update' && item.brand_id === selectedBrand) {
-        return false
-      }
-      return item.category_name === name
-    })
-    return check !== undefined
-  }
-
-  const handleErrorBrandName = (name) => {
-    if (name === '') {
-      setErrorBrandName('Brand name is required')
-      return false
-    }
-    if (CheckBrandNameExist(name)) {
-      setErrorBrandName('Brand name is already exist')
-      return false
-    }
-    return true
-  }
-
   const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
     if (!response.ok) {
       const content_type = response.headers.get('content-type')
@@ -449,25 +249,205 @@ const Brands = () => {
     return true
   }
 
-  // handle delete brand record
-  const handleDeleteBrand = async (id) => {
-    const response = await BrandsAPI.deleteBrands(id, token)
-    const isResponseOK = await handleResponse(response, `Error delete brand with id: ${id}`)
-    if (!isResponseOK) {
-      return
+  const fetchAllDelivery = async () => {
+    try {
+      setLoading(true)
+      const response = await AdminDeliveryAPI.getAllDeliveryMethod(token)
+      const isResponseOK = await handleResponse(response, 'Error fetch all delivery')
+      if (!isResponseOK) {
+        return
+      }
+      const res = await response.json()
+      const data = res.data
+      const tableData = data.map((item) => ({
+        ...item,
+        key: item.delivery_method_id
+      }))
+      setData(tableData)
+      setFilterData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: tableData.length
+        }
+      })
+    } catch (e) {
+    } finally {
+      setLoading(false)
     }
-    setStatus(200)
-    setMessageResult('Brand was successfully deleted')
   }
 
-  const handleRestoreBrand = async (id) => {
-    const response = await BrandsAPI.restoreBrands(id, token)
-    const isResponseOK = await handleResponse(response, `Error restore brand with id: ${id}`)
+  const searchDelivery = () => {
+    try {
+      const formatDate = (date) => {
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+          const [day, month, year] = date.split('/')
+          return `${year}-${month}-${day}`
+        }
+
+        // Check if the date is in ISO 8601 format
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          return `${year}-${month}-${day}`
+        }
+
+        // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+        if (Date.parse(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          return `${year}-${month}-${day}`
+        }
+        return ''
+      }
+      const filter = data.filter((item) => {
+        const matchesName = item.delivery_method_name.toLowerCase().includes(searchValue.toLowerCase())
+        const matchesDateRange =
+          selectedFrom && selectedTo
+            ? formatDate(item.created_at) >= formatDate(selectedFrom) &&
+              formatDate(item.created_at) <= formatDate(selectedTo)
+            : true
+        return matchesName && matchesDateRange
+      })
+      setFilterData(filter)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: filter.length
+        }
+      })
+    } catch (e) {}
+  }
+
+  useEffect(() => {
+    fetchAllDelivery()
+  }, [])
+
+  useEffect(() => {
+    if (data) searchDelivery()
+  }, [
+    searchValue,
+    selectedFrom,
+    selectedTo,
+    tableParams.pagination?.current,
+    tableParams?.sortOrder,
+    tableParams?.sortField,
+    tableParams.pagination?.pageSize,
+    JSON.stringify(tableParams.filters)
+  ])
+  //#endregion
+
+  //#region modal data
+  //Modal setting
+  const [openModal, setOpenModal] = useState(false)
+  const [typeModal, setTypeModal] = useState('add')
+
+  //Modal form data
+  const [deliverySelected, setDeliverySelected] = useState()
+  const [deliveryName, setDeliveryName] = useState('')
+  const [errorDeliverName, setErrorDeliverName] = useState('')
+  const [deliveryFee, setDeliveryFee] = useState('')
+  const [errorDeliverFee, setErrorDeliverFee] = useState('')
+  const [DeliveryDescription, setDeliveryDescription] = useState('')
+  const [errorDeliverDescription, setErrorDeliverDescription] = useState('')
+  const [deliveryLogo, setDeliveryLogo] = useState('')
+  const [errorDeliverLogo, setErrorDeliverLogo] = useState('')
+  const fileInputRef = useRef(null)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [errorFileUpload, setErrorFileUpload] = useState('')
+
+  //handle drag and drop image file
+  const [dragging, setDragging] = useState(false)
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setDragging(true)
+  }
+
+  const handleDragLeave = () => {
+    setDragging(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragging(false)
+    const droppedFile = e.dataTransfer.files[0]
+    if (droppedFile && droppedFile.type.startsWith('image/')) {
+      setSelectedFile(droppedFile)
+      setDeliveryLogo(URL.createObjectURL(droppedFile))
+      fileInputRef.current.value = null
+    }
+  }
+
+  //handle upload logo
+  const handleUploadLogo = (e) => {
+    const file = e.target.files[0]
+    const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
+    if (file && validExtensions.includes(file.type)) {
+      setDeliveryLogo(URL.createObjectURL(file))
+      setSelectedFile(file)
+      fileInputRef.current.value = null
+    } else {
+      setStatus(422)
+      setMessageResult(`File ${file.name} is not a valid image file.`)
+    }
+  }
+
+  //handle clear logo
+  const handleClearLogo = (e) => {
+    e.stopPropagation()
+    setDeliveryLogo(null)
+    setSelectedFile(null)
+  }
+
+  const handleErrorDeliveryName = (name) => {
+    if (name === '') {
+      setErrorDeliverName('Brand name is required')
+      return false
+    }
+    return true
+  }
+
+  const handleErrorDeliveryFee = (fee) => {
+    if (fee === '') {
+      setErrorDeliverFee('Fee is required')
+      return false
+    } else if (!/^[1-9]\d*(\.\d+)?$/.test(fee)) {
+      setErrorDeliverFee('Please enter a positive number')
+      return false
+    }
+    return true
+  }
+  // handle delete brand record
+  const handleDeleteDelivery = async (id) => {
+    const formData = new FormData()
+    formData.append('delivery_is_active', 1)
+    const response = await AdminDeliveryAPI.deleteDeliveryMethod(token, id, formData)
+    const isResponseOK = await handleResponse(response, `Error delete delivery with id: ${id}`)
     if (!isResponseOK) {
       return
     }
+    fetchAllDelivery()
     setStatus(200)
-    setMessageResult('Brand was successfully restored')
+    setMessageResult('Delivery method was successfully deleted')
+  }
+
+  const handleRestoreDelivery = async (id) => {
+    const formData = new FormData()
+    formData.append('delivery_is_active', 0)
+    const response = await AdminDeliveryAPI.deleteDeliveryMethod(token, id, formData)
+    const isResponseOK = await handleResponse(response, `Error restore delivery with id: ${id}`)
+    if (!isResponseOK) {
+      return
+    }
+    fetchAllDelivery()
+    setStatus(200)
+    setMessageResult('Delivery method was successfully restored')
   }
 
   // handle submit and or update brand
@@ -477,35 +457,34 @@ const Brands = () => {
     e.preventDefault()
     setSubmitLoading(true)
     const formData = new FormData()
-    const brand_name = brandName
-    const brand_description = brandDescription
-    const isValidBrandName = handleErrorBrandName(brand_name)
-    if (!isValidBrandName) {
-      setSubmitLoading(false)
-      return
-    }
-    formData.append('brand_name', brandName)
-    formData.append('brand_slug', brandSlug)
-    if (brand_description) formData.append('brand_description', brandDescription)
-    if (selectedFile) formData.append('brand_logo', selectedFile)
+    formData.append('delivery_method_name', deliveryName)
+    formData.append('delivery_fee', deliveryFee)
+    if (DeliveryDescription) formData.append('delivery_method_description', DeliveryDescription)
+    if (selectedFile) formData.append('delivery_method_logo', selectedFile)
     let response = null
     try {
       if (typeModal === 'add') {
-        response = await BrandsAPI.addBrands(formData, token)
+        response = await AdminDeliveryAPI.addDeliveryMethod(token, formData)
       }
       if (typeModal === 'update') {
-        response = await BrandsAPI.updateBrands(selectedBrand, formData, token)
+        if (!deliverySelected) {
+          setStatus(400)
+          setMessageResult('Delivery method not found')
+          return
+        }
+        response = await AdminDeliveryAPI.updateDeliveryMethod(token, deliverySelected, formData)
       }
-      const isResponseOK = await handleResponse(response, `Error ${typeModal} brand fetch`)
+      const isResponseOK = await handleResponse(response, `Error ${typeModal} delivery method fetch`)
       if (!isResponseOK) {
         return
       }
       setStatus(200)
       if (typeModal === 'add') {
-        setMessageResult('Brand was successfully added')
+        setMessageResult('Delivery method was successfully added')
       } else if (typeModal === 'update') {
-        setMessageResult('Brand was successfully updated')
+        setMessageResult('Delivery method was successfully updated')
       }
+      handleCancel()
     } catch (e) {
     } finally {
       setSubmitLoading(false)
@@ -514,31 +493,24 @@ const Brands = () => {
 
   //handle cancel modal
   const handleCancel = () => {
-    setLogo(null)
-    setSelectedFile(null)
-    setBrandName('')
-    setBrandDescription('')
-    setBrandSlug('')
-    setErrorSlug('')
-    setErrorBrandName('')
     setOpenModal(false)
+    setDeliveryName('')
+    setDeliveryFee('')
+    setDeliveryDescription('')
+    setDeliveryLogo(null)
+    setSelectedFile(null)
+    setErrorDeliverName('')
+    setErrorDeliverFee('')
+    setErrorDeliverDescription('')
+    setErrorDeliverLogo('')
+    setErrorFileUpload('')
   }
-  //#endregion
-  //#endregion
-
-  //#region Modal view
-  const [openModalView, setOpenModalView] = useState(false)
-  const [showDescription, setShowDescription] = useState(false)
   //#endregion
 
   //#region status and message result of fetch api call
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
       openMessage('success', messageResult, 3)
-      fetchBrands({
-        search: searchValue
-      })
-      handleCancel()
       setStatus(null)
       setMessageResult(null)
     } else if (status >= 400) {
@@ -548,14 +520,13 @@ const Brands = () => {
     }
   }, [status, messageResult])
   //#endregion
-
   return (
-    <section className='w-full max-w-[100%] h-full'>
+    <section className='w-full'>
       {contextHolder}
       <header className='flex justify-between animate-slideDown'>
         <div className='flex flex-col gap-1'>
-          <BreadCrumbs items={[{ title: `Brands (${filterData?.length})` }]} />
-          <p>List of brands available</p>
+          <BreadCrumbs items={[{ title: `Deliveries (${filterData?.length})` }]} />
+          <p>List of Deliveries available</p>
         </div>
         <button
           className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
@@ -572,7 +543,7 @@ const Brands = () => {
         destroyOnClose
         title={
           <span>
-            {typeModal} new Brand (fields with <span className='text-[red]'>*</span> are required)
+            {typeModal} new delivery method (fields with <span className='text-[red]'>*</span> are required)
           </span>
         }
         centered
@@ -586,14 +557,14 @@ const Brands = () => {
           <form action='' method='POST' onSubmit={handleSubmit} autoComplete='off'>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull relative'>
-                <label htmlFor='brand_logo' className='AddCategoryForm__label mb-8'>
+                <label htmlFor='delivery_method_logo' className='AddCategoryForm__label mb-8'>
                   Logo (only *.jpeg, *.jpg, *.png, *.gif and *.svg)
                 </label>
                 <input
                   type='file'
                   accept='image/jpg, image/jpeg, image/png, image/gif, image/svg'
-                  name='brand_logo'
-                  id='brand_logo'
+                  name='delivery_method_logo'
+                  id='delivery_method_logo'
                   className='hidden'
                   placeholder='Choose file'
                   onChange={handleUploadLogo}
@@ -612,17 +583,17 @@ const Brands = () => {
                     <button
                       type='button'
                       onClick={() => {
-                        if (!Logo) document.getElementById('brand_logo').click()
+                        if (!deliveryLogo) document.getElementById('delivery_method_logo').click()
                       }}
                       className='w-full max-w-[18.75rem] min-h-40 flex flex-col items-center justify-center rounded-lg gap-2 text-lg m-auto'
                       style={{
-                        border: Logo !== null ? 'None' : '3px dashed #e8ebed'
+                        border: deliveryLogo ? 'None' : '3px dashed #e8ebed'
                       }}
                     >
-                      {Logo ? (
+                      {deliveryLogo ? (
                         <>
                           <Image
-                            src={Logo}
+                            src={deliveryLogo}
                             alt='Logo'
                             className='w-full max-w-[18.75rem] max-h-40 object-cover rounded-lg'
                           />
@@ -648,12 +619,12 @@ const Brands = () => {
             </div>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
-                <label htmlFor='brand_name' className='AddCategoryForm__label'>
+                <label htmlFor='delivery_method_name' className='AddCategoryForm__label'>
                   <span className='text-[red]'>* </span>Name
                 </label>
                 <Tooltip
-                  title={errorBrandName}
-                  open={errorBrandName !== ''}
+                  title={errorDeliverName}
+                  open={errorDeliverName !== ''}
                   placement='bottomLeft'
                   align={{
                     offset: [60, -8]
@@ -661,25 +632,25 @@ const Brands = () => {
                 >
                   <input
                     type='text'
-                    name='brand_name'
-                    id='brand_name'
+                    name='delivery_method_name'
+                    id='delivery_method_name'
                     className='AddCategoryForm__input'
-                    placeholder='This is a brand name'
-                    value={brandName}
-                    onChange={(e) => setBrandName(e.target.value)}
-                    onFocus={() => setErrorBrandName('')}
+                    placeholder='This is a delivery method name'
+                    value={deliveryName}
+                    onChange={(e) => setDeliveryName(e.target.value)}
+                    onFocus={() => setErrorDeliverName('')}
                   />
                 </Tooltip>
               </div>
             </div>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
-                <label htmlFor='category_slug' className='AddCategoryForm__label'>
-                  <span className='text-[red]'>* </span>Slug
+                <label htmlFor='delivery_fee' className='AddCategoryForm__label'>
+                  <span className='text-[red]'>* </span>Fee
                 </label>
                 <Tooltip
-                  title={errorSlug}
-                  open={errorSlug !== ''}
+                  title={errorDeliverFee}
+                  open={errorDeliverFee !== ''}
                   placement='bottomLeft'
                   align={{
                     offset: [60, -8]
@@ -687,31 +658,31 @@ const Brands = () => {
                 >
                   <input
                     type='text'
-                    name='category_slug'
-                    id='category_slug'
+                    name='delivery_fee'
+                    id='delivery_fee'
                     className='AddCategoryForm__input'
-                    placeholder='This is a brand slug'
-                    value={brandSlug}
-                    onChange={(e) => setBrandSlug(e.target.value)}
-                    onFocus={() => setErrorSlug('')}
+                    placeholder='25000'
+                    value={deliveryFee}
+                    onChange={(e) => setDeliveryFee(e.target.value)}
+                    onFocus={() => setErrorDeliverFee('')}
                   />
                 </Tooltip>
               </div>
             </div>
             <div className='AddCategoryForm__row'>
               <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
-                <label htmlFor='brand_description' className='AddCategoryForm__label'>
+                <label htmlFor='delivery_method_description' className='AddCategoryForm__label'>
                   Description
                 </label>
                 <textarea
                   type='text'
-                  name='brand_description'
-                  id='brand_description'
+                  name='delivery_method_description'
+                  id='delivery_method_description'
                   className='AddCategoryForm__textarea'
                   rows={6}
-                  placeholder='This is a category description'
-                  value={brandDescription !== null ? brandDescription : ''}
-                  onChange={(e) => setBrandDescription(e.target.value)}
+                  placeholder='Giao hàng tiết kiệm'
+                  value={DeliveryDescription !== null ? DeliveryDescription : ''}
+                  onChange={(e) => setDeliveryDescription(e.target.value)}
                 />
               </div>
             </div>
@@ -728,41 +699,12 @@ const Brands = () => {
           </form>
         </div>
       </Modal>
-      <Modal centered open={openModalView} width={350} footer={null} onCancel={() => setOpenModalView(false)}>
-        <div className='w-[300px] flex justify-between pt-10'>
-          <Tooltip
-            title={
-              selectedBrandData !== null
-                ? selectedBrandData.brand_description !== null
-                  ? selectedBrandData.brand_description
-                  : '...'
-                : '...'
-            }
-            open={showDescription}
-            overlayStyle={{ maxWidth: '800px', whiteSpace: 'normal' }}
-            placement='bottom'
-          >
-            <figure className='w-[100%] flex justify-center items-center flex-col grow'>
-              <img
-                src={selectedBrandData !== null ? selectedBrandData.brand_logo : ''}
-                alt={selectedBrandData !== null ? selectedBrandData.brand_name : ''}
-                className='w-[200px] h-[200px] object-cover rounded-full'
-                onMouseEnter={() => setShowDescription(true)}
-                onMouseLeave={() => setShowDescription(false)}
-              />
-              <figcaption className='mt-2 text-center'>
-                {selectedBrandData !== null ? selectedBrandData.brand_name : ''}
-              </figcaption>
-            </figure>
-          </Tooltip>
-        </div>
-      </Modal>
-      <div className='p-5 my-4 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp'>
+      <div className='p-5 my-8 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp flex flex-col gap-4'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
-              placeholder='Search for brands'
+              placeholder='Search for deliveries'
               className='focus:border-[#1D242E] border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
@@ -772,9 +714,7 @@ const Brands = () => {
             />
             <button
               onClick={() => {
-                fetchBrands({
-                  search: searchValue
-                })
+                fetchAllDelivery()
               }}
             >
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
@@ -811,14 +751,14 @@ const Brands = () => {
             </ConfigProvider>
           </div>
         </div>
-        <div className='pt-4'>
+        <div>
           <AdminTable
             columns={columns}
-            rowKey='brand_id'
+            rowKey='delivery_method_id'
             data={filterData}
             tableParams={tableParams}
-            tableStyles={{ width: '1200px', minHeight: '350px', maxHeight: '450px', backgroundColor: '#ffffff' }}
-            scroll={{ y: '300px' }}
+            tableStyles={{ width: '1200px', minHeight: '320px', maxHeight: '320px', backgroundColor: '#ffffff' }}
+            scroll={{ y: '280px' }}
             loading={loading}
             handleTableChange={handleTableChange}
             pageSizeOptionsParent={['8', '10', '20', '50']}
@@ -832,4 +772,5 @@ const Brands = () => {
     </section>
   )
 }
-export default Brands
+
+export default Delivery

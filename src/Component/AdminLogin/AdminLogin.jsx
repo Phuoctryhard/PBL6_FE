@@ -1,5 +1,4 @@
 import React, { useContext, useState, useEffect } from 'react'
-// import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { schemaForgotPassword, schemaLogin } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -10,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/app.context'
 import { LockOutlined, MailOutlined } from '@ant-design/icons'
-import { message } from 'antd'
+import { message, Spin } from 'antd'
 import './AdminLogin.css'
 export default function AdminLogin() {
   const { login } = useContext(AuthContext)
@@ -19,6 +18,7 @@ export default function AdminLogin() {
   const [isEmailFocus, setIsEmailFocus] = useState(false)
   const [isPasswordFocus, setIsPasswordFocus] = useState(false)
   const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const {
     register,
@@ -71,6 +71,7 @@ export default function AdminLogin() {
   }
   const onSubmit = handleSubmit((data) => {
     // gửi lên api data
+    setLoading(true)
     const formData = new FormData()
     if (!isForgotPassword) {
       formData.append('email', data.email)
@@ -82,8 +83,10 @@ export default function AdminLogin() {
       onSuccess: (data) => {
         if (!isForgotPassword) handleLoginSubmit(data)
         else handleForgotPasswordSubmit(data)
+        setLoading(false)
       },
       onError: (data) => {
+        setLoading(false)
         setStatus(400)
         setMessageResult(data.message)
       }
@@ -130,7 +133,8 @@ export default function AdminLogin() {
       }}
     >
       {contextHolder}
-      <div className='bg-transparent rounded-xl border-[0.188rem] border-solid border-[rgb(179,103,214,0.2)] backdrop-blur-xl w-[28.125rem] animate-slideUp'>
+      <Spin spinning={loading} tip='Loading...' size='large' fullscreen />
+      <div className='bg-transparent rounded-xl border-[0.188rem] border-solid border-[rgb(179,103,214,0.2)] backdrop-blur-xl w-[28.125rem] animate-slideUp mx-5'>
         <form action='' onSubmit={onSubmit} noValidate>
           {isForgotPassword ? (
             <div className='text-[#fff] flex flex-col justify-end p-7 gap-6'>

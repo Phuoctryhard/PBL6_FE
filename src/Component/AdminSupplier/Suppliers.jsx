@@ -150,7 +150,7 @@ const Suppliers = () => {
                 label: (
                   <button
                     type='button'
-                    className='flex items-center gap-x-2 justify-center'
+                    className='flex items-center gap-x-2 justify-start w-full'
                     onClick={() => {
                       setOpenModalItem(true)
                       setTypeModalItem('Update')
@@ -162,68 +162,65 @@ const Suppliers = () => {
                       setSupplierAddress(record.supplier_address === 'N/A' ? '' : record.supplier_address)
                     }}
                   >
-                    <Edit size='15' color='green' /> <span>Update</span>
+                    <Edit size='15' color='#bc9143' /> <span>Update</span>
                   </button>
                 )
               },
               {
                 key: '3',
-                label: (
-                  <Popconfirm
-                    align={{ offset: [20, 20] }}
-                    placement='bottomRight'
-                    title={`Delete record ${record.supplier_id}`}
-                    description='Are you sure to delete this record?'
-                    onConfirm={() => {
-                      if (record.supplier_is_delete === 1) {
-                        setStatus(400)
-                        setMessageResult('Supplier is already deleted')
-                        return
-                      }
-                      handleDeleteSupplier(record.supplier_id)
-                    }}
-                    okText='Delete'
-                    cancelText='Cancel'
-                  >
-                    <button
-                      type='button'
-                      className='flex items-center gap-x-2 justify-center'
-                      onClick={(e) => e.stopPropagation()}
+                label:
+                  record.supplier_is_delete === 0 ? (
+                    <Popconfirm
+                      align={{ offset: [20, 20] }}
+                      placement='bottomRight'
+                      title={`Delete record ${record.supplier_id}`}
+                      description='Are you sure to delete this record?'
+                      onConfirm={() => {
+                        if (record.supplier_is_delete === 1) {
+                          setStatus(400)
+                          setMessageResult('Supplier is already deleted')
+                          return
+                        }
+                        handleDeleteSupplier(record.supplier_id)
+                      }}
+                      okText='Delete'
+                      cancelText='Cancel'
                     >
-                      <DeleteOutlined className='text-[14px] text-[red]' />
-                      <span>Delete</span>
-                    </button>
-                  </Popconfirm>
-                )
-              },
-              {
-                key: '4',
-                label: (
-                  <Popconfirm
-                    align={{ offset: [20, 20] }}
-                    placement='bottomRight'
-                    title={`Restore record ${record.supplier_id}`}
-                    description='Are you sure to store this record?'
-                    onConfirm={() => {
-                      if (record.supplier_is_delete === 0) {
-                        setStatus(400)
-                        setMessageResult('Supplier is already active')
-                        return
-                      }
-                      handleRestoreSupplier(record.supplier_id)
-                    }}
-                    okText='Restore'
-                    cancelText='Cancel'
-                  >
-                    <button
-                      type='button'
-                      className='flex items-center gap-x-2 justify-center'
-                      onClick={(e) => e.stopPropagation()}
+                      <button
+                        type='button'
+                        className='flex items-center gap-x-2 justify-start w-full'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DeleteOutlined className='text-[14px] text-[red]' />
+                        <span>Delete</span>
+                      </button>
+                    </Popconfirm>
+                  ) : (
+                    <Popconfirm
+                      align={{ offset: [20, 20] }}
+                      placement='bottomRight'
+                      title={`Restore record ${record.supplier_id}`}
+                      description='Are you sure to store this record?'
+                      onConfirm={() => {
+                        if (record.supplier_is_delete === 0) {
+                          setStatus(400)
+                          setMessageResult('Supplier is already active')
+                          return
+                        }
+                        handleRestoreSupplier(record.supplier_id)
+                      }}
+                      okText='Restore'
+                      cancelText='Cancel'
                     >
-                      <Refresh className='text-[green]' size={15} /> <span>Restore</span>
-                    </button>
-                  </Popconfirm>
-                )
+                      <button
+                        type='button'
+                        className='flex items-center gap-x-2 justify-start w-full'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Refresh className='text-[green]' size={15} /> <span>Restore</span>
+                      </button>
+                    </Popconfirm>
+                  )
               }
             ]
           }}
@@ -573,14 +570,14 @@ const Suppliers = () => {
         </div>
         <button tabIndex={-1} type='button'>
           <button
-            className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
+            className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
             onClick={() => {
               setOpenModalItem(true)
               setTypeModalItem('Add')
             }}
           >
+            Add new
             <Add size='20' />
-            Add new supplier
           </button>
         </button>
       </header>

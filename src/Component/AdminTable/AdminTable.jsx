@@ -14,7 +14,7 @@ const AdminTable = ({
   tableLayout = undefined
 }) => {
   const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
-    <div className='flex justify-between items-center mt-3'>
+    <div className='w-full flex justify-between items-center mt-3'>
       <span className='inline-block text-[14px]'>
         Showing {current - 1 < 1 ? 1 : (current - 1) * pageSize + 1} to{' '}
         {current * pageSize <= total ? current * pageSize : total} of {total} entries

@@ -219,7 +219,7 @@ const AdminImports = () => {
                 label: (
                   <button
                     type='button'
-                    className='flex items-center gap-x-2 justify-center'
+                    className='flex items-center gap-x-2 justify-start w-full'
                     onClick={() => {
                       navigate(`/admin/imports/${record.import_id}`)
                     }}
@@ -233,16 +233,15 @@ const AdminImports = () => {
                 label: (
                   <button
                     type='button'
-                    className='flex items-center gap-x-2 justify-center'
+                    className='flex items-center gap-x-2 justify-start w-full'
                     onClick={() => {
                       const Data = async () => {
                         setSubmitLoading(true)
                         const data = await fetchImportById(record.import_id)
                         if (data) {
-                          const importData = data.import
                           const import_detailData = data.import_details
-                          setSupplierID(importData.supplier_id)
-                          setImportDate(convertToDDMMYYYY(importData.import_date))
+                          setSupplierID(data.supplier_id)
+                          setImportDate(convertToDDMMYYYY(data.import_date))
                           setItems(import_detailData)
                           setOpenModal(true)
                           setTypeModal('update')
@@ -252,7 +251,7 @@ const AdminImports = () => {
                       Data()
                     }}
                   >
-                    <Edit size='15' color='green' /> <span>Update</span>
+                    <Edit size='15' color='#bc9143' /> <span>Update</span>
                   </button>
                 )
               },
@@ -270,7 +269,7 @@ const AdminImports = () => {
                   >
                     <button
                       type='button'
-                      className='flex items-center gap-x-2 justify-center'
+                      className='flex items-center gap-x-2 justify-start w-full'
                       onClick={(e) => e.stopPropagation()}
                     >
                       <DeleteOutlined className='text-[15px] text-[red]' /> <span>Delete</span>
@@ -942,14 +941,14 @@ const AdminImports = () => {
           <p>List of items imported into the warehouse</p>
         </div>
         <button
-          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] focus:outline-none focus:opacity-80 hover:opacity-80'
+          className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
           onClick={() => {
             setOpenModal(true)
             setTypeModal('add')
           }}
         >
+          Add new
           <Add size='20' />
-          Add new import
         </button>
       </header>
       <Modal
@@ -1253,6 +1252,18 @@ const AdminImports = () => {
             >
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
+          </div>
+          <div>
+            <ConfigProvider theme={filterTheme}>
+              <RangePicker
+                className='w-[250px] h-[50px]'
+                format={'DD/MM/YYYY'}
+                onChange={(date, dateString) => {
+                  setSelectedFrom(dateString[0])
+                  setSelectedTo(dateString[1])
+                }}
+              />
+            </ConfigProvider>
           </div>
         </div>
         <AdminTable

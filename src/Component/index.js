@@ -19,6 +19,11 @@ import AdminOrders from './AdminOrders'
 import AdminTable from './AdminTable/AdminTable'
 import BreadCrumbs from './AdminBreadCrumbs/BreadCrumbs'
 import AdminIllness from './AdminIllness'
+import AdminAddIllness from './AdminAddIllness'
+import AdminEditor from './AdminEditor'
+import AdminUpdateIllness from './AdminUpdateIllness'
+import AdminViewOrder from './AdminViewOrder'
+import AdminDelivery from './AdminDelivery'
 export {
   AdminVerifyEmail,
   AdminMainLayout,
@@ -40,5 +45,10 @@ export {
   AdminOrders,
   AdminTable,
   BreadCrumbs,
-  AdminIllness
+  AdminIllness,
+  AdminAddIllness,
+  AdminEditor,
+  AdminUpdateIllness,
+  AdminViewOrder,
+  AdminDelivery
 }
