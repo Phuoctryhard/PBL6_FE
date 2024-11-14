@@ -1,0 +1,7 @@
+/* Global CSS */
+.ant-pagination-item {
+  @apply border border-gray-300; /* Thêm viền cho từng trang */
+}
+.ant-pagination-item:not(:last-child) {
+  @apply mr-2; /* Khoảng cách giữa các trang */
+}
