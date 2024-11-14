@@ -6,8 +6,9 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-
+import { Empty } from 'antd'
 import { AuthContext } from '../../../context/app.context'
+import { formatCurrency } from '../../../until'
 export default function Cart() {
   const { isAuthenticated, logout } = useContext(AuthContext)
   // get list cart
@@ -30,15 +31,17 @@ export default function Cart() {
       setProducts([])
     }
   }, [data])
-
+  console.log(data)
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [modalText, setModalText] = useState('Bạn có chắc chắn muốn xóa sản phẩm này?')
   const [total, setTotal] = useState(0)
-  const showModal = () => {
+  const showModal = (id) => {
+    setidDelete(id)
     setOpen(true)
   }
 
+  const [idDelete, setidDelete] = useState('')
   const handleDelete = (id) => {
     console.log(id)
     mutate.mutate(id, {
@@ -154,9 +157,11 @@ export default function Cart() {
   }
   //// xóa
   const handleOk = (id) => {
-    handleDelete(id)
-
-    setOpen(false)
+    console.log(id)
+    if (id) {
+      handleDelete(id)
+      setOpen(false)
+    }
   }
   const handleCancel = () => {
     setOpen(false)
@@ -291,7 +296,7 @@ export default function Cart() {
                           </p>
                         </div>
                       </div>
-                      <div class='w-1/6 text-center pl-6'>{element.cart_price}</div>
+                      <div class='w-1/6 text-center pl-6'>{formatCurrency(element.cart_price)}</div>
                       <div class='w-1/6 flex text-center justify-end pr-3'>
                         <button
                           class='px-2 py-1 text-lg text-gray-500 border rounded-l'
@@ -317,7 +322,9 @@ export default function Cart() {
                           +
                         </button>
                       </div>
-                      <div class='w-1/6 text-right pr-4'>{element.cart_price * element.cart_quantity} đ</div>
+                      <div class='w-1/6 text-right pr-4'>
+                        {formatCurrency(element.cart_price * element.cart_quantity)}
+                      </div>
                       <span
                         class=' inline-flex align-[-0.125em] justify-center max-h-full max-w-full w-6 h-6'
                         onClick={() => showModal(element.cart_id)}
@@ -341,19 +348,13 @@ export default function Cart() {
                           ></path>
                         </svg>
                       </span>
-                      <Modal
-                        title={<span style={{ fontSize: '24px', fontWeight: 'bold' }}>Xóa sản phẩm</span>}
-                        open={open}
-                        onOk={() => handleOk(element.cart_id)}
-                        onCancel={handleCancel}
-                      >
-                        <p className='mt-2 text-lg'> {modalText}</p>
-                      </Modal>
                     </div>
                   )
                 })
               ) : (
-                <div>No items in cart.</div>
+                <div className='mt-5'>
+                  <Empty description='Không có dữ liệu' imageStyle={{ height: '100px', margin: '0px 50px ' }} />;
+                </div>
               )}
             </div>
           </div>
@@ -411,7 +412,7 @@ export default function Cart() {
               <div className='flex justify-between  py-3 px-2  my-1 '>
                 <div className='font-semibold '>Tổng tiền </div>
 
-                <div className='text-[#F22121] font-semibold'>{total}</div>
+                <div className='text-[#F22121] font-semibold'>{formatCurrency(total)}</div>
               </div>
               <div className='flex mt-2 '>
                 <button className='text-white font-medium text-2xl bg-[#1A51A2] px-4 py-2  rounded-lg w-full'>
@@ -422,6 +423,14 @@ export default function Cart() {
           </div>
         </div>
       </div>
+      <Modal
+        title={<span style={{ fontSize: '24px', fontWeight: 'bold' }}>Xóa sản phẩm</span>}
+        open={open}
+        onOk={() => handleOk(idDelete)}
+        onCancel={handleCancel}
+      >
+        <p className='mt-2 text-lg'> {modalText}</p>
+      </Modal>
     </div>
   )
 }

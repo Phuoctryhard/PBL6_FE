@@ -1,5 +1,5 @@
 import http from '../../until/until'
-const AddressApi = {
+const OrderApi = {
   ///api/orders/historyXem lịch sử đơn hàng
   getHistoryOrder: () => http.get('orders/history'),
   //chi tiết giỏ hàng
@@ -11,4 +11,4 @@ const AddressApi = {
   //user mua hàng trực tiếp từ sản phẩm chi tiết
   BuyProduct_DetailProduct: (data) => http.post(`orders/buy-now`, data)
 }
-export default AddressApi
+export default OrderApi

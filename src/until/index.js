@@ -36,3 +36,10 @@ export const getIdfromNameId = (nameId) => {
   var arr = nameId.split('-i,')
   return arr[arr.length - 1]
 }
+
+export const formatCurrency = (data) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(data ?? 0)
+}
