@@ -1,14 +1,26 @@
 import { Navigate, Outlet, useRoutes } from 'react-router-dom'
 import React, { useContext } from 'react'
-import AdminMainLayout from '../Layouts/Admin/MainLayout/MainLayout.jsx'
-import AdminProducts from '../Component/AdminProducts/Products.jsx'
-import AdminCategories from '../Component/AdminCategories'
-import AdminAddProduct from '../Component/AdminAddProduct'
-import AdminEditProduct from '../Component/AdminEditProduct'
-import AdminViewProduct from '../Component/AdminViewProduct'
-import AdminBrands from '../Component/AdminBrands'
-import AdminManagement from '../Component/AdminManagement'
-import AdminSetting from '../Component/AdminSetting'
+import {
+  AdminVerifyEmail,
+  AdminMainLayout,
+  AdminProducts,
+  AdminCategories,
+  AdminAddProduct,
+  AdminEditProduct,
+  AdminViewProduct,
+  AdminBrands,
+  AdminManagement,
+  AdminSetting,
+  AdminImports,
+  AdminDetailImport,
+  AdminOverview,
+  AdminLogin,
+  AdminSuppliers,
+  AdminCustomer,
+  AdminResetPassword,
+  AdminOrders,
+  AdminIllness
+} from '../Component'
 import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
 import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
 import Login from '../Component/Login/Login.jsx'
@@ -25,6 +37,7 @@ import OrderHistory from '../Pages/User/Account/order_history/OrderHistory.jsx'
 import UpdatePassword from '../Pages/User/Account/personal-info/components/UpdatePassword/UpdatePassword.jsx'
 import { AuthContext } from '../context/app.context.jsx'
 import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
+
 import AdminLogin from '../Component/AdminLogin/AdminLogin.jsx'
 import Checkout from '../Pages/User/Checkout/Checkout.jsx'
 import Disease from '../Pages/User/Disease/Disease.jsx'
@@ -138,47 +151,29 @@ export default function useRouterElement() {
       ]
     },
     {
+      path: '/auth/verify-email/admin',
+      element: <AdminVerifyEmail />
+    },
+    {
+      path: '/auth/forgot-password/admin',
+      element: <AdminResetPassword />
+    },
+    {
       path: '/admin',
-      element: (
-        <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            <div className=''>
-              <div className=' flex items-center justify-center'>Content overview </div>
-            </div>
-          </div>
-        </AdminMainLayout>
-      )
+      element: <Navigate to='/admin/overview' />
     },
     {
       path: '/admin/overview',
       element: (
-        <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            <div className=''>
-              <div className=' flex items-center justify-center'></div>
-            </div>
-          </div>
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/post',
-      element: (
-        <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>Content post </div>
-            </div>
-          </div>
+        <AdminMainLayout scrollBar='simpleBar'>
+          <AdminOverview />
         </AdminMainLayout>
       )
     },
     {
       path: '/admin/inventory',
       element: (
-        <AdminMainLayout>
+        <AdminMainLayout scrollBar='simpleBar'>
           <div>
             <h1>This is inventory</h1>
           </div>
@@ -188,39 +183,33 @@ export default function useRouterElement() {
     {
       path: '/admin/products',
       element: (
-        <AdminMainLayout>
-          <AdminProducts />
+        <AdminMainLayout scrollBar='simpleBar'>
+          <Outlet />
         </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/products/add-product',
-      element: (
-        <AdminMainLayout>
-          <AdminAddProduct />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/products/update/:productID',
-      element: (
-        <AdminMainLayout>
-          <AdminEditProduct />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/products/:productID',
-      element: (
-        <AdminMainLayout>
-          <AdminViewProduct />
-        </AdminMainLayout>
-      )
+      ),
+      children: [
+        {
+          path: '',
+          element: <AdminProducts />
+        },
+        {
+          path: 'add-product',
+          element: <AdminAddProduct />
+        },
+        {
+          path: 'update/:productID',
+          element: <AdminEditProduct />
+        },
+        {
+          path: ':productID',
+          element: <AdminViewProduct />
+        }
+      ]
     },
     {
       path: '/admin/categories',
       element: (
-        <AdminMainLayout>
+        <AdminMainLayout scrollBar='simpleBar'>
           <AdminCategories />
         </AdminMainLayout>
       )
@@ -228,29 +217,31 @@ export default function useRouterElement() {
     {
       path: '/admin/manage-admins',
       element: (
-        <AdminMainLayout>
+        <AdminMainLayout scrollBar='simpleBar'>
           <AdminManagement />
+        </AdminMainLayout>
+      )
+    },
+    {
+      path: '/admin/manage-users',
+      element: (
+        <AdminMainLayout scrollBar='simpleBar'>
+          <AdminCustomer />
         </AdminMainLayout>
       )
     },
     {
       path: '/admin/orders',
       element: (
-        <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>User order</div>
-            </div>
-          </div>
+        <AdminMainLayout scrollBar='simpleBar'>
+          <AdminOrders />
         </AdminMainLayout>
       )
     },
     {
       path: '/admin/reports',
       element: (
-        <AdminMainLayout>
+        <AdminMainLayout scrollBar='simpleBar'>
           <div className='col-span-3 bg-gray-light  '>
             {/* Scrollable content */}
             <div className=''>
@@ -262,31 +253,35 @@ export default function useRouterElement() {
       )
     },
     {
-      path: '/admin/receipts',
+      path: '/admin/imports',
       element: (
-        <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>User receipts</div>
-            </div>
-          </div>
+        <AdminMainLayout scrollBar='simpleBar'>
+          <Outlet />
         </AdminMainLayout>
-      )
+      ),
+      children: [
+        {
+          path: '',
+          element: <AdminImports />
+        },
+        {
+          path: ':id',
+          element: <AdminDetailImport />
+        }
+      ]
     },
     {
       path: '/admin/suppliers',
       element: (
-        <AdminMainLayout>
-          <h1>This is suppliers</h1>
+        <AdminMainLayout scrollBar='simpleBar'>
+          <AdminSuppliers />
         </AdminMainLayout>
       )
     },
     {
       path: '/admin/brands',
       element: (
-        <AdminMainLayout>
+        <AdminMainLayout scrollBar='simpleBar'>
           <AdminBrands />
         </AdminMainLayout>
       )
@@ -294,7 +289,7 @@ export default function useRouterElement() {
     {
       path: '/admin/users',
       element: (
-        <AdminMainLayout>
+        <AdminMainLayout scrollBar='simpleBar'>
           <div className='col-span-3 bg-gray-light  '>
             <div className=''>
               {/* Adjust the height according to your header's height */}
@@ -307,7 +302,7 @@ export default function useRouterElement() {
     {
       path: '/admin/posts',
       element: (
-        <AdminMainLayout>
+        <AdminMainLayout scrollBar='simpleBar'>
           <div className='col-span-3 bg-gray-light  '>
             {/* Scrollable content */}
             <div className=''>
@@ -321,7 +316,7 @@ export default function useRouterElement() {
     {
       path: '/admin/comment_review',
       element: (
-        <AdminMainLayout>
+        <AdminMainLayout scrollBar='simpleBar'>
           <div className='col-span-3 bg-gray-light  '>
             {/* Scrollable content */}
             <div className=''>
@@ -333,16 +328,10 @@ export default function useRouterElement() {
       )
     },
     {
-      path: '/admin/illness',
+      path: '/admin/disease',
       element: (
-        <AdminMainLayout>
-          <div className='col-span-3 bg-gray-light  '>
-            {/* Scrollable content */}
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>illness</div>
-            </div>
-          </div>
+        <AdminMainLayout scrollBar='simpleBar'>
+          <AdminIllness />
         </AdminMainLayout>
       )
     },
@@ -368,11 +357,7 @@ export default function useRouterElement() {
         },
         {
           path: '/admin/login',
-          element: (
-            <RegisterLayout>
-              <AdminLogin />
-            </RegisterLayout>
-          )
+          element: <AdminLogin />
         },
         {
           path: '/register',

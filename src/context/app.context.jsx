@@ -1,19 +1,16 @@
-import { clearProfile, getAccessToken, getProfile } from '../until/index.js'
-import { createContext, useState } from 'react'
-
+import { clearProfile, getAccessToken, getProfile, saveProfile } from '../until/index.js'
+import { createContext, useState, useContext } from 'react'
 // Context API
 
 const initialAppContext = {
   isAuthenticated: Boolean(getAccessToken()),
   profile: getProfile()
-  // profileAdmin: getProfileAdmin()
 }
 export const AuthContext = createContext(initialAppContext)
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(initialAppContext.isAuthenticated)
   const [isProfile, setIsProfile] = useState(initialAppContext.profile)
- // const [isProfileAdmin, setIsProfileAdmin] = useState(initialAppContext.profile)
 
   const login = (user, token) => {
     localStorage.setItem('accesstoken', token) // Lưu token vào localStorage
@@ -27,9 +24,19 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false) // Cập nhật trạng thái xác thực
   }
 
+  const setProfile = (profile) => {
+    setIsProfile(profile)
+    saveProfile(profile)
+  }
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, login, logout, setIsProfile, isProfile }}>
+    <AuthContext.Provider
+      value={{ isAuthenticated, setIsAuthenticated, login, logout, setIsProfile, isProfile, setProfile }}
+    >
       {children}
     </AuthContext.Provider>
   )
+}
+export const useAuth = () => {
+  return useContext(AuthContext)
 }

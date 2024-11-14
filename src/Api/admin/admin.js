@@ -9,6 +9,13 @@ const AdminAPI = {
         Authorization: 'Bearer ' + token
       }
     }),
+  getAdmin: async (token) =>
+    await fetch(`${rootAdmin}/profile`, {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    }),
   addAdmin: async (data, token) =>
     await fetch(`${rootAdmin}/add-admin`, {
       method: 'POST',
@@ -38,6 +45,25 @@ const AdminAPI = {
       headers: {
         Authorization: 'Bearer ' + token
       }
+    }),
+  changePassword: async (data, token) =>
+    await fetch(`${rootAdmin}/change-password`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token
+      },
+      body: data
+    }),
+  changeRole: async (id, token) =>
+    await fetch(`${rootAdmin}/change-role/${id}`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    }),
+  verifyEmail: async (token) =>
+    await fetch(`${rootAdmin}/verify-email?${token}`, {
+      method: 'POST'
     })
 }
 

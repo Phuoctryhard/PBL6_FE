@@ -1,0 +1,27 @@
+.adminLogin__Input:-webkit-autofill,
+.adminLogin__Input:-webkit-autofill:hover,
+.adminLogin__Input:-webkit-autofill:focus,
+.adminLogin__Input:-webkit-autofill:active {
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff;
+}
+
+@keyframes zoomBackground {
+  0% {
+    background-size: 100%;
+    background-position: center;
+  }
+  50% {
+    background-size: 110%;
+    background-position: center;
+  }
+  100% {
+    background-size: 100%;
+    background-position: center;
+  }
+}
+
+.moving-background {
+  animation: zoomBackground 10s linear infinite alternate;
+}

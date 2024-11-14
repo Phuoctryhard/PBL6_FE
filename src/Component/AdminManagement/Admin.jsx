@@ -1,32 +1,20 @@
-import { AuthContext } from '../../context/app.context'
-import { useState, useEffect, useRef, useContext } from 'react'
-import './Admin.css'
+import { useState, useEffect, useRef } from 'react'
 import { AdminAPI } from '../../Api/admin'
-import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye, ArrowDown2 } from 'iconsax-react'
+import { Add, SearchNormal, Edit, Refresh, ArrowDown2, ArrowSwapHorizontal } from 'iconsax-react'
 import { Link, useNavigate } from 'react-router-dom'
-import {
-  Table,
-  Breadcrumb,
-  Dropdown,
-  Popconfirm,
-  message,
-  Modal,
-  Tooltip,
-  Pagination,
-  Spin,
-  DatePicker,
-  ConfigProvider,
-  Select
-} from 'antd'
+import { Dropdown, Popconfirm, message, Modal, Tooltip, Spin, DatePicker, ConfigProvider, Select } from 'antd'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useAuth } from '../../context/app.context'
+import AdminTable from '../AdminTable'
+import BreadCrumbs from '../AdminBreadCrumbs'
 const { RangePicker } = DatePicker
-
-// import { AuthContext } from '../../context/app.context'
 const filterTheme = {
   token: {
-    colorTextQuaternary: '#1D242E', // Disabled text color
-    colorTextPlaceholder: '#1D242E', // Placeholder text color
-    fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+    colorTextQuaternary: '#1D242E',
+    colorTextPlaceholder: '#9da4b0',
+    fontFamily: 'Poppins, sans-serif',
     controlOutline: 'none',
     colorBorder: '#e8ebed',
     borderRadius: '4px',
@@ -50,14 +38,30 @@ const filterTheme = {
     }
   }
 }
+
 const Admin = () => {
   const navigate = useNavigate()
   const token = localStorage.getItem('accesstoken')
+  const { logout } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    logout()
+    navigate('/admin/login')
+  }
+
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
+
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-  // const { login, isProfile } = useContext(AuthContext)
-  // console.log(isProfile)
-
   //#region filter data
   const [searchValue, setSearchValue] = useState('')
   const [selectedFrom, setSelectedFrom] = useState(null)
@@ -146,17 +150,17 @@ const Admin = () => {
           case 0:
             color = 'green'
             backgroundColor = 'rgba(0, 255, 0, 0.1)'
-            statusText = 'User'
+            statusText = 'Admin'
             break
           case 1:
             color = 'red'
             backgroundColor = 'rgba(255, 0, 0, 0.1)'
-            statusText = 'Admin'
+            statusText = 'Super Admin'
             break
           case 2:
             color = 'rgb(249, 115, 22)'
             backgroundColor = 'rgba(255, 165, 0, 0.1)'
-            statusText = 'Super Admin'
+            statusText = 'Manager'
             break
         }
         return (
@@ -190,53 +194,46 @@ const Admin = () => {
           menu={{
             items: [
               {
-                key: '1',
-                label: (
-                  <button type='button' className='flex items-center gap-x-2 justify-center' onClick={() => {}}>
-                    <Eye size='15' color='green' /> <span>View</span>
-                  </button>
-                )
-              },
-              {
-                key: '2',
-                label: (
-                  <button
-                    type='button'
-                    className='flex items-center gap-x-2 justify-center'
-                    onClick={() => {
-                      setOpenModal(true)
-                      setTypeModal('update')
-                      setAdminFullName(record.admin_fullname)
-                      setEmail(record.email)
-                      setAvatar(record.admin_avatar)
-                      setSelectedAdmin(record)
-                    }}
-                  >
-                    <Edit size='15' color='green' /> <span>Update</span>
-                  </button>
-                )
-              },
-              {
                 key: '3',
-                label: (
-                  <Popconfirm
-                    align={{ offset: [20, 20] }}
-                    placement='bottomRight'
-                    title={`Delete record ${record.admin_id}`}
-                    description='Are you sure to delete this record?'
-                    onConfirm={() => handleDeleteAdmin(record)}
-                    okText='Delete'
-                    cancelText='Cancel'
-                  >
-                    <button
-                      type='button'
-                      className='flex items-center gap-x-2 justify-center'
-                      onClick={(e) => e.stopPropagation()}
+                label:
+                  record.admin_is_delete === 1 ? (
+                    <Popconfirm
+                      align={{ offset: [20, 20] }}
+                      placement='bottomRight'
+                      title={`Restore record ${record.admin_id}`}
+                      description='Are you sure to store this record?'
+                      onConfirm={() => handleRestoreAdmin(record)}
+                      okText='Restore'
+                      cancelText='Cancel'
                     >
-                      <DeleteOutlined className='text-[15px] text-[red]' /> <span>Delete</span>
-                    </button>
-                  </Popconfirm>
-                )
+                      <button
+                        type='button'
+                        className='flex items-center gap-x-2 justify-center'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Refresh className='text-[green]' size={15} /> <span>Restore</span>
+                      </button>
+                    </Popconfirm>
+                  ) : (
+                    <Popconfirm
+                      align={{ offset: [20, 20] }}
+                      placement='bottomRight'
+                      title={`Delete record ${record.admin_id}`}
+                      description='Are you sure to delete this record?'
+                      onConfirm={() => handleDeleteAdmin(record)}
+                      okText='Delete'
+                      cancelText='Cancel'
+                    >
+                      <button
+                        type='button'
+                        className='flex items-center gap-x-2 justify-center'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DeleteOutlined className='text-[14px] text-[red]' />
+                        <span>Delete</span>
+                      </button>
+                    </Popconfirm>
+                  )
               },
               {
                 key: '4',
@@ -244,10 +241,12 @@ const Admin = () => {
                   <Popconfirm
                     align={{ offset: [20, 20] }}
                     placement='bottomRight'
-                    title={`Restore record ${record.admin_id}`}
-                    description='Are you sure to store this record?'
-                    onConfirm={() => handleRestoreAdmin(record)}
-                    okText='Restore'
+                    title={`Change role record ${record.admin_id}`}
+                    description='Are you sure to change role this record?'
+                    onConfirm={() => {
+                      handleChangeRole(record)
+                    }}
+                    okText='Ok'
                     cancelText='Cancel'
                   >
                     <button
@@ -255,7 +254,7 @@ const Admin = () => {
                       className='flex items-center gap-x-2 justify-center'
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Refresh className='text-[green]' size={15} /> <span>Restore</span>
+                      <ArrowSwapHorizontal className='text-[green]' size={15} /> <span>Change Role</span>
                     </button>
                   </Popconfirm>
                 )
@@ -283,22 +282,6 @@ const Admin = () => {
     }
   })
 
-  const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
-    <div className='flex justify-between items-center mt-3'>
-      <span className='inline-block text-[14px]'>
-        Showing {current - 1 < 1 ? 1 : (current - 1) * pageSize + 1} to{' '}
-        {current * pageSize <= total ? current * pageSize : total} of {total} entries
-      </span>
-      <Pagination
-        total={total}
-        current={current}
-        pageSize={pageSize}
-        onChange={onChange}
-        pageSizeOptions={pageSizeOptions || ['8', '10', '20']}
-      />
-    </div>
-  )
-
   const handleTableChange = (pagination, filters, sorter) => {
     setLoading(true)
     const params = {
@@ -308,10 +291,6 @@ const Admin = () => {
       sortField: sorter ? sorter.field : undefined
     }
     setTableParams(params)
-    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setData([])
-      setFilterData([])
-    }
     setLoading(false)
   }
 
@@ -366,23 +345,24 @@ const Admin = () => {
     setLoading(false)
   }
 
-  const handleUnauthenticated = () => {
-    localStorage.removeItem('accesstoken')
-    navigate('/login')
-  }
-
   const fetchAdmins = async () => {
     setLoading(true)
     try {
       const response = await AdminAPI.getAllAdmin(token)
       if (!response.ok) {
+        const res = await response.json()
+        let messages
+        const status = res.status
+        if (!res.messages) {
+          if (!res.data)
+            if (status) messages = status
+            else messages = res.data.join('. ')
+        } else messages = res.messages.join('. ')
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
-          handleUnauthenticated()
+          handleUnauthorized()
         } else {
           setStatus(response.status)
-          setMessageResult(`Error fetching admin: with status ${response.status}`)
+          setMessageResult(`Error fetching admin: ${messages}`)
           setLoading(false)
         }
         return
@@ -408,11 +388,11 @@ const Admin = () => {
           data.map((item) => {
             switch (item.admin_is_admin) {
               case 0:
-                return 'User'
-              case 1:
                 return 'Admin'
-              case 2:
+              case 1:
                 return 'Super Admin'
+              case 2:
+                return 'Manager'
             }
           })
         )
@@ -441,7 +421,7 @@ const Admin = () => {
 
   useEffect(() => {
     fetchAdmins()
-  }, [tableParams.pagination?.pageSize])
+  }, [])
 
   useEffect(() => {
     if (data) {
@@ -456,6 +436,7 @@ const Admin = () => {
     selectedFrom,
     selectedTo,
     selectedRoles,
+    tableParams.pagination?.pageSize,
     selectedAdminStatus
   ])
   //#endregion
@@ -527,18 +508,48 @@ const Admin = () => {
       setErrorEmail('Email is required')
       return false
     }
+
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@(gmail\.com|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/
+
+    if (!/^[a-zA-Z0-9._%+-]+@/.test(email)) {
+      setErrorEmail('Invalid email format: missing "@" symbol or incorrect local part')
+      return false
+    }
+
+    if (!/@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      setErrorEmail('Invalid email format: domain part is incorrect')
+      return false
+    }
+
+    if (!emailPattern.test(email)) {
+      setErrorEmail('Invalid email format')
+      return false
+    }
     return true
   }
 
   // handle delete admin record
   const handleDeleteAdmin = async (record) => {
-    if (record.admin_is_delete === 1) {
-      setStatus(400)
-      setMessageResult("This record has been deleted. Can't delete again")
+    let response = await AdminAPI.deleteAdmin(record.admin_id, token)
+    if (response.ok) {
+      setStatus(200)
+      setMessageResult('Success delete')
+    } else {
+      const res = await response.json()
+      const message = res.messages ? res.messages.join('. ') : 'Error deleting'
+      if (response.status === 401) {
+        handleUnauthorized()
+      } else {
+        setStatus(response.status)
+        setMessageResult(`${message} `)
+      }
       return
     }
-    let response = await AdminAPI.deleteAdmin(record.admin_id, token)
-    setTypeModal('Delete')
+  }
+
+  //handle change role admin
+  const handleChangeRole = async (record) => {
+    let response = await AdminAPI.changeRole(record.admin_id, token)
     if (response.ok) {
       const result = await response.json()
       const { messages, status } = result
@@ -546,13 +557,12 @@ const Admin = () => {
       setMessageResult(messages)
     } else {
       if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
+        handleUnauthorized()
       } else {
-        setStatus(response.status)
-        setMessageResult(`Error delete admin with status: ${response.status}, message: `, response.messages)
+        const { status } = await response.json()
+        setStatus(400)
+        setMessageResult(`${status}`)
       }
-      return
     }
   }
 
@@ -571,8 +581,7 @@ const Admin = () => {
       setMessageResult(messages)
     } else {
       if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
+        handleUnauthorized()
       } else {
         setStatus(response.status)
         setMessageResult(`Error restore admin with status: ${response.status}, message: `, response.messages)
@@ -598,37 +607,33 @@ const Admin = () => {
     formData.append('admin_fullname', adminFullName)
     formData.append('email', adminEmail)
     if (selectedFile) formData.append('admin_avatar', selectedFile)
-    console.log('data', Object.fromEntries(formData))
     let response = null
     try {
       if (typeModal === 'add') {
         response = await AdminAPI.addAdmin(formData, token)
       }
-      if (typeModal === 'update') {
-        response = await AdminAPI.updateAdmin(formData, token)
-      }
       if (!response.ok) {
-        setSubmitLoading(false)
-        const { message, data } = await response.json()
+        const res = await response.json()
+        const data = res.data
+        let messages
+        if (!res.messages) {
+          if (data) messages = data.join('. ')
+          else messages = 'Error adding admin'
+        }
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthorized()
         } else if (response.status === 422) {
           setStatus(422)
-          setMessageResult(`Invalid data: ${data} with message: ${message}`)
+          setMessageResult(`${messages}`)
         } else {
           setStatus(response.status)
-          setMessageResult(`Error ${typeModal} admin: ${data} with message: ${message}`)
+          setMessageResult(`${messages}`)
         }
         return
       }
-      const result = await response.json()
-      const { messages, status } = result
-      setStatus(status)
-      setMessageResult(messages)
-      setSubmitLoading(false)
+      setStatus(200)
+      setMessageResult(`Success ${typeModal} admin`)
     } catch (e) {
-      setSubmitLoading(false)
     } finally {
       setSubmitLoading(false)
     }
@@ -651,13 +656,13 @@ const Admin = () => {
   //#region status and message result of fetch api call
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
-      message.success(`${typeModal} admin was successfully`, 3)
+      openMessage('success', messageResult, 3)
       fetchAdmins()
+      handleCancelModal()
       setStatus(null)
       setMessageResult(null)
-      handleCancelModal()
     } else if (status >= 400) {
-      message.error(messageResult, 3)
+      openMessage('error', messageResult, 3)
       setStatus(null)
       setMessageResult(null)
     }
@@ -666,25 +671,22 @@ const Admin = () => {
 
   return (
     <section className='w-full max-w-[100%] h-full'>
+      {contextHolder}
       <header className='flex justify-between animate-slideDown'>
-        <div className='Breadcrumb'>
-          <h1>
-            <Breadcrumb
-              separator={<ArrowRight2 size='15' color='#1D242E' />}
-              className='font-bold text-[#848A91]'
-              items={[
-                { title: 'Users' },
-                {
-                  title: (
-                    <Link to='/admin/manage-admins' tabIndex='-1'>
-                      List of admin ({data?.length})
-                    </Link>
-                  )
-                }
-              ]}
-            ></Breadcrumb>
-          </h1>
-          <p className='mt-[11px]'>List of admin available</p>
+        <div className='flex flex-col gap-1'>
+          <BreadCrumbs
+            items={[
+              { title: `Users` },
+              {
+                title: (
+                  <Link to='/admin/manage-admins' tabIndex='-1'>
+                    List of admin ({data?.length})
+                  </Link>
+                )
+              }
+            ]}
+          />
+          <p>List of admin available</p>
         </div>
         <button
           className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
@@ -733,6 +735,7 @@ const Admin = () => {
                   title={errorFileUpload}
                   open={errorFileUpload !== ''}
                   placement='top'
+                  overlayStyle={{ maxWidth: 'max-content' }}
                   align={{
                     offset: [0, 100]
                   }}
@@ -763,11 +766,6 @@ const Admin = () => {
                     </button>
                   </div>
                 </Tooltip>
-                {selectedFile && (
-                  <div>
-                    <span>{selectedFile.name}</span>
-                  </div>
-                )}
               </div>
             </div>
             <div className='AddCategoryForm__row'>
@@ -779,6 +777,7 @@ const Admin = () => {
                   title={errorAdminFullName}
                   open={errorAdminFullName !== ''}
                   placement='bottomLeft'
+                  overlayStyle={{ maxWidth: 'max-content' }}
                   align={{
                     offset: [60, -8]
                   }}
@@ -805,12 +804,13 @@ const Admin = () => {
                   title={errorEmail}
                   open={errorEmail !== ''}
                   placement='bottomLeft'
+                  overlayStyle={{ maxWidth: 'max-content' }}
                   align={{
                     offset: [60, -8]
                   }}
                 >
                   <input
-                    type='email'
+                    type='text'
                     name='email'
                     id='email'
                     className='AddCategoryForm__input'
@@ -835,13 +835,13 @@ const Admin = () => {
           </form>
         </div>
       </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-slideUp'>
+      <div className='my-5 p-5 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center w-[250px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for admins'
-              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='focus:border-[#1D242E] border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
@@ -861,24 +861,19 @@ const Admin = () => {
               <Select
                 suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                 allowClear
-                placeholder='- Choose role -'
+                placeholder='Select role'
                 placement='bottomLeft'
                 options={roles.map((item) => {
                   switch (item) {
-                    case 'User':
-                      return { label: 'User', value: 0 }
                     case 'Admin':
-                      return { label: 'Admin', value: 1 }
+                      return { label: 'Admin', value: 0 }
                     case 'Super Admin':
-                      return { label: 'Super Admin', value: 2 }
+                      return { label: 'Super Admin', value: 1 }
+                    case 'Manager':
+                      return { label: 'Manager', value: 2 }
                   }
                 })}
                 value={selectedRoles}
-                dropdownStyle={{
-                  maxHeight: 400,
-                  overflow: 'auto',
-                  minWidth: '300px'
-                }}
                 className='w-[250px] h-[50px]'
                 onChange={(value) => {
                   setSelectedRoles(value)
@@ -891,7 +886,7 @@ const Admin = () => {
               <Select
                 suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                 allowClear
-                placeholder='- Choose status -'
+                placeholder='Select status'
                 placement='bottomLeft'
                 options={adminStatus.map((item) => {
                   switch (item) {
@@ -902,11 +897,6 @@ const Admin = () => {
                   }
                 })}
                 value={selectedAdminStatus}
-                dropdownStyle={{
-                  maxHeight: 400,
-                  overflow: 'auto',
-                  minWidth: '300px'
-                }}
                 className='w-[250px] h-[50px]'
                 onChange={(value) => {
                   setSelectedAdminStatus(value)
@@ -927,58 +917,21 @@ const Admin = () => {
             </ConfigProvider>
           </div>
         </div>
-        <div className='pt-[15px]'>
-          <ConfigProvider
-            theme={{
-              components: {
-                Table: {
-                  rowHoverBg: '#f5f5f5',
-                  headerSplitColor: 'transparent',
-                  headerBg: '#f5f5f5',
-                  sortField: '#f5f5f5',
-                  sortOrder: '#f5f5f5',
-                  borderColor: '#e8ebed'
-                }
-              }
+        <div className='pt-4'>
+          <AdminTable
+            columns={columns}
+            rowKey='admin_id'
+            data={filterData}
+            tableParams={tableParams}
+            tableStyles={{ width: '1200px', minHeight: '350px', maxHeight: '450px', backgroundColor: '#ffffff' }}
+            scroll={{ y: '300px' }}
+            loading={loading}
+            handleTableChange={handleTableChange}
+            pageSizeOptionsParent={['8', '10', '20', '50']}
+            paginationTable={{
+              position: ['none'],
+              ...tableParams.pagination
             }}
-          >
-            <Table
-              size='small'
-              columns={columns}
-              rowKey={(record) => record.admin_id}
-              dataSource={filterData}
-              pagination={{
-                position: ['none'],
-                ...tableParams.pagination
-              }}
-              loading={loading}
-              onChange={handleTableChange}
-              scroll={{
-                y: '300px'
-              }}
-              style={{
-                width: '1200px',
-                minHeight: '350px',
-                maxHeight: '450px',
-                backgroundColor: '#ffffff'
-              }}
-            />
-          </ConfigProvider>
-          <CustomPagination
-            total={tableParams.pagination.total}
-            current={tableParams.pagination.current}
-            pageSize={tableParams.pagination.pageSize}
-            onChange={(page, pageSize) =>
-              handleTableChange(
-                {
-                  ...tableParams.pagination,
-                  current: page,
-                  pageSize
-                },
-                tableParams.filters,
-                tableParams.sortOrder
-              )
-            }
           />
         </div>
       </div>

@@ -1,10 +1,13 @@
 import { Link, useParams } from 'react-router-dom'
-import { Breadcrumb, Image } from 'antd'
-import { ArrowRight2, Edit } from 'iconsax-react'
+import { Image, Tooltip } from 'antd'
+import { Edit } from 'iconsax-react'
 import { useState, useEffect, useRef } from 'react'
 import './ViewProduct.css'
+import { ProductsAPI } from '../../Api/admin'
+import BreadCrumbs from '../AdminBreadCrumbs'
 let currentSlide = 0
 const ViewProduct = () => {
+  const [showTooltipHeader, setShowTooltipHeader] = useState(false)
   const { productID } = useParams()
   const [productName, setProductName] = useState('')
   const [brand, setBrand] = useState('')
@@ -28,6 +31,7 @@ const ViewProduct = () => {
   const [showThumbnailRight, setShowThumbnailRight] = useState(true)
   const [productUses, setProductUses] = useState('')
   const [productDescription, setProductDescription] = useState('')
+
   const DateFormat = {
     year: 'numeric',
     month: '2-digit',
@@ -41,7 +45,7 @@ const ViewProduct = () => {
     return new Date(date).toLocaleString('en-US', DateFormat)
   }
   const fetchProducts = async () => {
-    const response = await fetch(`https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/products/${productID}`)
+    const response = await ProductsAPI.getProductByID(productID)
     const data = await response.json()
     const product = data['data']
     setProductName(product.product_name !== null ? product.product_name : '...')
@@ -120,48 +124,53 @@ const ViewProduct = () => {
 
   return (
     <section className='max-w-[100%] h-max flex flex-col mb-6'>
-      <header className='flex justify-between animate-[slideDown_1s_ease]'>
-        <div className='Breadcrumb'>
-          <h1>
-            <Breadcrumb
-              separator={<ArrowRight2 size='15' color='#1D242E' />}
-              className='font-bold text-[#848A91]'
-              items={[
-                { title: 'Inventory' },
-                {
-                  title: (
-                    <Link to='/admin/products' tabIndex={-1}>
-                      List of products
+      <header className='flex justify-between animate-[slideDown_1s_ease] w-full items-center'>
+        <div className='w-[50%]'>
+          <BreadCrumbs
+            items={[
+              { title: 'Inventory' },
+              {
+                title: (
+                  <Link to='/admin/products' tabIndex={-1}>
+                    List of products
+                  </Link>
+                )
+              },
+              {
+                title: (
+                  <Tooltip
+                    title={productName}
+                    placement='bottomLeft'
+                    trigger='hover'
+                    overlayStyle={{ maxWidth: '800px', whiteSpace: 'normal' }}
+                  >
+                    <Link to={`/admin/products/${productID}`} tabIndex={-1} className='w-full'>
+                      <span className='w-[50%] text-ellipsis overflow-hidden whitespace-nowrap inline-block'>
+                        {productName}
+                      </span>
                     </Link>
-                  )
-                },
-                {
-                  title: (
-                    <Link to={`/admin/products/${productID}`} tabIndex={-1}>
-                      <span>{productName}</span>
-                    </Link>
-                  )
-                }
-              ]}
-            />
-          </h1>
+                  </Tooltip>
+                )
+              }
+            ]}
+          />
         </div>
         <Link to={`/admin/products/update/${productID}`} tabIndex={-1}>
-          <button className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#db3545] rounded-[4px] text-[#FFFFFF] flex items-center font-bold text-[14px] gap-x-2'>
+          <button className='cursor-pointer h-[46px] px-[18px] py-[16px] bg-[#db3545] rounded-[4px] text-[#FFFFFF] flex items-center font-bold text-[14px] gap-x-2 w-full'>
             <Edit className='text-[20px]' />
             <span>Update Product</span>
           </button>
         </Link>
       </header>
-      <div className='container mt-6 w-full flex h-max flex-col bg-[#ffffff] rounded-xl border-[2px] border-solid border-[#e7ebee] animate-[slideUp_1s_ease]'>
+
+      <div className='mt-6 w-full flex h-max flex-col bg-[#ffffff] rounded-xl border-[2px] border-solid border-[#e7ebee] animate-[slideUp_1s_ease]'>
         <div className='flex gap-x-10 h-max border-b-[2px] border-b-solid border-b-[#e3e3e3] px-7 pt-7'>
           <div className='w-[60%] max-w-[60%]'>
             <div className='container__group'>
               <div className='group__content'>
-                <h2 className='text-[16px] font-bold border-b-[2px] border-b-solid border-b-[#e7ebee] px-[30px] py-[15px] w-[100%] flex justify-between'>
+                <h2 className='text-[16px] font-bold border-b-[2px] border-b-solid border-b-[#e7ebee] px-[30px] py-[15px] w-[100%] flex justify-between gap-[1.25rem]'>
                   <span className='flex-1'>Product overview</span>
                   <span className='flex-1'>
-                    Status:{' '}
                     <span className={`text-[${productIsDelete === 0 ? 'green' : 'red'}]`}>
                       {productIsDelete === 0 ? 'Active' : 'Deleted'}
                     </span>
@@ -169,7 +178,7 @@ const ViewProduct = () => {
                 </h2>
                 <div className='group__row'>
                   <div className='group__detail'>
-                    <span className='text-[#1D242E] font-medium'>Product Name</span>
+                    <span className='text-[#1D242E] font-medium whitespace-break-spaces'>Product Name</span>
                     <span className='text-[#1D242E]'>{productName}</span>
                   </div>
                   <div className='group__detail'>
@@ -265,8 +274,8 @@ const ViewProduct = () => {
               </div>
             </div>
           </div>
-          <div className='w-[40%] max-w-[40%] '>
-            <div className='bg-[transparent] grow flex flex-col gap-y-1 h-[500px] sticky top-0 right-0'>
+          <div className='w-[40%] max-w-[40%] h-[500px] sticky top-0'>
+            <div className='bg-[transparent] grow flex flex-col gap-y-1'>
               <div className='slider__container'>
                 <div className='slides'>
                   {uploadImages.length === 0 ? (
@@ -333,7 +342,7 @@ const ViewProduct = () => {
         <div className='w-[100%] max-[100%] bg-[#ffffff] rounded-xl px-7 pt-7'>
           <div className='container__group'>
             <div className='group__content'>
-              <h2 className='text-[16px] font-bold border-b-[2px] border-b-solid border-b-[#e7ebee] px-[30px] py-[15px] w-[100%]'>
+              <h2 className='text-base font-bold border-b-[2px] border-b-solid border-b-[#e7ebee] px-[30px] py-[15px] w-[100%]'>
                 Product Description
               </h2>
               <div className='group__row'>

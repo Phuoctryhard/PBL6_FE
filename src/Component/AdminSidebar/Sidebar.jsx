@@ -1,5 +1,6 @@
+import { useAuth } from '../../context/app.context'
 import React, { useState, useEffect, useRef } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SideBarItem } from './Component/SideBarItem'
 import {
   ArchiveBox,
@@ -15,30 +16,63 @@ import {
   ReceiptEdit,
   Setting2,
   User,
-  HambergerMenu,
-  UserAdd
+  UserAdd,
+  UserSquare,
+  Logout
 } from 'iconsax-react'
 import './Sidebar.css'
+import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
 const Sidebar = () => {
+  const token = localStorage.getItem('accesstoken')
+  const navigate = useNavigate()
+  const { setIsAuthenticated, isProfile, logout } = useAuth()
+  const location = useLocation()
+
+  //#region info admin
+  const [adminFullName, setAdminFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [Avatar, setAvatar] = useState(null)
+  const [adminRole, setAdminRole] = useState('')
+  //#endregion
+
+  //#region nav and subNav
+  //nav selected and active state change
+  const [selectedId, setSelectedId] = useState(null)
+  const [activeNav, setActiveNav] = useState(null)
+
+  //subNav data
   const Inventory = [
     { id: 'products', name: 'Products' },
     { id: 'categories', name: 'Categories' }
   ]
 
   const Users = [
-    { id: 'customers', name: 'Customers' },
+    { id: 'manage-users', name: 'Customers' },
     { id: 'manage-admins', name: 'Admin' }
   ]
 
-  const location = useLocation()
-  const [selectedId, setSelectedId] = useState(null)
+  //show subNav
   const [showInventory, setShowInventory] = useState(false)
   const [showUser, setShowUser] = useState(false)
-  const [activeNav, setActiveNav] = useState(null)
   const [maxHeightProduct, setMaxHeightProduct] = useState('0px')
   const [maxHeightUser, setMaxHeightUser] = useState('0px')
   const productRef = useRef(null)
   const userRef = useRef(null)
+
+  //handle nav and subNav click
+  const handleNavClick = (navId) => {
+    setActiveNav(navId)
+    setShowInventory(navId === 'inventory' ? !showInventory : false)
+    setShowUser(navId === 'users' ? !showUser : false)
+  }
+
+  const handleSubNavClick = (itemId) => {
+    setSelectedId(itemId)
+    setActiveNav(null)
+  }
 
   useEffect(() => {
     if (showInventory) {
@@ -56,16 +90,17 @@ const Sidebar = () => {
     }
   }, [showUser])
 
+  //handle subNav active when refresh page
   useEffect(() => {
     const path = location.pathname
     const navID = path.split('/')[2]
-    const subNavID = ['products', 'categories', 'customers', 'manage-admins']
+    const subNavID = ['products', 'categories', 'customers', 'manage-admins', 'manage-users']
     if (subNavID.includes(navID)) {
       if (navID === 'products' || navID === 'categories') {
         setActiveNav(null)
         setShowInventory(true)
         setSelectedId(navID)
-      } else if (navID === 'manage-admins') {
+      } else if (navID === 'manage-admins' || navID === 'manage-users') {
         setActiveNav(null)
         setShowUser(true)
         setSelectedId(navID)
@@ -74,46 +109,124 @@ const Sidebar = () => {
       handleNavClick(navID)
     }
   }, [])
+  //#endregion
 
-  const handleNavClick = (navId) => {
-    setActiveNav(navId)
-    setShowInventory(navId === 'inventory' ? !showInventory : false)
-    setShowUser(navId === 'users' ? !showUser : false)
+  //#region admin profile
+  //#region fetch admin profile
+  const fetchAdminProfile = async () => {
+    const data = isProfile
+    setAdminFullName(data.admin_fullname)
+    setEmail(data.email)
+    setAvatar(data.admin_avatar)
+    setAdminRole(data.admin_is_admin)
+  }
+  useEffect(() => {
+    fetchAdminProfile()
+  }, [isProfile])
+
+  //#endregion
+
+  //#region show admin profile options
+  const [showProfileOptions, setShowProfileOptions] = useState(false)
+  const MoreRef = useRef(null)
+  const ProfileSettingRef = useRef(null)
+  let closeTimeout
+
+  //handle show profile options
+  const handleMouseEnterShowProfile = () => {
+    clearTimeout(closeTimeout)
+    setShowProfileOptions(true)
   }
 
-  const handleSubNavClick = (itemId) => {
-    setSelectedId(itemId)
-    setActiveNav(null)
+  const handleMouseLeaveCloseProfile = () => {
+    closeTimeout = setTimeout(() => {
+      setShowProfileOptions(false)
+    }, 200)
   }
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(closeTimeout)
+    }
+  }, [])
+
+  //handle click profile options
+  const handleMyProfileClick = () => {
+    setShowProfileOptions(false)
+    handleNavClick('setting')
+  }
+
+  const handleLogoutClick = () => {
+    logout()
+    navigate('/admin/login')
+  }
+  //#endregion
+
   return (
     <nav className='navBar w-[256px] bg-[#283342] text-[#ffffff] h-[100vh] overflow-y-auto overflow-x-hidden'>
-      <div className='navBar__header sticky top-0 left-0 w-[100%]'>
-        <div className='navBar__logo bg-[#1D242E] py-[9px] px-[24px] flex items-center min-w-[256px] h-[60px] z-[1]'>
+      <header className='sticky top-0 left-0 w-full z-10'>
+        <div className='bg-[#1d242e] py-[9px] px-[24px] flex items-center w-full h-[60px] justify-between gap-4'>
           <img
-            src='/assets/images/Admin_homepage_logo.png'
+            src='/assets/images/Logo_Pbl6.png'
             alt='Admin-homepage-logo'
-            className='w-[42px] h-[42px] mr-[16px]'
+            className='w-[2.813rem] h-[2.813rem] object-contain'
           />
-          <span className='logo__name text-[18px] text-[#FFFFFF]'>Pharmarcy</span>
+          <span className='w-full font-semibold text-sm'>MediCare Central</span>
         </div>
-        <div className='navBar__info h-[102px] flex justify-between items-center px-[24px] py-[30px] bg-[#283342] min-w-[256px]'>
-          <div className='flex relative'>
+        <div className='h-[102px] flex justify-between items-center px-[25px] py-[30px] bg-[#283342] w-full gap-4'>
+          <div className='flex relative w-full gap-4'>
             <img
-              src='/assets/images/person.png'
+              src={Avatar || '/assets/images/default-avatar.png'}
               alt='no image'
-              className='navBar__avatar w-[42px] h-[42px] rounded-[4px] mr-[16px] object-cover'
+              className='w-[2.813rem] h-[2.813rem] rounded object-cover'
             />
-            <div className='status inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border-2 border-solid border-[#2e3744]'></div>
-            <div className='text-[11px] flex flex-col justify-between items-start'>
-              <span className='text-[14px]'>Minh đẹp trai</span>
-              <span className='text-[#d6b80d]'>Super admin</span>
+            <span className='inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 animate-ping'></span>
+            <span className='inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border border-solid border-[#2e3744]'></span>
+            <div className='text-xs flex flex-col justify-between items-start w-[6.688rem]'>
+              <span className='text-sm whitespace-nowrap overflow-hidden text-ellipsis w-full'>{adminFullName}</span>
+              <span className='text-[#d6b80d]'>{adminRole}</span>
             </div>
           </div>
-          <div>
-            <More size={20} color='#ffffff' />
+          <More
+            ref={MoreRef}
+            size={20}
+            color='#ffffff'
+            className='cursor-pointer'
+            onMouseEnter={handleMouseEnterShowProfile}
+            onMouseLeave={handleMouseLeaveCloseProfile}
+          />
+          <div
+            ref={ProfileSettingRef}
+            className='w-32 h-max bg-[#ffffff] absolute right-4 top-[85%] flex flex-col box-border rounded-md text-xs after:content-[""] after:absolute after:bottom-[85%] after:right-2 after:w-4 after:h-4 after:bg-[#ffffff] after:rotate-45 after:rounded-tl-md after:shadow-[-2px_-2px_0_0_#ffffff] border border-solid border-[#1D242E] origin-[87.8%_0%] transition-all duration-500 ease'
+            onMouseEnter={handleMouseEnterShowProfile}
+            onMouseLeave={handleMouseLeaveCloseProfile}
+            style={{
+              opacity: showProfileOptions ? 1 : 0,
+              visibility: showProfileOptions ? 'visible' : 'hidden',
+              transform: showProfileOptions ? 'scale(1)' : 'scale(0)'
+            }}
+          >
+            <Link to='/admin/setting'>
+              <button
+                className='w-full px-4 py-2.5 flex gap-3 text-[#1D242E] items-center justify-start border-b border-b-solid border-b-[rgba(29,36,46,0.3)]'
+                type='button'
+                onClick={handleMyProfileClick}
+              >
+                <UserSquare size={20} />
+                <span className='select-none'>My Profile</span>
+              </button>
+            </Link>
+            <button
+              className='w-full px-4 py-2.5 flex gap-3 text-[red] items-center justify-start'
+              type='button'
+              onClick={handleLogoutClick}
+            >
+              <Logout size={20} />
+              <span className='select-none'>LogOut</span>
+            </button>
           </div>
         </div>
-      </div>
+      </header>
       <div className='navBar__menu flex flex-col text-[14px] min-w-[256px]'>
         <NavLink
           to='/admin/overview'
@@ -189,11 +302,11 @@ const Sidebar = () => {
           <SideBarItem name='Reports' iconName={<FavoriteChart className='w-6' />} />
         </NavLink>
         <NavLink
-          to='/admin/receipts'
-          className={activeNav === 'receipts' ? 'bg-[#008f99]' : ''}
-          onClick={() => handleNavClick('receipts')}
+          to='/admin/imports'
+          className={activeNav === 'imports' ? 'bg-[#008f99]' : ''}
+          onClick={() => handleNavClick('imports')}
         >
-          <SideBarItem name='Receipts' iconName={<ReceiptEdit className='w-6' />} />
+          <SideBarItem name='Imports' iconName={<ReceiptEdit className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/suppliers'
@@ -218,7 +331,7 @@ const Sidebar = () => {
           }}
         >
           <SideBarItem
-            name='Users'
+            name='Managers'
             iconName={<User className='w-6' />}
             arrowIcon={
               <ArrowDown2
@@ -241,22 +354,31 @@ const Sidebar = () => {
             }}
           >
             <ul>
-              {Users.map((item) => (
-                <li
-                  key={item.id}
-                  onClick={() => {
-                    handleSubNavClick(item.id)
-                  }}
-                  style={{ backgroundColor: item.id === selectedId ? '#008f99' : '' }}
-                >
-                  <NavLink
-                    to={`/admin/${item.id}`}
-                    className='pl-[62px] px-[24px] h-[46px] flex items-center justify-start cursor-pointer'
+              {Users.filter((item) => {
+                if (adminRole.toLowerCase() === 'admin') {
+                  return item.id === 'manage-users'
+                }
+                return item
+              }).map((item) => {
+                return (
+                  <li
+                    key={item.id}
+                    onClick={() => {
+                      handleSubNavClick(item.id)
+                    }}
+                    style={{
+                      backgroundColor: item.id === selectedId ? '#008f99' : ''
+                    }}
                   >
-                    {item.name}
-                  </NavLink>
-                </li>
-              ))}
+                    <NavLink
+                      to={`/admin/${item.id}`}
+                      className='pl-[62px] px-[24px] h-[46px] flex items-center justify-start cursor-pointer'
+                    >
+                      {item.name}
+                    </NavLink>
+                  </li>
+                )
+              })}
             </ul>
           </div>
         }
@@ -275,11 +397,11 @@ const Sidebar = () => {
           <SideBarItem name='Comments/reviews' iconName={<Keyboard className='w-6' />} />
         </NavLink>
         <NavLink
-          to='/admin/illness'
-          className={activeNav === 'illness' ? 'bg-[#008f99]' : ''}
-          onClick={() => handleNavClick('illness')}
+          to='/admin/disease'
+          className={activeNav === 'disease' ? 'bg-[#008f99]' : ''}
+          onClick={() => handleNavClick('disease')}
         >
-          <SideBarItem name='illness' iconName={<Hospital className='w-6' />} />
+          <SideBarItem name='Diseases' iconName={<Hospital className='w-6' />} />
         </NavLink>
         <NavLink
           to='/admin/setting'

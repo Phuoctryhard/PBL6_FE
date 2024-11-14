@@ -1,17 +1,39 @@
-import './Brands.css'
-import BrandsAPI from '../../Api/admin/brands'
-import { ArrowRight2, Add, SearchNormal, Edit, Refresh, Eye } from 'iconsax-react'
+import { BrandsAPI } from '../../Api/admin'
+import { Add, SearchNormal, Edit, Eye } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
-import { ConfigProvider, Select } from 'antd'
-import { Table, Breadcrumb, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin, DatePicker } from 'antd'
+import { useNavigate } from 'react-router-dom'
+import { Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin, DatePicker, ConfigProvider } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useAuth } from '../../context/app.context'
+import AdminTable from '../AdminTable'
+import BreadCrumbs from '../AdminBreadCrumbs'
 const { RangePicker } = DatePicker
+
 const Brands = () => {
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    logout()
+    navigate('/admin/login')
+  }
+
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
 
   //#region filter data
   const [searchValue, setSearchValue] = useState('')
@@ -52,7 +74,6 @@ const Brands = () => {
       title: 'Name',
       dataIndex: 'brand_name',
       key: 'brand_name',
-      width: '30%',
       sorter: (a, b) => a.brand_name.localeCompare(b.brand_name),
       ellipsis: true,
       render: (text, record) => (
@@ -66,7 +87,6 @@ const Brands = () => {
       title: 'Create at',
       dataIndex: 'brand_created_at',
       key: 'brand_created_at',
-      width: '20%',
       sorter: (a, b) => new Date(a.brand_created_at) - new Date(b.brand_created_at),
       ellipsis: true,
       render: (text) => <span className='text-[14px]'>{DateFormat(text)}</span>
@@ -170,22 +190,6 @@ const Brands = () => {
     }
   })
 
-  const CustomPagination = ({ total, current, pageSize, onChange, pageSizeOptions }) => (
-    <div className='flex justify-between items-center mt-3'>
-      <span className='inline-block text-[14px]'>
-        Showing {current - 1 < 1 ? 1 : (current - 1) * pageSize + 1} to{' '}
-        {current * pageSize <= total ? current * pageSize : total} of {total} entries
-      </span>
-      <Pagination
-        total={total}
-        current={current}
-        pageSize={pageSize}
-        onChange={onChange}
-        pageSizeOptions={pageSizeOptions || ['8', '10', '20', '50']}
-      />
-    </div>
-  )
-
   const handleTableChange = (pagination, filters, sorter) => {
     setLoading(true)
     const params = {
@@ -195,9 +199,6 @@ const Brands = () => {
       sortField: sorter ? sorter.field : undefined
     }
     setTableParams(params)
-    if (pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setData([])
-    }
     setLoading(false)
   }
 
@@ -295,7 +296,7 @@ const Brands = () => {
     fetchBrands({
       search: searchValue
     })
-  }, [tableParams.pagination?.pageSize])
+  }, [])
 
   useEffect(() => {
     if (data) {
@@ -306,6 +307,7 @@ const Brands = () => {
     tableParams.pagination?.current,
     tableParams?.sortOrder,
     tableParams?.sortField,
+    tableParams.pagination?.pageSize,
     JSON.stringify(tableParams.filters),
     selectedFrom,
     selectedTo
@@ -353,10 +355,14 @@ const Brands = () => {
   //handle upload logo
   const handleUploadLogo = (e) => {
     const file = e.target.files[0]
-    if (file && file.type.startsWith('image/')) {
+    const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
+    if (file && validExtensions.includes(file.type)) {
       setLogo(URL.createObjectURL(file))
       setSelectedFile(file)
       fileInputRef.current.value = null
+    } else {
+      setStatus(422)
+      setMessageResult(`File ${file.name} is not a valid image file.`)
     }
   }
 
@@ -393,15 +399,13 @@ const Brands = () => {
   // handle delete brand record
   const handleDeleteBrand = async (id) => {
     const response = await BrandsAPI.deleteBrands(id, token)
-    setTypeModal('Delete')
     if (response.ok) {
       fetchBrands({
         search: searchValue
       })
     } else {
       if (response.status === 401) {
-        setStatus(401)
-        setMessageResult('Unauthorized access. Please check your credentials.')
+        handleUnauthorized()
       } else {
         setStatus(response.status)
         setMessageResult(`Error delete brand with status: ${response.status}, message: `, response.messages)
@@ -409,10 +413,8 @@ const Brands = () => {
       }
       return
     }
-    const result = await response.json()
-    const { messages, status } = result
-    setStatus(status)
-    setMessageResult(messages)
+    setStatus(200)
+    setMessageResult('Brand was successfully deleted')
   }
 
   // handle submit and or update brand
@@ -440,11 +442,9 @@ const Brands = () => {
         response = await BrandsAPI.updateBrands(selectedBrand, formData, token)
       }
       if (!response.ok) {
-        setSubmitLoading(false)
         const { messages } = await response.json()
         if (response.status === 401) {
-          setStatus(401)
-          setMessageResult('Unauthorized access. Please check your credentials.')
+          handleUnauthorized()
         } else if (response.status === 422) {
           setStatus(422)
           setMessageResult(`Invalid data: ${messages}`)
@@ -454,13 +454,13 @@ const Brands = () => {
         }
         return
       }
-      const result = await response.json()
-      const { messages, status } = result
-      setStatus(status)
-      setMessageResult(messages)
-      setSubmitLoading(false)
+      setStatus(200)
+      if (typeModal === 'add') {
+        message.success('Brand was successfully added', 3)
+      } else if (typeModal === 'update') {
+        message.success('Brand was successfully updated', 3)
+      }
     } catch (e) {
-      setSubmitLoading(false)
     } finally {
       setSubmitLoading(false)
     }
@@ -476,7 +476,6 @@ const Brands = () => {
     setOpenModal(false)
   }
   //#endregion
-
   //#endregion
 
   //#region Modal view
@@ -487,15 +486,15 @@ const Brands = () => {
   //#region status and message result of fetch api call
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
-      message.success(`${typeModal} brand was successfully`, 3)
+      openMessage('success', messageResult, 3)
       fetchBrands({
         search: searchValue
       })
+      handleCancel()
       setStatus(null)
       setMessageResult(null)
-      handleCancel()
     } else if (status >= 400) {
-      message.error(messageResult, 3)
+      openMessage('error', messageResult, 3)
       setStatus(null)
       setMessageResult(null)
     }
@@ -504,28 +503,14 @@ const Brands = () => {
 
   return (
     <section className='w-full max-w-[100%] h-full'>
+      {contextHolder}
       <header className='flex justify-between animate-slideDown'>
-        <div className='Breadcrumb'>
-          <h1>
-            <Breadcrumb
-              separator={<ArrowRight2 size='15' color='#1D242E' />}
-              className='font-bold text-[#848A91]'
-              items={[
-                { title: 'Brands' },
-                {
-                  title: (
-                    <Link to='/admin/brands' tabIndex='-1'>
-                      List of brands ({filterData?.length})
-                    </Link>
-                  )
-                }
-              ]}
-            ></Breadcrumb>
-          </h1>
-          <p className='mt-[11px]'>List of brands available</p>
+        <div className='flex flex-col gap-1'>
+          <BreadCrumbs items={[{ title: `Brands (${filterData?.length})` }]} />
+          <p>List of brands available</p>
         </div>
         <button
-          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
+          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px] focus:outline-none focus:opacity-80 hover:opacity-80'
           onClick={() => {
             setOpenModal(true)
             setTypeModal('add')
@@ -601,11 +586,6 @@ const Brands = () => {
                     </button>
                   </div>
                 </Tooltip>
-                {selectedFile && (
-                  <div>
-                    <span>{selectedFile.name}</span>
-                  </div>
-                )}
               </div>
             </div>
             <div className='AddCategoryForm__row'>
@@ -693,13 +673,13 @@ const Brands = () => {
           </Tooltip>
         </div>
       </Modal>
-      <div className='table__content my-[15px] bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-md animate-slideUp'>
+      <div className='p-5 my-4 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp'>
         <div className='flex justify-between items-center'>
           <div className='flex items-center w-[340px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for brands'
-              className='searchBox__input border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
+              className='focus:border-[#1D242E] border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
@@ -720,26 +700,15 @@ const Brands = () => {
             <ConfigProvider
               theme={{
                 token: {
-                  colorTextQuaternary: '#1D242E', // Disabled text color
-                  colorTextPlaceholder: '#1D242E', // Placeholder text color
-                  fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+                  colorTextQuaternary: '#1D242E',
+                  colorTextPlaceholder: '#9da4b0',
+                  fontFamily: 'Poppins, sans-serif',
                   controlOutline: 'none',
                   colorBorder: '#e8ebed',
                   borderRadius: '4px',
                   colorPrimary: '#008f99'
                 },
                 components: {
-                  Select: {
-                    activeBorderColor: '#1D242E',
-                    hoverBorderColor: '#1D242E',
-                    optionActiveBg: '#bde0fe',
-                    optionSelectedBg: '#bde0fe',
-                    optionSelectedColor: '#1D242E'
-                  },
-                  TreeSelect: {
-                    nodeHoverBg: '#bde0fe',
-                    nodeSelectedBg: '#bde0fe'
-                  },
                   DatePicker: {
                     activeBorderColor: '#1D242E',
                     hoverBorderColor: '#1D242E'
@@ -758,59 +727,21 @@ const Brands = () => {
             </ConfigProvider>
           </div>
         </div>
-        <div className='pt-[15px]'>
-          <ConfigProvider
-            theme={{
-              components: {
-                Table: {
-                  rowHoverBg: '#f5f5f5',
-                  headerSplitColor: 'transparent',
-                  headerBg: '#f5f5f5',
-                  sortField: '#f5f5f5',
-                  sortOrder: '#f5f5f5',
-                  borderColor: '#e8ebed'
-                }
-              }
+        <div className='pt-4'>
+          <AdminTable
+            columns={columns}
+            rowKey='brand_id'
+            data={filterData}
+            tableParams={tableParams}
+            tableStyles={{ width: '1200px', minHeight: '350px', maxHeight: '450px', backgroundColor: '#ffffff' }}
+            scroll={{ y: '300px' }}
+            loading={loading}
+            handleTableChange={handleTableChange}
+            pageSizeOptionsParent={['8', '10', '20', '50']}
+            paginationTable={{
+              position: ['none'],
+              ...tableParams.pagination
             }}
-          >
-            <Table
-              size='small'
-              columns={columns}
-              rowKey={(record) => record.brand_id}
-              dataSource={filterData}
-              pagination={{
-                position: ['none'],
-                ...tableParams.pagination
-              }}
-              loading={loading}
-              onChange={handleTableChange}
-              scroll={{
-                y: '300px'
-              }}
-              style={{
-                width: '1200px',
-                minHeight: '350px',
-                maxHeight: '450px',
-                backgroundColor: '#ffffff'
-              }}
-              className='Brands__table'
-            />
-          </ConfigProvider>
-          <CustomPagination
-            total={tableParams.pagination.total}
-            current={tableParams.pagination.current}
-            pageSize={tableParams.pagination.pageSize}
-            onChange={(page, pageSize) =>
-              handleTableChange(
-                {
-                  ...tableParams.pagination,
-                  current: page,
-                  pageSize
-                },
-                tableParams.filters,
-                tableParams.sortOrder
-              )
-            }
           />
         </div>
       </div>
