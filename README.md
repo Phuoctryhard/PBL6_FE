@@ -68,24 +68,3 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-
-- remove special character
-  var desired = stringToReplace.replace(/[^\w\s]/gi, '')
-  As was mentioned in the comments it's easier to do this as a whitelist - replace the characters which aren't in your safelist.
-
-The caret (^) character is the negation of the set [...], gi say global and case-insensitive (the latter is a bit redundant but I wanted to mention it) and the safelist in this example is digits, word characters, underscores (\w) and whitespace (\s).
-Khi áp dụng đoạn mã var desired = stringToReplace.replace(/[^\w\s]/gi, ''); cho chuỗi "Serum ngừa mụn, giảm thâm và làm sáng da 𝑻ɦ𝙚 𝙊𝐫d𝐢𝐧𝓪𝗿𝐲 & Balance Niacinamide 10% Zinc 1% 30ml/chai", nó sẽ loại bỏ tất cả các ký tự đặc biệt, chỉ giữ lại chữ cái, chữ số, dấu gạch dưới và khoảng trắng. Kết quả sẽ như sau:
-
-javascript
-Sao chép mã
-var stringToReplace = "Serum ngừa mụn, giảm thâm và làm sáng da 𝑻ɦ𝙚 𝙊𝐫d𝐢𝐧𝓪𝗿𝐲 & Balance Niacinamide 10% Zinc 1% 30ml/chai";
-var desired = stringToReplace.replace(/[^\w\s]/gi, '');
-console.log(desired);
-"Serum ngừa mụn giảm thâm và làm sáng da 𝑻ɦ𝙚 𝙊𝐫d𝐢𝐧𝓪𝗿𝐲 Balance Niacinamide 10 Zinc 1 30mlchai"
-
-
-//var stringToReplace = "Serum ngừa mụn giảm thâm và làm sáng da 𝑻ɦ𝙚 𝙊𝐫d𝐢𝐧𝓪𝗿𝐲 Balance Niacinamide 10 Zinc 1 30mlchai";
-
-// Xóa các ký tự đặc biệt và thêm dấu "-" giữa các từ
-var desired = stringToReplace.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-');
-console.log(desired);
