@@ -4,28 +4,19 @@ import { ArrowRight2, Personalcard, TickCircle, Lock } from 'iconsax-react'
 import { Breadcrumb, message, Tooltip, Spin } from 'antd'
 import { DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { AdminAPI } from '../../Api/admin'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/app.context'
-import { toast } from 'react-toastify'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 import 'react-toastify/dist/ReactToastify.css'
 
 const AdminSetting = () => {
+  const { setProfile } = useAuth()
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const [typeForm, setTypeForm] = useState('profile') // type form profile or change password
   const [submitLoading, setSubmitLoading] = useState(false) // loading submit state
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-  const navigate = useNavigate()
-  const { isProfile, logout, setProfile } = useAuth()
 
   const [token, setToken] = useState(localStorage.getItem('accesstoken'))
-
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -192,35 +183,34 @@ const AdminSetting = () => {
   //#endregion
 
   const fetchAdminProfile = async () => {
-    const response = await AdminAPI.getAdmin(token)
-    if (!response.ok) {
-      const { messages } = await response.json()
-      if (response.status === 401) {
-        handleUnauthorized()
-      } else {
-        setStatus(response.status)
-        setMessageResult(`Error get profile: ${messages}`)
+    try {
+      const result = await AdminAPI.getAdmin(token)
+      if (!result) return
+      const { data } = result
+      setAdminFullName(data.admin_fullname)
+      setEmail(data.email)
+      setAvatar(data.admin_avatar)
+      setAdminFullNameCard(data.admin_fullname)
+      setEmailCard(data.email)
+      setImageCard(data.admin_avatar)
+      switch (data.admin_is_admin) {
+        case 0:
+          setAdminRole('Admin')
+          break
+        case 1:
+          setAdminRole('Super Admin')
+          break
+        case 2:
+          setAdminRole('Manager')
+          break
       }
-      return
-    }
-    const result = await response.json()
-    const { data } = result
-    setAdminFullName(data.admin_fullname)
-    setEmail(data.email)
-    setAvatar(data.admin_avatar)
-    setAdminFullNameCard(data.admin_fullname)
-    setEmailCard(data.email)
-    setImageCard(data.admin_avatar)
-    switch (data.admin_is_admin) {
-      case 0:
-        setAdminRole('Admin')
-        break
-      case 1:
-        setAdminRole('Super Admin')
-        break
-      case 2:
-        setAdminRole('Manager')
-        break
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     }
   }
 
@@ -266,18 +256,8 @@ const AdminSetting = () => {
       if (typeForm === 'profile') response = await AdminAPI.updateAdmin(formData, token)
       else response = await AdminAPI.changePassword(formData, token)
       if (response) {
-        if (!response.ok) {
-          const { messages } = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setStatus(response.status)
-            setMessageResult(messages)
-          }
-          setSubmitLoading(false)
-          return
-        }
-        const result = await response.json()
+        if (!response) return
+        const result = response
         if (typeForm === 'profile') {
           const profileData = {
             ...Object.fromEntries(formData),
@@ -296,6 +276,12 @@ const AdminSetting = () => {
         setSubmitLoading(false)
       }
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
       setSubmitLoading(false)
     } finally {
       setSubmitLoading(false)
@@ -338,6 +324,10 @@ const AdminSetting = () => {
               src={imageCard ? imageCard : '/assets/images/default-avatar.png'}
               alt='setting'
               className='w-40 h-40 rounded-full border border-dashed border-[rgb(102, 181, 163)] object-cover'
+              onError={(e) => {
+                e.target.onerror = null
+                e.target.src = '/assets/images/default-avatar.png'
+              }}
             />
             <div className='gap-2 flex flex-col justify-center items-center'>
               <span className='text-sm font-semibold'>{adminFullNameCard}</span>
@@ -418,7 +408,15 @@ const AdminSetting = () => {
                         >
                           {Avatar ? (
                             <>
-                              <img src={Avatar} alt='Avatar' className='w-full h-full rounded-md object-contain' />
+                              <img
+                                src={Avatar}
+                                alt='Avatar'
+                                className='w-full h-full rounded-md object-contain'
+                                onError={(e) => {
+                                  e.target.onerror = null
+                                  e.target.src = '/assets/images/default-avatar.png'
+                                }}
+                              />
                               <CloseCircleOutlined
                                 className='absolute top-0 right-0 text-red-500 text-[20px] cursor-pointer'
                                 onClick={handleClearAvatar}

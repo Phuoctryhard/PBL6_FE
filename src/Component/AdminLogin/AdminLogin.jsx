@@ -37,7 +37,9 @@ export default function AdminLogin() {
   })
 
   const handleLoginSubmit = (data) => {
-    if (data.status >= 400) throw new Error(data.messages)
+    if (data.status >= 400) {
+      throw new Error(data.messages)
+    }
     const { admin_avatar, admin_fullname, admin_is_admin, email } = data.data
     let roles
     switch (admin_is_admin) {
@@ -129,12 +131,12 @@ export default function AdminLogin() {
     <section
       className='w-[100vw] h-[100vh] flex justify-center items-center moving-background bg-cover bg-no-repeat bg-center'
       style={{
-        backgroundImage: 'url(/assets/images/admin_login.jpg)'
+        backgroundImage: 'url(/assets/images/admin_login_2.jpg)'
       }}
     >
       {contextHolder}
       <Spin spinning={loading} tip='Loading...' size='large' fullscreen />
-      <div className='bg-transparent rounded-xl border-[0.188rem] border-solid border-[rgb(179,103,214,0.2)] backdrop-blur-xl w-[28.125rem] animate-slideUp mx-5'>
+      <div className='bg-[rgb(14,8,33,0.8)] rounded-xl border-[0.188rem] border-solid border-[rgb(179,103,214,0.2)] backdrop-blur-0 w-[28.125rem] animate-slideUp mx-5'>
         <form action='' onSubmit={onSubmit} noValidate>
           {isForgotPassword ? (
             <div className='text-[#fff] flex flex-col justify-end p-7 gap-6'>

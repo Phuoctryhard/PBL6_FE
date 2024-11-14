@@ -5,11 +5,10 @@ import { CloseOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/app.context'
 import './AddProduct.css'
 import { ProductsAPI, CategoriesAPI, BrandsAPI } from '../../Api/admin'
 import { AdminEditor, BreadCrumbs } from '../'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const filterTheme = {
   token: {
     colorTextQuaternary: '#1D242E',
@@ -36,16 +35,7 @@ const filterTheme = {
 }
 let currentSlide = 0
 const AddProduct = () => {
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
-
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const [productName, setProductName] = useState('')
   const [productSlug, setProductSlug] = useState('')
   const [categories, setCategories] = useState([])
@@ -324,34 +314,6 @@ const AddProduct = () => {
     return true
   }
 
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          if (res.message) {
-            setMessageResult(res.message)
-            setStatus(response.status)
-          } else if (res.messages) {
-            setMessageResult(res.messages.join('. '))
-            setStatus(response.status)
-          } else {
-            setStatus(400)
-            setMessageResult(defaultErrorText)
-          }
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
-      }
-      return false
-    }
-    return true
-  }
-
   const handleSubmit = async (e) => {
     setSubmitLoading(true)
     e.preventDefault()
@@ -383,15 +345,16 @@ const AddProduct = () => {
     if (productDescription) formData.append('product_description', productDescription)
 
     try {
-      const response = await ProductsAPI.addProducts(formData, token)
-      const isResponseOK = await handleResponse(response, 'Add product failed')
-      if (!isResponseOK) {
-        setSubmitLoading(false)
-        return
-      }
-      setStatus(response.status)
+      const res = await ProductsAPI.addProducts(formData, token)
+      setStatus(200)
       setMessageResult('Add product successfully')
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setSubmitLoading(false)
     }
@@ -436,12 +399,6 @@ const AddProduct = () => {
   useEffect(() => {
     try {
       CategoriesAPI.getAllCategories(token)
-        .then((response) => {
-          if (response.status === 401) {
-            handleUnauthorized()
-          }
-          return response.json()
-        })
         .then(({ data }) => {
           try {
             if (data) {
@@ -459,17 +416,24 @@ const AddProduct = () => {
             }
           } catch (err) {
             setStatus(400)
-            setMessageResult('Error fetching category:', err.message)
+            setMessageResult('Error convert category:', err.message)
           }
         })
+        .catch((err) => {
+          setStatus(400)
+          setMessageResult(err.message)
+        })
       BrandsAPI.getBrands()
-        .then((response) => response.json())
         .then(({ data }) => {
           let brands = data.map((brand) => ({
             label: brand.brand_name,
             value: brand.brand_id
           }))
           setBrands(brands)
+        })
+        .catch((err) => {
+          setStatus(400)
+          setMessageResult(err.message)
         })
     } catch (err) {
       console.log(err)

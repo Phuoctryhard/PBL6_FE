@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '../../context/app.context'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const { RangePicker } = DatePicker
 const filterTheme = {
   token: {
@@ -40,17 +41,8 @@ const filterTheme = {
 }
 
 const Admin = () => {
-  const navigate = useNavigate()
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
-
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
     messageApi.open({
@@ -111,9 +103,13 @@ const Admin = () => {
       render: (text, record) => (
         <div className='flex items-center gap-x-2 justify-start'>
           <img
-            src={record.admin_avatar !== null ? record.admin_avatar : ''}
+            src={record.admin_avatar ? record.admin_avatar : '/assets/images/default-avatar.png'}
             alt={text}
             className='w-[48px] h-[48px] object-cover rounded-full'
+            onError={(e) => {
+              e.target.onerror = null
+              e.target.src = '/assets/images/default-avatar.png'
+            }}
           />
           <span>{text}</span>
         </div>
@@ -295,79 +291,73 @@ const Admin = () => {
   }
 
   const searchAdmins = () => {
-    setLoading(true)
-    const formatDate = (date) => {
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-        const [day, month, year] = date.split('/')
-        return `${year}-${month}-${day}`
-      }
+    try {
+      const formatDate = (date) => {
+        let format = date
 
-      // Check if the date is in ISO 8601 format
-      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
-      }
+        // Check if the date is in DD/MM/YYYY format
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+          const [day, month, year] = date.split('/')
+          format = `${year}-${month}-${day}`
+        }
 
-      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
-      if (Date.parse(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
+        // Check if the date is in ISO 8601 format
+        else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          format = `${year}-${month}-${day}`
+        }
+
+        // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+        else if (Date.parse(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          format = `${year}-${month}-${day}`
+        }
+
+        return format ? new Date(format) : null
       }
-      return ''
+      const result = data.filter((item) => {
+        const matchesAdminFullName =
+          item.admin_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.admin_id.toString() === searchValue
+        const matchesAdminEmail = item.email.toLowerCase().includes(searchValue.toLowerCase())
+        const matchesRole = selectedRoles !== undefined ? item.admin_is_admin === selectedRoles : true
+        const matchesStatus = selectedAdminStatus !== undefined ? item.admin_is_delete === selectedAdminStatus : true
+        const matchesDateRange =
+          selectedFrom && selectedTo
+            ? formatDate(item.admin_created_at) &&
+              formatDate(selectedFrom) &&
+              formatDate(selectedTo) &&
+              formatDate(item.admin_created_at) >= formatDate(selectedFrom) &&
+              formatDate(item.admin_created_at) <= formatDate(selectedTo)
+            : true
+        return (matchesAdminFullName || matchesAdminEmail) && matchesDateRange && matchesRole && matchesStatus
+      })
+      const tableData = result
+      setFilterData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: result.length
+        }
+      })
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
     }
-    const result = data.filter((item) => {
-      const matchesAdminFullName = item.admin_fullname.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesAdminEmail = item.email.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesRole = selectedRoles !== undefined ? item.admin_is_admin === selectedRoles : true
-      const matchesStatus = selectedAdminStatus !== undefined ? item.admin_is_delete === selectedAdminStatus : true
-      const matchesDateRange =
-        selectedFrom && selectedTo
-          ? formatDate(item.admin_created_at) >= formatDate(selectedFrom) &&
-            formatDate(item.admin_created_at) <= formatDate(selectedTo)
-          : true
-      return (matchesAdminFullName || matchesAdminEmail) && matchesDateRange && matchesRole && matchesStatus
-    })
-    const tableData = result
-    setFilterData(tableData)
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        total: result.length
-      }
-    })
-    setLoading(false)
   }
 
   const fetchAdmins = async () => {
     setLoading(true)
     try {
-      const response = await AdminAPI.getAllAdmin(token)
-      if (!response.ok) {
-        const res = await response.json()
-        let messages
-        const status = res.status
-        if (!res.messages) {
-          if (!res.data)
-            if (status) messages = status
-            else messages = res.data.join('. ')
-        } else messages = res.messages.join('. ')
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Error fetching admin: ${messages}`)
-          setLoading(false)
-        }
-        return
-      }
-      const result = await response.json()
+      const result = await AdminAPI.getAllAdmin(token)
+      if (!result) return
       const data = result.data
       const tableData = data
         .map((item) => ({
@@ -387,8 +377,12 @@ const Admin = () => {
       })
       setLoading(false)
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
       setStatus(400)
-      setMessageResult('Error fetching admin: ' + e.message)
+      setMessageResult(e.message)
       setLoading(false)
     } finally {
       setLoading(false)
@@ -506,63 +500,53 @@ const Admin = () => {
 
   // handle delete admin record
   const handleDeleteAdmin = async (record) => {
-    let response = await AdminAPI.deleteAdmin(record.admin_id, token)
-    if (response.ok) {
+    try {
+      let response = await AdminAPI.deleteAdmin(record.admin_id, token)
+      if (!response) return
       setStatus(200)
       setMessageResult('Success delete')
-    } else {
-      const res = await response.json()
-      const message = res.messages ? res.messages.join('. ') : 'Error deleting'
-      if (response.status === 401) {
-        handleUnauthorized()
-      } else {
-        setStatus(response.status)
-        setMessageResult(`${message} `)
+    } catch (error) {
+      if (error.message.includes('401')) {
+        setIsLogin(false)
+        return
       }
-      return
+      setStatus(400)
+      setMessageResult(error.message)
     }
   }
 
   //handle change role admin
   const handleChangeRole = async (record) => {
-    let response = await AdminAPI.changeRole(record.admin_id, token)
-    if (response.ok) {
-      const result = await response.json()
+    try {
+      let result = await AdminAPI.changeRole(record.admin_id, token)
+      if (!result) return
       const { messages, status } = result
       setStatus(status)
-      setMessageResult(messages)
-    } else {
-      if (response.status === 401) {
-        handleUnauthorized()
-      } else {
-        const { status } = await response.json()
-        setStatus(400)
-        setMessageResult(`${status}`)
+      setMessageResult(messages.join('. '))
+    } catch (error) {
+      if (error.message.includes('401')) {
+        setIsLogin(false)
+        return
       }
+      setStatus(400)
+      setMessageResult(error.message)
     }
   }
 
   const handleRestoreAdmin = async (record) => {
-    if (record.admin_is_delete === 0) {
-      setStatus(400)
-      setMessageResult("This record has been restored. Can't restore again")
-      return
-    }
-    let response = await AdminAPI.deleteAdmin(record.admin_id, token)
-    setTypeModal('Restore')
-    if (response.ok) {
-      const result = await response.json()
+    try {
+      const result = await AdminAPI.deleteAdmin(record.admin_id, token)
+      if (!result) return
       const { messages, status } = result
       setStatus(status)
-      setMessageResult(messages)
-    } else {
-      if (response.status === 401) {
-        handleUnauthorized()
-      } else {
-        setStatus(response.status)
-        setMessageResult(`Error restore admin with status: ${response.status}, message: `, response.messages)
+      setMessageResult(messages.join('. '))
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
       }
-      return
+      setStatus(400)
+      setMessageResult(e.message)
     }
   }
 
@@ -588,28 +572,16 @@ const Admin = () => {
       if (typeModal === 'add') {
         response = await AdminAPI.addAdmin(formData, token)
       }
-      if (!response.ok) {
-        const res = await response.json()
-        const data = res.data
-        let messages
-        if (!res.messages) {
-          if (data) messages = data.join('. ')
-          else messages = 'Error adding admin'
-        }
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else if (response.status === 422) {
-          setStatus(422)
-          setMessageResult(`${messages}`)
-        } else {
-          setStatus(response.status)
-          setMessageResult(`${messages}`)
-        }
-        return
-      }
+      if (!response) return
       setStatus(200)
       setMessageResult(`Success ${typeModal} admin`)
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(`${e.message}`)
     } finally {
       setSubmitLoading(false)
     }
@@ -824,11 +796,7 @@ const Admin = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchAdmins()
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>

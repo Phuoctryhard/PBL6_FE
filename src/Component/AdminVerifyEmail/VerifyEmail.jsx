@@ -1,30 +1,68 @@
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { Spin } from 'antd'
 import { AdminAPI } from '../../Api/admin'
 const VerifyEmail = () => {
   const [statusVerify, setStatusVerify] = useState(false)
+  const navigate = useNavigate()
   const location = useLocation()
   const queryParams = new URLSearchParams(location.search)
   const token = queryParams.get('token')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState(null)
+  const [messageResult, setMessageResult] = useState(null)
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
   const verifyEmail = async () => {
-    const response = await AdminAPI.verifyEmail(`token=${token}`)
-    setLoading(false)
-    if (!response.ok) {
-      const res = await response.json()
-      const message = res.messages ? res.messages.join('') : 'Something went wrong. Please try again later.'
-      setMessage(message)
+    try {
+      const res = await AdminAPI.verifyEmail(`token=${token}`)
+      setLoading(false)
+      if (!res) {
+        const message = res.messages ? res.messages.join('. ') : 'Something went wrong. Please try again later.'
+        setMessage(message)
+        setStatusVerify(false)
+      } else {
+        setStatusVerify(true)
+        setStatus(200)
+        setMessageResult('Email verified successfully. Redirecting to login page...')
+        setTimeout(() => {
+          navigate('/admin/login')
+        }, 2000)
+      }
+    } catch (error) {
+      setStatus(400)
+      setMessage('Something went wrong. Please try again later.')
       setStatusVerify(false)
-    } else {
-      setStatusVerify(true)
+    } finally {
+      setLoading(false)
     }
   }
   useEffect(() => {
     document.title = 'Verify Email'
     verifyEmail()
   }, [])
+
+  //#region status and message result of fetch api call
+  useEffect(() => {
+    if ([200, 201, 202, 204].includes(status)) {
+      openMessage('success', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    } else if (status >= 400) {
+      openMessage('error', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    }
+  }, [status, messageResult])
+  //#endregion
+
   return (
     <div className='w-[100vw] h-[100vh] flex'>
       <Spin spinning={loading} tip='Loading...' size='large' fullscreen />

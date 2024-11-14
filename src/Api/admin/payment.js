@@ -1,44 +1,18 @@
 import { BASE_URL } from '../../until'
+import { fetchWithAuth } from './handleErrorAPI'
 const rootPayment = `${BASE_URL}/payments`
 const rootPaymentMethod = `${BASE_URL}/payment-methods`
 
 const AdminPaymentApi = {
-  getAllPayments: async (token) =>
-    await fetch(`${rootPayment}/all`, {
-      method: 'GET',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
+  getAllPayments: async (token) => await fetchWithAuth(`${rootPayment}/all`, 'GET', token, 'get all payments'),
   getPaymentsByID: async (id, token) =>
-    await fetch(`${rootPayment}/payments/${id}`, {
-      method: 'GET',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
+    await fetchWithAuth(`${rootPayment}/payments/${id}`, 'GET', token, 'get payment by ID'),
   changeStatus: async (id, token, formData) =>
-    await fetch(`${rootPayment}/update/${id}`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token
-      },
-      body: formData
-    }),
+    await fetchWithAuth(`${rootPayment}/update/${id}`, 'POST', token, 'change payment status', formData),
   getAllPaymentMethod: async (token) =>
-    await fetch(`${rootPaymentMethod}/all`, {
-      method: 'GET',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
+    await fetchWithAuth(`${rootPaymentMethod}/all`, 'GET', token, 'get all payment methods'),
   getPaymentMethodByID: async (id, token) =>
-    await fetch(`${rootPaymentMethod}/${id}`, {
-      method: 'GET',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    })
+    await fetchWithAuth(`${rootPaymentMethod}/${id}`, 'GET', token, 'get payment method by ID')
 }
 
 export default AdminPaymentApi

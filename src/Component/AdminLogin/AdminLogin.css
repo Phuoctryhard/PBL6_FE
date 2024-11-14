@@ -13,7 +13,7 @@
     background-position: center;
   }
   50% {
-    background-size: 110% 110%;
+    background-size: 105% 105%;
     background-position: center;
   }
   100% {
@@ -23,5 +23,5 @@
 }
 
 .moving-background {
-  animation: zoomBackground 10s linear infinite alternate;
+  animation: zoomBackground 15s linear infinite alternate;
 }

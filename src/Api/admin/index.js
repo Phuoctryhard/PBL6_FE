@@ -11,6 +11,7 @@ import AdminOrderApi from './orders'
 import AdminDeliveryAPI from './delivery'
 import AdminPaymentApi from './payment'
 import AdminOverView from './overview'
+import AdminReviewAPI from './review'
 export {
   BrandsAPI,
   CategoriesAPI,
@@ -24,5 +25,6 @@ export {
   AdminOrderApi,
   AdminDeliveryAPI,
   AdminPaymentApi,
-  AdminOverView
+  AdminOverView,
+  AdminReviewAPI
 }

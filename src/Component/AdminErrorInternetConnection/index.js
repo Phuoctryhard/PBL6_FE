@@ -1,0 +1,2 @@
+import AdminErrorInternetConnection from './AdminErrorInternetConnection'
+export default AdminErrorInternetConnection

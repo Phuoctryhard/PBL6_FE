@@ -1,48 +1,38 @@
+import { fetchWithAuth } from './handleErrorAPI'
 import { BASE_URL } from '../../until'
 const rootProducts = `${BASE_URL}/products`
 const ProductsAPI = {
-  getProducts: async () => await fetch(rootProducts),
-  getProductsNames: async () => await fetch(`${rootProducts}/names`),
-  getProductByID: async (id) => await fetch(`${rootProducts}/${id}`),
+  getProducts: async () => await fetchWithAuth(rootProducts, 'GET', undefined, 'fetch get all products'),
+  getProductsNames: async () =>
+    await fetchWithAuth(`${rootProducts}/names`, 'GET', undefined, 'fetch all product names'),
+  getProductByID: async (id) => await fetchWithAuth(`${rootProducts}/${id}`, 'GET', undefined, 'fetch product by id'),
   addProducts: async (formData, token) =>
-    await fetch(`${rootProducts}/add`, {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + token
-      },
-      body: formData
-    }),
+    await fetchWithAuth(`${rootProducts}/add`, 'POST', token, 'fetch add product', formData),
   updateProducts: async (id, formData, token) =>
-    await fetch(`${rootProducts}/update/${id}`, {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + token
-      },
-      body: formData
-    }),
+    await fetchWithAuth(`${rootProducts}/update/${id}`, 'POST', token, 'fetch update product', formData),
   deleteProducts: async (id, token) =>
-    await fetch(`${rootProducts}/delete/${id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: 'Bearer ' + token
-      },
-      body: JSON.stringify({
+    await fetchWithAuth(
+      `${rootProducts}/delete/${id}`,
+      'POST',
+      token,
+      'fetch delete product',
+      JSON.stringify({
         product_is_delete: 1
-      })
-    }),
+      }),
+      'application/json'
+    ),
   restoreProducts: async (id, token) =>
-    await fetch(`${rootProducts}/delete/${id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: 'Bearer ' + token
-      },
-      body: JSON.stringify({
+    await fetchWithAuth(
+      `${rootProducts}/delete/${id}`,
+      'POST',
+      token,
+      'fetch restore product',
+      JSON.stringify({
         product_is_delete: 0
-      })
-    }),
-  searchProducts: async (query) => await fetch(`${rootProducts}?${query}`)
+      }),
+      'application/json'
+    ),
+  searchProducts: async (query) => await fetchWithAuth(`${rootProducts}?${query}`, 'GET', undefined, 'search products')
 }
 
 export default ProductsAPI

@@ -1,13 +1,26 @@
 import { Link, useParams } from 'react-router-dom'
-import { Image, Tooltip, Modal } from 'antd'
+import { Image, Tooltip, Modal, message } from 'antd'
 import { Edit } from 'iconsax-react'
 import { useState, useEffect, useRef } from 'react'
 import './ViewProduct.css'
 import { ProductsAPI } from '../../Api/admin'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { CloseOutlined } from '@ant-design/icons'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 let currentSlide = 0
 const ViewProduct = () => {
+  const { setIsLogin, triggerSidebar } = useAdminMainLayoutFunction()
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
+  const [status, setStatus] = useState(null)
+  const [messageResult, setMessageResult] = useState('')
+
   const { productID } = useParams()
   const [productName, setProductName] = useState('')
   const [brand, setBrand] = useState('')
@@ -44,31 +57,37 @@ const ViewProduct = () => {
   const formatDateTime = (date) => {
     return new Date(date).toLocaleString('en-US', DateFormat)
   }
+
   const fetchProducts = async () => {
-    const response = await ProductsAPI.getProductByID(productID)
-    const data = await response.json()
-    const product = data['data']
-    console.log(data)
-    setProductName(product.product_name !== null ? product.product_name : '...')
-    setCategory(product.category_id !== null ? product.category_name : '...')
-    setBrand(product.brand_id !== null ? product.brand_name : '...')
-    setProductPrice(product.product_price !== null ? parseFloat(product.product_price).toString() : '...')
-    setProductDiscount(product.product_discount !== null ? parseFloat(product.product_discount).toString() : '...')
-    setProductQuantity(product.product_quantity !== null ? parseFloat(product.product_quantity).toString() : '...')
-    setProductSold(product.product_sold !== null ? parseFloat(product.product_sold).toString() : '...')
-    setProductPackage(product.package !== null ? product.package : '...')
-    setProductIngredient(product.ingredient !== null ? product.ingredient : '...')
-    setProductDosageForm(product.dosage_form !== null ? product.dosage_form : '...')
-    setProductSpecification(product.specification !== null ? product.specification : '...')
-    setProductManufacturer(product.manufacturer !== null ? product.manufacturer : '...')
-    setProductPlaceOfManufacture(product.place_of_manufacture !== null ? product.place_of_manufacture : '...')
-    setUploadImages(product.product_images !== null ? product.product_images.map((image) => `${image}`) : [])
-    setProductUses(product.product_uses !== null ? product.product_uses : '...')
-    setProductDescription(product.product_description !== null ? product.product_description : '...')
-    setProductIsDelete(product.product_is_delete !== null ? product.product_is_delete : '...')
-    setProductCreatedAt(product.product_created_at !== null ? product.product_created_at : '...')
-    setProductUpdatedAt(product.product_updated_at !== null ? product.product_updated_at : '...')
+    try {
+      const response = await ProductsAPI.getProductByID(productID)
+      const product = response?.data
+      if (!product) throw new Error(`Product ${productID} not found`)
+      setProductName(product.product_name !== null ? product.product_name : '...')
+      setCategory(product.category_id !== null ? product.category_name : '...')
+      setBrand(product.brand_id !== null ? product.brand_name : '...')
+      setProductPrice(product.product_price !== null ? parseFloat(product.product_price).toString() : '...')
+      setProductDiscount(product.product_discount !== null ? parseFloat(product.product_discount).toString() : '...')
+      setProductQuantity(product.product_quantity !== null ? parseFloat(product.product_quantity).toString() : '...')
+      setProductSold(product.product_sold !== null ? parseFloat(product.product_sold).toString() : '...')
+      setProductPackage(product.package !== null ? product.package : '...')
+      setProductIngredient(product.ingredient !== null ? product.ingredient : '...')
+      setProductDosageForm(product.dosage_form !== null ? product.dosage_form : '...')
+      setProductSpecification(product.specification !== null ? product.specification : '...')
+      setProductManufacturer(product.manufacturer !== null ? product.manufacturer : '...')
+      setProductPlaceOfManufacture(product.place_of_manufacture !== null ? product.place_of_manufacture : '...')
+      setUploadImages(product.product_images !== null ? product.product_images.map((image) => `${image}`) : [])
+      setProductUses(product.product_uses !== null ? product.product_uses : '...')
+      setProductDescription(product.product_description !== null ? product.product_description : '...')
+      setProductIsDelete(product.product_is_delete !== null ? product.product_is_delete : '...')
+      setProductCreatedAt(product.product_created_at !== null ? product.product_created_at : '...')
+      setProductUpdatedAt(product.product_updated_at !== null ? product.product_updated_at : '...')
+    } catch (err) {
+      setStatus(400)
+      setMessageResult(err.message)
+    }
   }
+
   function moveSlide(n) {
     const slides = document.querySelector('.slides')
     const totalSlides = slides.children.length
@@ -120,7 +139,6 @@ const ViewProduct = () => {
   }
 
   useEffect(() => {
-    fetchProducts()
     const container = thumbnailRef.current
     container.addEventListener('scroll', checkThumbnailTranslate)
     return () => {
@@ -128,8 +146,28 @@ const ViewProduct = () => {
     }
   }, [])
 
+  useEffect(() => {
+    triggerSidebar('inventory', 'products')
+    fetchProducts()
+  }, [productID])
+
+  //#region status and message result of fetch api call
+  useEffect(() => {
+    if ([200, 201, 202, 204].includes(status)) {
+      openMessage('success', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    } else if (status >= 400) {
+      openMessage('error', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    }
+  }, [status, messageResult])
+  //#endregion
+
   return (
     <section className='max-w-[100%] h-max flex flex-col mb-6'>
+      {contextHolder}
       <header className='flex justify-between animate-[slideDown_1s_ease] w-full items-center'>
         <div className='w-[70%]'>
           <BreadCrumbs

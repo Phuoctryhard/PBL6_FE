@@ -1,30 +1,21 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import BreadCrumbs from '../AdminBreadCrumbs'
-import { AdminOrderApi, ProductsAPI, CustomerAPI, AdminPaymentApi, AdminDeliveryAPI } from '../../Api/admin'
-import { toast } from 'react-toastify'
+import { AdminOrderApi, ProductsAPI } from '../../Api/admin'
 import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
-import { message, DatePicker, ConfigProvider, Tooltip } from 'antd'
-import { Edit, Printer, SearchNormal } from 'iconsax-react'
+import { message, Tooltip } from 'antd'
+import { Edit, Printer } from 'iconsax-react'
 import { AdminTable } from '../'
 import jsPDF from 'jspdf'
 import domtoimage from 'dom-to-image'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 
 const ViewOrder = () => {
+  const { setIsLogin, triggerSidebar } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
   const { id } = useParams()
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -33,25 +24,6 @@ const ViewOrder = () => {
       content: content,
       duration: duration
     })
-  }
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          setMessageResult(res.message)
-          setStatus(response.status)
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
-      }
-      return false
-    }
-    return true
   }
   // Date format options
   const optionsDateformat = {
@@ -71,8 +43,6 @@ const ViewOrder = () => {
   const [orderStatusDesigned, setOrderStatusDesigned] = useState()
   const [paymentStatusDesigned, setPaymentStatusDesigned] = useState()
   const [deliveredStatusDesigned, setDeliveredStatusDesigned] = useState()
-  const [paymentData, setPaymentData] = useState()
-  const [deliveryData, setDeliveryData] = useState()
 
   const handleDesignedStatus = (status) => {
     let color
@@ -200,10 +170,8 @@ const ViewOrder = () => {
   //#region fetch order by id
   const fetchOrderByIDs = async () => {
     try {
-      const response = await AdminOrderApi.getOrderById(id, token)
-      const isResponseOK = await handleResponse(response)
-      if (isResponseOK) {
-        const res = await response.json()
+      const res = await AdminOrderApi.getOrderById(id, token)
+      if (res) {
         const data = res.data
         let orderStatus = data.order_status
         let paymentStatus = data.payment_status
@@ -212,40 +180,28 @@ const ViewOrder = () => {
         setPaymentStatusDesigned(handleDesignedStatus(paymentStatus))
         setDeliveredStatusDesigned(handleDesignedStatus(deliveredStatus))
         const orderDetail = data.order_details
-        // const paymentMethod = await fetchPaymentMethodByID(data.payment_method_id)
-        // const deliveryMethod = await fetchDeliveryMethodByID(data.delivery_method_id)
-        // setPaymentData(paymentMethod)
-        // setDeliveryData(deliveryMethod)
         setData(data)
         fetchTableData(orderDetail)
       }
-    } catch (e) {}
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   const fetchProductByID = async (productID) => {
-    const response = await ProductsAPI.getProductByID(productID)
-    const isResponseOK = await handleResponse(response, "Can't get product")
-    if (isResponseOK) {
-      const res = await response.json()
-      return res.data
-    }
-  }
-
-  const fetchPaymentMethodByID = async (paymentMethodID) => {
-    const response = await AdminPaymentApi.getPaymentMethodByID(paymentMethodID, token)
-    const isResponseOK = await handleResponse(response, "Can't get payment method")
-    if (isResponseOK) {
-      const res = await response.json()
-      return res.data
-    }
-  }
-
-  const fetchDeliveryMethodByID = async (deliveryMethodID) => {
-    const response = await AdminDeliveryAPI.getDeliveryMethodByID(deliveryMethodID, token)
-    const isResponseOK = await handleResponse(response, "Can't get delivery method")
-    if (isResponseOK) {
-      const res = await response.json()
-      return res.data
+    try {
+      const res = await ProductsAPI.getProductByID(productID)
+      if (res) {
+        return res.data
+      }
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
     }
   }
 
@@ -274,26 +230,18 @@ const ViewOrder = () => {
         ...tableParams,
         pagination: {
           ...tableParams.pagination,
-          total: tableData.length
+          total: tableProductData.length
         }
       })
-    } catch (e) {}
-  }
-
-  const fetchUserByID = async (userID) => {
-    try {
-      const response = await CustomerAPI.getUserByID(userID, token)
-      const isResponseOK = await handleResponse(response, "Can't get user")
-      if (isResponseOK) {
-        const res = await response.json()
-        return res.data
-      }
-    } catch (error) {}
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   useEffect(() => {
     fetchOrderByIDs()
-  }, [])
+  }, [id])
   //#endregion
 
   //#endregion
@@ -331,7 +279,8 @@ const ViewOrder = () => {
           pdf.save(`order_${id}_${data?.user_fullname}.pdf`)
         })
     } catch (e) {
-      console.error(e)
+      setStatus(400)
+      setMessageResult('Error create pdf: ' + e.message)
     }
   }
 
@@ -397,7 +346,15 @@ const ViewOrder = () => {
       <div className='p-5 my-6 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp flex flex-col gap-4 w-full html-content'>
         <header className='flex items-center justify-between w-full'>
           <div className='flex gap-4 justify-start'>
-            <img src='/assets/images/Logo_Pbl6.png' alt='Logo' className='object-cover w-[9rem] h-auto' />
+            <img
+              src='/assets/images/Logo_Pbl6.png'
+              alt='Logo'
+              className='object-cover w-[9rem] h-auto'
+              onError={(e) => {
+                e.target.onerror = null
+                e.target.src = '/assets/images/default-avatar.png'
+              }}
+            />
             <div className='flex justify-center items-center gap-4 pt-8'>
               <Tooltip placement='top' title='Order Status' color='#000' trigger='hover'>
                 <div className='flex flex-col gap-1 justify-center items-center'>
