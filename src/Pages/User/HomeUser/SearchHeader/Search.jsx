@@ -12,6 +12,8 @@ import { AuthContext } from '../../../../context/app.context'
 import categoryAPI from '../../../../Api/user/category.js'
 import Anh from './_480f2c92-d896-48ef-978c-6c37301968f7-removebg-preview.png'
 import CategoryMain from '../Component/CategoryMain/CategoryMain.jsx'
+import Anhloi from './anhloi.png'
+
 export default function Search(class1 = 'text-blue') {
   const { isAuthenticated, logout, isProfile } = useContext(AuthContext)
   const [openCategory, setopenCategory] = useState(false)
@@ -190,32 +192,45 @@ export default function Search(class1 = 'text-blue') {
       <div className='w-full  '>
         <p className='text-xl font-thin '>Sản phẩm mới thêm </p>
         {data?.data?.data ? (
-          data.data.data.map((element) => {
-            return (
-              <div className='flex justify-between w-full py-2 mt-3 hover:bg-gray-300' key={element.cart_id}>
-                <div div className='flex gap-x-1  '>
-                  <div className='h-20 w-20  '>
-                    <img
-                      src={element?.product_images[0] ? element?.product_images[0] : ''}
-                      alt=''
-                      className='object-cover h-full w-full'
-                    />
-                  </div>
+          data?.data?.data
+            ?.filter((element) => {
+              return element.product_quantity > 0
+            })
+            .map((element) => {
+              console.log(element)
 
-                  <p className='truncate overflow-hidden whitespace-nowrap w-[250px] text-base font-normal'>
-                    {element.product_name}
-                  </p>
+              return (
+                <div className='flex justify-between w-full py-2 mt-3 hover:bg-gray-300' key={element.cart_id}>
+                  <div div className='flex gap-x-1  '>
+                    <div className='h-20 w-20  '>
+                      <img
+                        src={element?.product_images[0] ? element?.product_images[0] : Anhloi}
+                        alt=''
+                        className='object-cover h-full w-full'
+                      />
+                    </div>
+
+                    <p className='truncate overflow-hidden whitespace-nowrap w-[250px] text-base font-normal'>
+                      {element.product_name}
+                    </p>
+                  </div>
+                  <div className='text-red-500 pr-2'>9{element.cart_price}</div>
                 </div>
-                <div className='text-red-500 pr-2'>9{element.cart_price}</div>
-              </div>
-            )
-          })
+              )
+            })
         ) : (
           <div>No items in cart.</div>
         )}
       </div>
       <div className='flex justify-between items-center my-2'>
-        <span>{data?.data?.data?.length} Thêm hàng vào giỏ </span>
+        <span>
+          {
+            data?.data?.data?.filter((element) => {
+              return element.product_quantity > 0
+            }).length
+          }
+          Thêm hàng vào giỏ{' '}
+        </span>
         <button className='bg-[#1A51A2] px-3 py-2  rounded-lg text-white ' onClick={handleNavigate}>
           Xem giỏ hàng 1
         </button>
@@ -292,8 +307,7 @@ export default function Search(class1 = 'text-blue') {
         <div className='flex items-center md:mb-4 px-24 '>
           <div className='flex w-full flex-col-reverse items-start md:flex-row gap-5'>
             {' '}
-            <div className='hidden md:flex shrink-0 '>
-
+            <div className='hidden md:flex shrink-0 ' onClick={() => navigate('/')}>
               <img
                 class='w-32 h-20 cursor-pointer bg-white object-cover rounded-md'
                 src='/assets/images/Logo_Pbl6.png'
@@ -413,7 +427,14 @@ export default function Search(class1 = 'text-blue') {
                 </button>
               </Popover>
               <Popover content={ShopingCart} placement='bottomRight' className='' overlayStyle={{ width: '450px' }}>
-                <Badge count={data?.data?.data?.length > 0 ? data.data.data.length : ''} offset={[-15, 7]}>
+                <Badge
+                  count={
+                    data?.data?.data?.filter((element) => {
+                      return element.product_quantity > 0
+                    }).length
+                  }
+                  offset={[-15, 7]}
+                >
                   <div className='h-10 px-3'>
                     <svg
                       xmlns='http://www.w3.org/2000/svg'

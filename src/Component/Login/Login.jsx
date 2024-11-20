@@ -99,7 +99,7 @@ export default function Login() {
               </div>
               <div className='mt-8 text-center'>
                 <div className='flex items-center justify-center'>
-                  <span className=' text-slate-400'>Bạn chưa có tài khoản Pharmacity? </span>
+                  <span className=' text-slate-400'>Bạn chưa có tài khoản ? </span>
                   <Link to='/Register' className='text-red-600 ml-1'>
                     Đăng Kí
                   </Link>

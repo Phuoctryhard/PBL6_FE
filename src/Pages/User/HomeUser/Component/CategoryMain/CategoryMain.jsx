@@ -12,7 +12,7 @@ const CategoryMain = () => {
     navigate({
       pathname: '/category',
       search: `?${createSearchParams({
-        category_name: `${categoryName}`
+        category_parent_name: `${categoryName}`
       })}`
     })
   }
@@ -27,7 +27,7 @@ const CategoryMain = () => {
     cacheTime: 10 * 60 * 1000 // Dữ liệu được giữ trong cache tối đa 10 phút
   })
   // Tạo items cho Tabs
-  const items = ListCategory?.data?.data.map((category, index) => ({
+  const items = ListCategory?.data?.data?.map((category, index) => ({
     key: category.category_id.toString(),
     label: (
       <div
@@ -53,14 +53,14 @@ const CategoryMain = () => {
     ),
     children: (
       <div>
-        {category.category_name !== 'Tra cứu bệnh' ? (
+        {category?.category_name !== 'Tra cứu bệnh' ? (
           <div className='flex gap-4  cursor-pointer grid grid-cols-5'>
-            {category.children.slice(0, 8).map((child) => (
+            {category?.children.slice(0, 8)?.map((child) => (
               <div key={child.category_id} className='my-2'>
                 <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2 '>
                   <div onClick={() => handleClickCategory(child.category_name)} className='w-[100px] h-[100px]'>
                     <img
-                      src={child.category_thumbnail}
+                      src={child?.category_thumbnail}
                       alt='anh'
                       className='w-full h-full object-cover rounded-md border'
                     />

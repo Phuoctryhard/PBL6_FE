@@ -41,6 +41,7 @@ import NotPermitted from '../Component/NotPermitted/NotPermitted.jsx'
 import Checkout from '../Pages/User/Checkout/Checkout.jsx'
 import Disease from '../Pages/User/Disease/Disease.jsx'
 import DetailDisease from '../Pages/User/Disease/DetailDisease/DetailDisease.jsx'
+import DetailOrderHistory from '../Pages/User/Account/order_history/DetailOrderHistory.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
 
@@ -140,6 +141,11 @@ export default function useRouterElement() {
             {
               path: '/account/order-history',
               element: <OrderHistory />
+            },
+
+            {
+              path: '/account/order-history/:slug',
+              element: <DetailOrderHistory />
             },
             {
               path: '/account/profile/update-password',
@@ -376,6 +382,7 @@ export default function useRouterElement() {
         </MainLayoutUser>
       )
     },
+    {},
     {
       path: '/benh/:slug',
       element: (

@@ -13,14 +13,13 @@ const ModalListAddress = ({
   setValueAddress
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const showModal = () => {
-    setIsModalOpen(true)
-  }
+
   const handleOk = () => {
     setValueAddress(+value)
     setOpenListAddress(false)
   }
   const handleCancel = () => {
+    setValue(+valueAddress)
     setOpenListAddress(false)
   }
   const handleUpdateAddress = (e) => {
@@ -57,7 +56,9 @@ const ModalListAddress = ({
                         <span>{element.receiver_phone}</span>
                       </div>
                       <div className='my-2'>{element.receiver_address}nh</div>
-                      <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
+                      <span
+                        class={`mt-2 rounded-sm px-1 py-[4px] text-xs font-medium   ${'' + valueAddress == element.receiver_address_id ? 'text-[#CE4712] bg-[#FFE0C7]' : ''} `}
+                      >
                         {'' + valueAddress == element.receiver_address_id ? 'Mặc định' : ''}
                       </span>
                     </div>

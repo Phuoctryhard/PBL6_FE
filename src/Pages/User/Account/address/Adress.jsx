@@ -26,6 +26,7 @@ export default function Adress() {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const showModal = () => {
+    console.log(':oki')
     setIsModalOpen(true)
   }
   const handleOk = () => {
@@ -105,15 +106,15 @@ export default function Adress() {
                     </div>
                   </div>
                 </div>
-                <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
-                  <>
-                    <AddressForm closeModal={() => setIsModalOpen(false)} queryClient={queryClient} />
-                  </>
-                </Modal>
               </>
             )
           }
         })}
+        <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
+          <>
+            <AddressForm closeModal={() => setIsModalOpen(false)} queryClient={queryClient} />
+          </>
+        </Modal>
         <div className='w-full flex  text-center justify-center'>
           <Pagination
             current={currentPage}

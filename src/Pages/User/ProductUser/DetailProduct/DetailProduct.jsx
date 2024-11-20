@@ -129,7 +129,8 @@ export default function DetailProduct() {
           cart_quantity: quantity,
           productName: data.data.data.product_name,
           productPrice: data.data.data.product_price,
-          productImage: data.data.data.items[0]
+          productImage: data.data.data.items[0],
+          product_discount: data.data.data.product_discount || 0
         }
       })
     }
@@ -151,54 +152,7 @@ export default function DetailProduct() {
         <>
           <div class='hidden bg-neutral-100 md:block  mb-4'>
             <div class='container '>
-              <div>
-                <ul class='flex items-center py-1.5 text-neutral-600'>
-                  <li class='h-5 text-sm'>
-                    <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
-                      <a href='/'>Trang chủ</a>
-                    </span>
-                    <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
-                      <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                        <path
-                          d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
-                          fill='currentColor'
-                        ></path>
-                      </svg>
-                    </span>
-                  </li>
-                  <li class='h-5 text-sm'>
-                    <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
-                      <a href='/cham-soc-sac-dep'>Chăm sóc sắc đẹp</a>
-                    </span>
-                    <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
-                      <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                        <path
-                          d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
-                          fill='currentColor'
-                        ></path>
-                      </svg>
-                    </span>
-                  </li>
-                  <li class='h-5 text-sm'>
-                    <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
-                      <a href='/san-pham-chong-nang'>Sản phẩm chống nắng</a>
-                    </span>
-                    <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
-                      <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                        <path
-                          d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
-                          fill='currentColor'
-                        ></path>
-                      </svg>
-                    </span>
-                  </li>
-                  <li class='h-5 text-sm'>
-                    <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'>
-                      Kem chống nắng dành cho mặt
-                    </span>
-                  </li>
-                </ul>
-              </div>
+              <div></div>
             </div>
           </div>
           {/* ffffff:    */}
@@ -224,7 +178,7 @@ export default function DetailProduct() {
                 <div className='bg-white col-span-2 border-b-2'>
                   <h1
                     title='Gel URGO ECZEKALM hỗ trợ giảm các triệu chứng viêm da và khô da (Tuýp 50ml)'
-                    class='line-clamp-3 text-base font-semibold text-neutral-900 md:text-xl md:font-bold'
+                    class='line-clamp-3 text-lg font-bold text-neutral-900 md:text-xl md:font-bold'
                   >
                     {data.data.data.product_name}
                   </h1>
@@ -251,70 +205,26 @@ export default function DetailProduct() {
                         </h3>
                         <div class='order-1 flex items-center justify-start md:order-2'>
                           <p class='relative order-2 whitespace-nowrap text-base font-semibold text-neutral-600 md:order-1 md:me-2  md:text-xl'>
-                            303.000&nbsp;₫
+                            {data.data.data.product_discount ? `${data.data.data.product_discount} ₫` : ''}
                             <span class='absolute inset-x-0 top-1/2 h-[1px] w-full -translate-y-1/2 bg-neutral-600'></span>
                           </p>
-                          <span class='order-1 me-2 rounded-sm bg-pink px-1 text-xs font-medium leading-5 text-white md:order-2 md:me-0'>
-                            -10%
-                          </span>
                         </div>
                       </div>
 
-                      <p class='text-[14px] leading-[20px] font-normal text-neutral-500 md:text-sm mb-1.5 md:mb-1 mt-1'>
-                        Giá đã bao gồm thuế. Phí vận chuyển và các chi phí khác (nếu có) sẽ được thể hiện khi đặt hàng.
-                      </p>
-
                       <div class='flex items-center justify-start space-x-1 md:space-x-2 mb-3 md:mb-1 mt-1'>
-                        <span class='text-xs font-semibold text-gold-500 md:text-sm text-[#FAAE14]'>
-                          Tích lũy từ 2.727 P-Xu vàng
-                        </span>
-
                         <div class='[&amp;>[data-radix-popper-content-wrapper]]:!z-[9]'>
                           <div data-state='closed'>
                             <button
                               data-size='sm'
                               type='button'
                               class='relative flex justify-center outline-none font-semibold focus:ring-primary-300 text-sm bg-transparent data-[size=sm]:text-sm text-inherit border-0 hover:bg-0 hover:text-primary-500 focus:text-primary-500 h-3 p-0 md:h-4'
-                            >
-                              <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 items-center text-neutral-700 md:h-4 md:w-4'>
-                                <svg viewBox='0 0 25 25' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                                  <path
-                                    d='M12.5 2.5C7 2.5 2.5 7 2.5 12.5C2.5 18 7 22.5 12.5 22.5C18 22.5 22.5 18 22.5 12.5C22.5 7 18 2.5 12.5 2.5ZM12.5 18.75C11.81 18.75 11.25 18.19 11.25 17.5C11.25 16.81 11.81 16.25 12.5 16.25C13.19 16.25 13.75 16.81 13.75 17.5C13.75 18.19 13.19 18.75 12.5 18.75ZM14.5288 12.615C13.9075 13.1488 13.75 13.3287 13.75 13.75C13.75 14.4412 13.19 15 12.5 15C11.81 15 11.25 14.4412 11.25 13.75C11.25 12.1325 12.2437 11.28 12.9025 10.7162C13.5237 10.185 13.6812 10.0037 13.6812 9.58375C13.6812 9.355 13.6813 8.75 12.5013 8.75C11.9563 8.78 11.375 9.03 10.9288 9.45125C10.4275 9.92375 9.635 9.9 9.16125 9.4C8.6875 8.8975 8.71 8.10625 9.2125 7.6325C10.09 6.80625 11.2337 6.315 12.4362 6.2525H12.44C14.705 6.2525 16.1812 7.59125 16.1812 9.585C16.1812 11.2013 15.1875 12.0538 14.53 12.6163L14.5288 12.615Z'
-                                    fill='currentColor'
-                                  ></path>
-                                </svg>
-                              </span>
-                            </button>
+                            ></button>
                           </div>
                         </div>
                       </div>
 
-                      <div class='flex content-center justify-between mb-3 md:mb-4'>
-                        <div class='flex items-center justify-start space-x-1 '>
-                          <div class='flex items-center justify-start'>
-                            <div class='h-6 w-6 '>
-                              <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full w-4 h-4 text-neutral-700'>
-                                <svg
-                                  xmlns='http://www.w3.org/2000/svg'
-                                  width='25'
-                                  height='24'
-                                  fill='none'
-                                  viewBox='0 0 25 24'
-                                >
-                                  <path
-                                    fill='currentColor'
-                                    d='M17.22 2a6.2 6.2 0 0 0-4.72 2.16A6.2 6.2 0 0 0 7.78 2a6.26 6.26 0 0 0-4.55 10.58l8.55 8.9a1 1 0 0 0 1.44 0l8.55-8.9h.01A6.26 6.26 0 0 0 17.22 2Z'
-                                  ></path>
-                                </svg>
-                              </span>
-                            </div>
-                            <div class='flex items-center justify-start space-x-1 text-sm'>
-                              <p class='text-neutral-900'>29.2k</p>
-                            </div>
-                          </div>
-                          <span class='h-[12px] w-[1px] bg-neutral-500'></span>
-                          <p class='text-sm text-neutral-900'>Đã bán 6.0k</p>
-                        </div>
+                      <div class='flex content-center justify-between mb-3 '>
+                        <p class='text-sm text-neutral-900'>Đã bán {data?.data?.data.product_sold}</p>
                       </div>
                     </>
                   )}
@@ -322,27 +232,31 @@ export default function DetailProduct() {
                   <div className='w-full border border-[1px]'></div>
                   <div class='mb-3 md:mb-4 my-2 '>
                     <div class='space-y-3'>
-                      <label
-                        class='peer-disabled:cursor-not-allowed peer-disabled:opacity-70 w-fit text-sm font-semibold text-neutral-900'
-                        for=':r8s:-form-item'
-                      >
-                        Phân loại sản phẩm
-                      </label>
-                      <div
-                        class='flex flex-wrap gap-2'
-                        id=':r8s:-form-item'
-                        aria-describedby=':r8s:-form-item-description'
-                        aria-invalid='false'
-                      >
-                        <button
-                          data-size='sm'
-                          type='button'
-                          className='relative flex justify-center outline-none font-semibold bg-white border border-solid border-[#1A51A2] text-[#1A51A2] disabled:border-neutral-200 disabled:text-neutral-600 disabled:!bg-white text-sm px-4 py-2 items-center rounded-lg h-8 min-w-[82px] md:h-8 !bg-primary-50 hover:border-[#587cb2] hover:text-[#5883c2] '
-                        >
-                          <span>{data.data.data.product_package}</span>
-                        </button>
-                      </div>
-                      <div className='border border-b-[1px]'></div>
+                      {data?.data?.data?.product_package && (
+                        <>
+                          <label
+                            class='peer-disabled:cursor-not-allowed peer-disabled:opacity-70 w-fit text-sm font-semibold text-neutral-900'
+                            for=':r8s:-form-item'
+                          >
+                            Phân loại sản phẩm
+                          </label>
+                          <div
+                            class='flex flex-wrap gap-2'
+                            id=':r8s:-form-item'
+                            aria-describedby=':r8s:-form-item-description'
+                            aria-invalid='false'
+                          >
+                            <button
+                              data-size='sm'
+                              type='button'
+                              className='relative flex justify-center outline-none font-semibold bg-white border border-solid border-[#1A51A2] text-[#1A51A2] disabled:border-neutral-200 disabled:text-neutral-600 disabled:!bg-white text-sm px-4 py-2 items-center rounded-lg h-8 min-w-[82px] md:h-8 !bg-primary-50 hover:border-[#587cb2] hover:text-[#5883c2] '
+                            >
+                              <span>{data.data.data.product_package}</span>
+                            </button>
+                          </div>
+                          <div className='border border-b-[1px]'></div>
+                        </>
+                      )}
                       <h4 class='text-[16px] leading-[24px] relative whitespace-nowrap bg-[#6EBE46] px-4 font-semibold text-white w-32'>
                         Khuyến mãi
                         <span class='absolute right-0 top-0 block h-0 w-0 border-b-[12px] border-r-[8px] border-t-[12px] border-white border-b-transparent border-t-transparent'></span>
@@ -816,3 +730,52 @@ export default function DetailProduct() {
     </div>
   )
 }
+// <span class='order-1 me-2 rounded-sm bg-pink px-1 text-xs font-medium leading-5 text-white md:order-2 md:me-0'>
+//                             -10%
+//                           </span>
+// <ul class='flex items-center py-1.5 text-neutral-600'>
+// <li class='h-5 text-sm'>
+//   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
+//     <a href='/'>Trang chủ</a>
+//   </span>
+//   <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
+//     <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+//       <path
+//         d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
+//         fill='currentColor'
+//       ></path>
+//     </svg>
+//   </span>
+// </li>
+// <li class='h-5 text-sm'>
+//   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
+//     <a href='/cham-soc-sac-dep'>Chăm sóc sắc đẹp</a>
+//   </span>
+//   <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
+//     <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+//       <path
+//         d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
+//         fill='currentColor'
+//       ></path>
+//     </svg>
+//   </span>
+// </li>
+// <li class='h-5 text-sm'>
+//   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
+//     <a href='/san-pham-chong-nang'>Sản phẩm chống nắng</a>
+//   </span>
+//   <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
+//     <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+//       <path
+//         d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
+//         fill='currentColor'
+//       ></path>
+//     </svg>
+//   </span>
+// </li>
+// <li class='h-5 text-sm'>
+//   <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'>
+//     Kem chống nắng dành cho mặt
+//   </span>
+// </li>
+// </ul>

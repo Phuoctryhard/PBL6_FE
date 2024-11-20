@@ -11,10 +11,11 @@ export default function HomeUser() {
     <div className=''>
       <Header />
       <ProductList />
-      <Disease />
+      //
       <Category />
       <Footer />
     </div>
   )
 }
 // <CategoryMain/>
+// <Disease />
