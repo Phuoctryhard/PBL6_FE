@@ -90,7 +90,15 @@ export default function Adress() {
                       <span className='mx-2'>|</span>
                       <span>0865446276</span>
                     </div>
-                    <div className='my-2'>{element.receiver_address}</div>
+                    <div className='my-2'>
+                      {element.receiver_address +
+                        ' , ' +
+                        element.ward_name +
+                        ' , ' +
+                        element.district_name +
+                        ' , ' +
+                        element.province_name}
+                    </div>
                     <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
                       Nhà riêng
                     </span>

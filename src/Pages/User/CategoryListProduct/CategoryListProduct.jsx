@@ -473,7 +473,6 @@ export default function CategoryListProduct() {
             </div>
             <div className='grid grid-cols-5 px-3 py-4  gap-3'>
               {productsData?.data?.data?.data?.map((element) => {
-                console.log(element)
                 return (
                   <div className='border border-1 shadow-lg rounded-lg overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105'>
                     <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>

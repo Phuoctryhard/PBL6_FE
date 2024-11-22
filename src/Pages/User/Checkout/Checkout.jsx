@@ -18,6 +18,7 @@ import { AuthContext } from '../../../context/app.context'
 import CartAPI from '../../../Api/user/cart'
 import { queryClient } from '../../../index.js'
 export default function Checkout() {
+
   const location = useLocation()
   const [isModalOpen, setIsModalOpen] = useState(false)
 

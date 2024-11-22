@@ -3,13 +3,13 @@ import { formatCurrency, generateNameId } from '../../../../until'
 import anhloi from './anhloi.png'
 import { Link } from 'react-router-dom'
 export default function ProductItem({ sanphammoi }) {
-  console.log(sanphammoi)
+ 
   return (
     <>
       {sanphammoi?.data?.data?.data?.map((element) => {
         const productImage = Array.isArray(element?.product_images) ? element.product_images[0] : null
         // console.log(productImage)
-        console.log(element)
+       
         return (
           <div>
             <div className='rounded-lg overflow-hidden border shadow-md bg-white  h-full transition-transform duration-300 ease-in-out hover:scale-105'>
