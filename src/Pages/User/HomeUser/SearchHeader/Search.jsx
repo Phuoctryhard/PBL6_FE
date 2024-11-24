@@ -24,7 +24,7 @@ export default function Search() {
   const [filteredData, setFilteredData] = useState([])
   // current hiện tại
   const [page, setCurrent] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(15)
   const [search, setSearch] = useState('')
   const { isAuthenticated, logout, isProfile } = useContext(AuthContext)
   const [openCategory, setopenCategory] = useState(false)
@@ -320,7 +320,11 @@ export default function Search() {
     }
   }
 
-  const { register, handleSubmit } = useForm()
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      search: '' // Đảm bảo giá trị mặc định là rỗng
+    }
+  })
 
   const handleOnSubmit = handleSubmit(
     (data) => {
@@ -401,6 +405,7 @@ export default function Search() {
                       <input
                         className='w-full border-neutral-500 focus:ring-neutral-500 focus:border-neutral-700 outline-none p-3.5 search-input flex h-10 items-center justify-start rounded-sm border-0 py-2 pl-10 text-start text-sm font-medium text-neutral-800 truncate'
                         placeholder='Tên thuốc, triệu chứng, vitamin và thực phẩm chức năng'
+                        autoComplete='off'
                         {...register('search')} // Đăng ký với React Hook Form
                         onFocus={(e) => {
                           handleDrop1(e) // Gọi hàm onFocus của bạn
@@ -454,7 +459,7 @@ export default function Search() {
                           productsDataDropdown?.data?.data?.data.map((item) => [item.category_name, item]) // Map category_name thành unique key
                         ).values()
                       )
-                        .slice(0, 10) // Giới hạn hiển thị 3 loại
+                        .slice(0, 15) // Giới hạn hiển thị 3 loại
                         .map((element) => {
                           return (
                             <div key={element.id} className=''>

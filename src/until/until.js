@@ -1,5 +1,7 @@
 import axios from 'axios'
-import { getAccessToken, saveAccessToken, saveProfile, tokenBear } from '.'
+import { getAccessToken, saveAccessToken, saveProfile, tokenBear , clearAll } from '.'
+import { Navigate, useNavigate } from 'react-router-dom'
+
 
 class Http {
   instance
@@ -51,9 +53,21 @@ class Http {
             saveProfile(response.data.data)
           }
         }
+        console.log(response)
         return response
       },
       function (error) {
+        console.log(error.status)
+        console.log(error.response.status)
+
+        if (error.response.status === 401) {
+          // c1
+          // console.log('xóa')
+          // localStorage.removeItem('accesstoken')
+          // localStorage.removeItem('profile')
+          // window.location.reload() // Sử dụng window.location thay vì useNavigate
+          clearAll()
+        }
         return Promise.reject(error)
       }
     )

@@ -18,10 +18,9 @@ import { AuthContext } from '../../../context/app.context'
 import CartAPI from '../../../Api/user/cart'
 import { queryClient } from '../../../index.js'
 export default function Checkout() {
-
   const location = useLocation()
+  const [isModalOpen1, setIsModalOpen1] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-
   const { isAuthenticated, logout, checkedProducts, setCheckedProducts } = useContext(AuthContext)
   const { product_id, cart_quantity, productName, productPrice, productImage, product_discount } = location.state || {}
   //console.log(product_id, cart_quantity, productName, productPrice, productImage, product_discount)
@@ -186,6 +185,15 @@ export default function Checkout() {
   // modal delivery
   const [isModalDelivery, setModalDelivery] = useState(false)
   console.log(PriceDelivery, product_discount)
+
+  const [isModalOpenAdd, setIsModalOpenAdd] = useState(false)
+
+  const handleOk = () => {
+    setOpenListAddress(false)
+  }
+  const handleCancel = () => {
+    setOpenListAddress(false)
+  }
   return (
     <div className='px-24 grid grid-cols-1 md: lg:grid-cols-9 bg-[#e5e5e5] gap-y-3'>
       <div className='text-lg font-bold mt-2'>Thanh Toán</div>
@@ -319,7 +327,7 @@ export default function Checkout() {
             </svg>
             Địa chỉ nhận hàng{' '}
           </div>
-          {selectedAddress && (
+          {getAddress?.data?.data.length > 0 && selectedAddress && (
             <div className='flex mt-4'>
               <div className='w-[40%]'>
                 <div className=''>
@@ -337,6 +345,39 @@ export default function Checkout() {
                 >
                   Thay đổi
                 </div>
+              </div>
+            </div>
+          )}
+          {getAddress?.data?.data.length == 0 && (
+            <div className='flex mt-4 items-center gap-5 '>
+              <div
+                className='font-bold'
+                onClick={() => {
+                  setIsModalOpen(true)
+                }}
+              >
+                Thêm địa chỉ
+              </div>
+              <div
+                className='text-white  '
+                onClick={() => {
+                  setIsModalOpen(true)
+                }}
+              >
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth='1.5'
+                  stroke='currentColor'
+                  className='size-6 bg-[#1A51A2] rounded-full'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'
+                  />
+                </svg>
               </div>
             </div>
           )}
@@ -361,6 +402,11 @@ export default function Checkout() {
         setPriceDelivery={setPriceDelivery}
       />
       <ModalPaymentSucess isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
+      <Modal title='Địa chỉ mới' open={isModalOpen1} onOk={handleOk} onCancel={handleCancel} footer={null}>
+        <>
+          <AddressForm closeModal={() => setIsModalOpen(false)} />
+        </>
+      </Modal>
     </div>
   )
 }

@@ -27,7 +27,11 @@ export const AuthProvider = ({ children }) => {
 
   const setProfile = (profile) => {
     setIsProfile(profile)
-    saveProfile(profile)
+  }
+  const reset = ()=> {
+    setCheckedProducts([])
+     setIsProfile(null)
+    setIsAuthenticated(false)
   }
 
   return (
@@ -41,7 +45,8 @@ export const AuthProvider = ({ children }) => {
         isProfile,
         setProfile,
         checkedProducts,
-        setCheckedProducts
+        setCheckedProducts,
+        reset
       }}
     >
       {children}

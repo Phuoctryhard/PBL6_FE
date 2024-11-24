@@ -37,8 +37,9 @@ import {
 export default function CategoryListProduct() {
   const location = useLocation()
   const queryParams = new URLSearchParams(location.search)
-  const brands = queryParams.getAll('brands[]') // sử dụng getAll để lấy tất cả giá trị
-  //console.log(brands) // kiểm tra xem cả hai thương hiệu có được lấy ra không
+  const brands = queryParams.getAll('brand_names[]') // sử dụng getAll để lấy tất cả giá trị
+  // ['Pharmacity', 'Hasan- Demarpharm']
+  console.log(brands) // kiểm tra xem cả hai thương hiệu có được lấy ra không
   const [visibleBrands, setVisibleBrands] = useState(5) // Bắt đầu với 5 thương hiệu được hiển thị
   // State để lưu danh sách thương hiệu sau khi lọc
   const [filteredBrands, setFilteredBrands] = useState([])
@@ -153,7 +154,7 @@ export default function CategoryListProduct() {
 
   const isChecked = (min, max) => {
     // So sánh đúng thứ tự max với price_max và min với price_min
-    return useQueryParameter?.price_max === max && useQueryParameter?.price_min === min
+    return useQueryParameter?.price_to === max && useQueryParameter?.price_from === min
   }
 
   // api brand[]
@@ -176,10 +177,12 @@ export default function CategoryListProduct() {
   }
   // xử lí check box
   const handleCheckboxChange = (e) => {
+    console.log(e.target.value)
     let updateBrands
     setNameBrands((prev) => {
       if (e.target.checked) {
         // brands lấy trên url
+
         updateBrands = [...brands, e.target.value]
       } else {
         // Remove brand if unchecked
@@ -187,13 +190,16 @@ export default function CategoryListProduct() {
           return brand !== e.target.value
         })
       }
+      //[Pharmacity,Abbott,Hasan- Demarpharm]
+      console.log('updateBrands' + updateBrands)
       // Create search parameters
       const searchParams = createSearchParams({
         ...useQueryParameter,
         'brand_names[]': updateBrands // Update brands[] parameter
+        //brand_names%5B%5D=Pharmacity&brand_names%5B%5D=Hasan-+Demarpharm
       }).toString()
 
-      // Navigate with updated search parameters
+      //Navigate with updated search parameters
       navigate({
         pathname: `/category`,
         search: `?${searchParams}`
@@ -242,7 +248,7 @@ export default function CategoryListProduct() {
       })
     }
   }
-
+  console.log(useQueryParameter)
   // if (isLoading) return <Loading />
   return (
     <div className=''>

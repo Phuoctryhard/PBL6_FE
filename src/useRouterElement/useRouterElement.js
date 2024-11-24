@@ -42,6 +42,7 @@ import Checkout from '../Pages/User/Checkout/Checkout.jsx'
 import Disease from '../Pages/User/Disease/Disease.jsx'
 import DetailDisease from '../Pages/User/Disease/DetailDisease/DetailDisease.jsx'
 import DetailOrderHistory from '../Pages/User/Account/order_history/DetailOrderHistory.jsx'
+import StatusPayos from '../Pages/User/StatusPayos/StatusPayos.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
 
@@ -154,6 +155,14 @@ export default function useRouterElement() {
           ]
         }
       ]
+    },
+    {
+      path: '/cancel',
+      element: <StatusPayos />
+    },
+    {
+      path: '/success',
+      element: <StatusPayos />
     },
     {
       path: '/auth/verify-email/admin',

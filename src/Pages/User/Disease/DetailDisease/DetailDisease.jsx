@@ -14,6 +14,7 @@ export default function DetailDisease() {
   })
   console.log(slug)
   console.log(data?.data)
+  console.log(data?.data?.data)
   console.log(data?.data?.data?.general_overview)
   return (
     <div className='disable-fixed mt-5'>

@@ -65,7 +65,7 @@ const ModalListAddress = ({
                           element.district_name +
                           ' , ' +
                           element.province_name}
-                        }nh
+                        }
                       </div>
                       <span
                         class={`mt-2 rounded-sm px-1 py-[4px] text-xs font-medium   ${'' + valueAddress == element.receiver_address_id ? 'text-[#CE4712] bg-[#FFE0C7]' : ''} `}
@@ -84,8 +84,8 @@ const ModalListAddress = ({
               )
             })}
         </>
-        <div className=' flex gap-x-10 justify-between'>
-          <div className='font-bold'>Thêm địa chỉ</div>
+        <div className=' flex gap-x-10 justify-between '>
+          <div className='font-bold '>Thêm địa chỉ</div>
           <div
             className='text-white  '
             onClick={() => {

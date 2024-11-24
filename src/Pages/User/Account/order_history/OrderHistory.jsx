@@ -1,13 +1,20 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Tabs } from 'antd'
 import './ant.css'
-import { Link } from 'react-router-dom'
-
+import { Link, Navigate } from 'react-router-dom'
+import { Empty } from 'antd'
 import { Divider } from 'antd'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import OrderApi from '../../../../Api/user/order'
 import { formatCurrency } from '../../../../until'
+import CartAPI from '../../../../Api/user/cart'
+import { toast } from 'react-toastify'
+import { queryClient } from '../../../..'
+import { useNavigate } from 'react-router-dom'
+import { AuthContext } from '../../../../context/app.context'
 export default function OrderHistory() {
+  const { isAuthenticated, logout, checkedProducts, setCheckedProducts } = useContext(AuthContext)
+  const navigate = useNavigate() // Hook để điều hướng
   const [isActive, setActive] = useState('All')
   const ORDER_STATUS = [
     { name: 'Tất cả', status: 'All' },
@@ -39,7 +46,67 @@ export default function OrderHistory() {
       setDataAll(data?.data?.data)
     }
   }, [isActive, data])
+
+  const handleBuyAgain = async (order_detail) => {
+    let arrayIdCart = [] // Declare the array before the loop
+
+    console.log(order_detail)
+
+    // Loop through the order details and trigger the mutation for each product
+    for (const element of order_detail) {
+      console.log(element)
+      try {
+        const data = await mutateAddProductCart.mutateAsync({
+          product_id: element.product_id,
+          cart_quantity: element.order_quantity
+        })
+
+        // Handle success for each product added to the cart
+        console.log('Product added to cart successfully:', data.data.data)
+        arrayIdCart.push(data.data.data.cart_id) // Track which products were added
+        console.log('Products added to cart:', arrayIdCart)
+
+        // Invalidate the queries after each successful mutation
+        queryClient.invalidateQueries({ queryKey: ['getCart'] })
+      } catch (error) {
+        // Handle error in case the mutation fails
+        console.error('Failed to add product to cart:', error)
+      }
+    }
+
+    // After the loop finishes, navigate to the cart page
+    setCheckedProducts((prev) => {
+      return [...prev, ...arrayIdCart] // Use spread operator to merge arrays
+    })
+
+    await navigate('/cart')
+    // Optionally, handle any logic after all products have been processed
+    console.log('Products added to cart:', arrayIdCart)
+  }
+  // Them vao gio hang
+  const mutateAddProductCart = useMutation({
+    mutationFn: CartAPI.addproduct_inCart,
+    onError: (error) => {
+      console.error('Lỗi khi thêm sản phẩm vào giỏ hàng:', error.response.data.message[0])
+    }
+  })
+
+  const Cancel_CartOrder = useMutation({
+    mutationFn: OrderApi.Cancel_CartOrder
+  })
   console.log(isActive)
+  const handleCancelOrder = (idOrder) => {
+    console.log(idOrder)
+    Cancel_CartOrder.mutate(idOrder, {
+      onSuccess: () => {
+        toast.success('Hủy đơn hàng thành công')
+        queryClient.invalidateQueries({ queryKey: ['getOrderApi'] })
+      },
+      onError: () => {
+        toast.error('Hủy đơn hàng thất bại ')
+      }
+    })
+  }
   return (
     <div className=''>
       <div className='flex justify-between  '>
@@ -89,10 +156,23 @@ export default function OrderHistory() {
                 Tổng tiền: {formatCurrency(element.order_total_amount)}
               </div>
               <div className='flex gap-x-5'>
-                <button className='text-white bg-blue  rounded-lg py-3 px-6  '>Mua lại </button>
+                <button
+                  className='text-white bg-blue  rounded-lg py-3 px-6  '
+                  onClick={() => handleBuyAgain(element.order_detail)}
+                >
+                  Mua lại{' '}
+                </button>
                 <Link to={`/account/order-history/${element.order_id}`}>
                   <button className='text-white bg-blue rounded-lg py-3 px-6'>Xem chi tiết đơn hàng</button>
                 </Link>
+                {element.delivery_status === 'pending' && (
+                  <button
+                    className='text-white bg-blue  rounded-lg py-3 px-6  '
+                    onClick={() => handleCancelOrder(element.order_id)}
+                  >
+                    Hủy đơn hàng{' '}
+                  </button>
+                )}
               </div>
               <Divider
                 style={{
@@ -102,6 +182,8 @@ export default function OrderHistory() {
             </div>
           )
         })}
+
+        {dataAll?.length == 0 ? <Empty /> : <></>}
       </div>
     </div>
   )
