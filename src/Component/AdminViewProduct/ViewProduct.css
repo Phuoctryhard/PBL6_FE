@@ -134,3 +134,7 @@
 .thumbnail__right {
   right: 0;
 }
+
+.viewProduct {
+  padding: 15px 30px !important;
+}

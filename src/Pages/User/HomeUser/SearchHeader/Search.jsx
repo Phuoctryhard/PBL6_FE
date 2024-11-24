@@ -185,7 +185,7 @@ export default function Search() {
   const ShopingCart = (
     <div className=''>
       <div className='w-full  '>
-        <p className='text-xl font-thin '>Sản phẩm mới thêm </p>
+        <p className='text-xl font-medium '>Sản phẩm mới thêm </p>
         {data?.data?.data ? (
           data?.data?.data
             ?.filter((element) => {

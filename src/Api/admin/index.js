@@ -6,4 +6,21 @@ import AdminAPI from './admin'
 import CustomerAPI from './customer'
 import ImportsAPI from './imports'
 import AdminAuthAPI from './auth'
-export { BrandsAPI, CategoriesAPI, SuppliersAPI, ProductsAPI, AdminAPI, CustomerAPI, ImportsAPI, AdminAuthAPI }
+import AdminDiseaseApi from './disease'
+import AdminOrderApi from './orders'
+import AdminDeliveryAPI from './delivery'
+import AdminPaymentApi from './payment'
+export {
+  BrandsAPI,
+  CategoriesAPI,
+  SuppliersAPI,
+  ProductsAPI,
+  AdminAPI,
+  CustomerAPI,
+  ImportsAPI,
+  AdminAuthAPI,
+  AdminDiseaseApi,
+  AdminOrderApi,
+  AdminDeliveryAPI,
+  AdminPaymentApi
+}

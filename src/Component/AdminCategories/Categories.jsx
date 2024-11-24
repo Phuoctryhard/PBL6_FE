@@ -1,10 +1,10 @@
 import './Categories.css'
 import { CategoriesAPI } from '../../Api/admin'
-import { Add, SearchNormal, ArrowDown2, Edit, Eye } from 'iconsax-react'
+import { Add, SearchNormal, ArrowDown2, Edit, Eye, Refresh } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
-import { TreeSelect, Dropdown, Popconfirm, message, Modal, Tooltip, Pagination, Spin } from 'antd'
+import { TreeSelect, Dropdown, Popconfirm, message, Modal, Tooltip, Spin, Image } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { toast } from 'react-toastify'
@@ -43,6 +43,8 @@ const Categories = () => {
   const [errorCategoryType, setErrorCategoryType] = useState('')
   const [categoryName, setCategoryName] = useState('')
   const [errorCategoryName, setErrorCategoryName] = useState('')
+  const [categorySlug, setCategorySlug] = useState('')
+  const [errorSlug, setErrorSlug] = useState('')
   const [categoryDescription, setCategoryDescription] = useState('')
   const [openModal, setOpenModal] = useState(false)
   const [typeModal, setTypeModal] = useState('add')
@@ -159,7 +161,7 @@ const Categories = () => {
                 label: (
                   <button
                     type='button'
-                    className='flex items-center gap-x-2 justify-center'
+                    className='flex items-center gap-x-2 justify-start w-full'
                     onClick={() => {
                       setOpenModalView(true)
                       setSelectedCategoryData(record)
@@ -174,7 +176,7 @@ const Categories = () => {
                 label: (
                   <button
                     type='button'
-                    className='flex items-center gap-x-2 justify-center'
+                    className='flex items-center gap-x-2 justify-start w-full'
                     onClick={() => {
                       setOpenModal(true)
                       setSelectedCategory(record.category_id)
@@ -183,34 +185,54 @@ const Categories = () => {
                       setCategoryName(record.category_name)
                       setCategoryDescription(record.category_description)
                       setThumbnail(record.category_thumbnail)
+                      setCategorySlug(record.category_slug)
                       setParentCategory(record.category_parent_id === null ? undefined : record.category_parent_id)
                     }}
                   >
-                    <Edit size='15' color='green' /> <span>Update</span>
+                    <Edit size='15' color='#bc9143' /> <span>Update</span>
                   </button>
                 )
               },
               {
                 key: '3',
-                label: (
-                  <Popconfirm
-                    align={{ offset: [20, 20] }}
-                    placement='bottomRight'
-                    title={`Delete record ${record.category_id}`}
-                    description='Are you sure to delete this record?'
-                    onConfirm={() => handleDeleteCategory(record.category_id)}
-                    okText='Delete'
-                    cancelText='Cancel'
-                  >
-                    <button
-                      type='button'
-                      className='flex items-center gap-x-2 justify-center'
-                      onClick={(e) => e.stopPropagation()}
+                label:
+                  record.category_is_delete === 0 ? (
+                    <Popconfirm
+                      align={{ offset: [20, 20] }}
+                      placement='bottomRight'
+                      title={`Delete record ${record.category_id}`}
+                      description='Are you sure to delete this record?'
+                      onConfirm={() => handleDeleteCategory(record.category_id)}
+                      okText='Delete'
+                      cancelText='Cancel'
                     >
-                      <DeleteOutlined className='text-[15px] text-[red]' /> <span>Delete</span>
-                    </button>
-                  </Popconfirm>
-                )
+                      <button
+                        type='button'
+                        className='flex items-center gap-x-2 justify-start w-full'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DeleteOutlined className='text-[15px] text-[red]' /> <span>Delete</span>
+                      </button>
+                    </Popconfirm>
+                  ) : (
+                    <Popconfirm
+                      align={{ offset: [20, 20] }}
+                      placement='bottomRight'
+                      title={`Restore record ${record.category_id}`}
+                      description='Are you sure to restore this record?'
+                      onConfirm={() => handleRestoreCategory(record.category_id)}
+                      okText='Restore'
+                      cancelText='Cancel'
+                    >
+                      <button
+                        type='button'
+                        className='flex items-center gap-x-2 justify-start w-full'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Refresh className='text-[blue]' size={15} /> <span>Restore</span>
+                      </button>
+                    </Popconfirm>
+                  )
               }
             ]
           }}
@@ -303,6 +325,7 @@ const Categories = () => {
       const tableData = treeDataConvert.map((item) => ({
         key: item.category_id,
         category_name: item.category_name,
+        category_slug: item.category_slug,
         category_type: item.category_type,
         category_thumbnail: item.category_thumbnail,
         category_description: item.category_description,
@@ -402,6 +425,14 @@ const Categories = () => {
     return true
   }
 
+  const handleErrorSlug = (value) => {
+    if (value === '') {
+      setErrorSlug('This field cannot be empty.')
+      return false
+    }
+    return true
+  }
+
   const handleErrorCategoryName = (value) => {
     if (value === '') {
       setErrorCategoryName('This field cannot be empty.')
@@ -423,6 +454,8 @@ const Categories = () => {
     setCategoryType('')
     setCategoryName('')
     setCategoryDescription('')
+    setCategorySlug('')
+    setErrorSlug('')
     setThumbnail(null)
     setSelectedFile(null)
     setParentCategory()
@@ -430,21 +463,50 @@ const Categories = () => {
 
   const handleDeleteCategory = async (id) => {
     const response = await CategoriesAPI.deleteCategories(id, token)
-    if (response.ok) {
-      fetchCategories(token, {
-        search: searchValue
-      })
-    } else {
-      if (response.status === 401) {
-        handleUnauthorized()
-      } else {
-        setStatus(response.status)
-        setMessageResult('Error:', response.messages)
-      }
+    const isResponseOK = await handleResponse(response, `Error delete category with id: ${id}`)
+    if (!isResponseOK) {
       return
     }
     setStatus(200)
     setMessageResult(`Delete category with id: ${id} successfully.`)
+  }
+
+  const handleRestoreCategory = async (id) => {
+    const response = await CategoriesAPI.restoreCategories(id, token)
+    const isResponseOK = await handleResponse(response, `Error restore category with id: ${id}`)
+    if (!isResponseOK) {
+      return
+    }
+    setStatus(200)
+    setMessageResult(`Restore category with id: ${id} successfully.`)
+  }
+
+  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
+    if (!response.ok) {
+      const content_type = response.headers.get('content-type')
+      if (content_type && content_type.includes('application/json')) {
+        const res = await response.json()
+        if (response.status === 401) {
+          handleUnauthorized()
+        } else {
+          if (res.message) {
+            setMessageResult(res.message)
+            setStatus(response.status)
+          } else if (res.messages) {
+            setMessageResult(res.messages.join('. '))
+            setStatus(response.status)
+          } else {
+            setStatus(400)
+            setMessageResult(defaultErrorText)
+          }
+        }
+      } else {
+        setStatus(response.status)
+        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
+      }
+      return false
+    }
+    return true
   }
 
   const handleSubmit = async (e) => {
@@ -458,8 +520,9 @@ const Categories = () => {
     const File = selectedFile === undefined || null ? '' : selectedFile
     const isValidCategoryType = handleErrorCategoryType(categoryType)
     const isValidCategoryName = handleErrorCategoryName(categoryName)
+    const isValidSlug = handleErrorSlug(categorySlug)
 
-    if (!isValidCategoryType || !isValidCategoryName) {
+    if (!isValidCategoryType || !isValidCategoryName || !isValidSlug) {
       setSubmitLoading(false)
       return
     }
@@ -478,6 +541,7 @@ const Categories = () => {
       formData.append('category_thumbnail', File)
     }
     formData.append('category_parent_id', category_parent_id)
+    formData.append('category_slug', categorySlug)
 
     let response = null
     try {
@@ -486,18 +550,9 @@ const Categories = () => {
       } else if (typeModal === 'update') {
         response = await CategoriesAPI.updateCategories(selectedCategory, formData, token)
       }
-      if (!response.ok) {
-        setSubmitLoading(false)
-        const { messages } = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else if (response.status === 422) {
-          setStatus(422)
-          setMessageResult(`Invalid data: ${messages}`)
-        } else {
-          setStatus(response.status)
-          setMessageResult('Error:', messages)
-        }
+
+      const isResponseOK = await handleResponse(response, `Error ${typeModal} category fetch`)
+      if (!isResponseOK) {
         return
       }
       setStatus(200)
@@ -551,7 +606,7 @@ const Categories = () => {
     <section className='max-w-[100%] h-full'>
       {contextHolder}
       <header className='flex justify-between animate-slideDown'>
-        <div className='flex flex-col gap-3'>
+        <div className='flex flex-col gap-1'>
           <BreadCrumbs
             items={[
               { title: 'Inventory' },
@@ -567,15 +622,15 @@ const Categories = () => {
           <p>List of categories available</p>
         </div>
         <button
-          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
+          className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
           onClick={() => {
             setOpenModal(true)
             setTypeModal('add')
             setSelectedCategory(null)
           }}
         >
+          Add new
           <Add size='20' />
-          Add new category
         </button>
       </header>
       <Modal
@@ -595,8 +650,8 @@ const Categories = () => {
           <Spin spinning={submitLoading} tip='Loading...' size='large' fullscreen />
           <form action='' method='POST' onSubmit={handleSubmit} autoComplete='off'>
             <div className='AddCategoryForm__row'>
-              <div className='AddCategoryForm__group AddCategoryForm__WidthFull relative'>
-                <label htmlFor='category_thumbnail' className='AddCategoryForm__label mb-1'>
+              <div className='AddCategoryForm__group AddCategoryForm__WidthFull relative flex-flex-col gap-8'>
+                <label htmlFor='category_thumbnail' className='AddCategoryForm__label'>
                   Thumbnail (only *.jpeg, *.jpg, *.png, *.gif and *.svg)
                 </label>
                 <input
@@ -621,25 +676,37 @@ const Categories = () => {
                   <div className='' onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
                     <button
                       type='button'
-                      onClick={() => document.getElementById('category_thumbnail').click()}
-                      className='AddCategoryForm__uploadBtn'
+                      onClick={() => {
+                        if (!thumbnail) {
+                          document.getElementById('category_thumbnail').click()
+                        }
+                      }}
+                      className='w-full max-w-[18.75rem] min-h-40 flex flex-col items-center justify-center rounded-lg gap-2 text-lg m-auto'
                       style={{
                         border: thumbnail !== null ? 'None' : '3px dashed #e8ebed'
                       }}
                     >
                       {thumbnail ? (
                         <>
-                          <img src={thumbnail} alt='Thumbnail' className='w-full h-[300px] object-cover' />
+                          <Image
+                            src={thumbnail}
+                            alt='Thumbnail'
+                            className='w-full max-w-[18.75rem] max-h-40 object-cover rounded-lg'
+                          />
                           <CloseCircleOutlined
                             className='absolute top-0 right-0 text-red-500 text-[20px] cursor-pointer'
                             onClick={handleClearThumbnail}
                           />
                         </>
                       ) : (
-                        <>
-                          <CloudUploadOutlined className='text-[green] text-[40px]' />{' '}
-                          <span>Drag or upload your image here</span>
-                        </>
+                        <div className='w-full flex items-center justify-center gap-4 p-5 '>
+                          <CloudUploadOutlined className='text-[green] text-6xl' />
+                          <div className='flex flex-col gap-1 justify-center items-center text-sm text-teal-700'>
+                            <span>Drag Your Image</span>
+                            <span className='text-base text-teal-800 font-semibold'>Or</span>
+                            <span>Browser Here</span>
+                          </div>
+                        </div>
                       )}
                     </button>
                   </div>
@@ -690,10 +757,36 @@ const Categories = () => {
                     name='category_name'
                     id='category_name'
                     className='AddCategoryForm__input'
-                    placeholder='This is a category name'
+                    placeholder='Thuốc kê đơn'
                     value={categoryName}
                     onChange={(e) => setCategoryName(e.target.value)}
                     onFocus={() => setErrorCategoryName('')}
+                  />
+                </Tooltip>
+              </div>
+            </div>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
+                <label htmlFor='category_slug' className='AddCategoryForm__label'>
+                  <span className='text-[red]'>* </span>Slug
+                </label>
+                <Tooltip
+                  title={errorSlug}
+                  open={errorSlug !== ''}
+                  placement='bottomLeft'
+                  align={{
+                    offset: [60, -8]
+                  }}
+                >
+                  <input
+                    type='text'
+                    name='category_slug'
+                    id='category_slug'
+                    className='AddCategoryForm__input'
+                    placeholder='Thuoc-ke-don'
+                    value={categorySlug}
+                    onChange={(e) => setCategorySlug(e.target.value)}
+                    onFocus={() => setErrorSlug('')}
                   />
                 </Tooltip>
               </div>
@@ -752,7 +845,6 @@ const Categories = () => {
                     placement='bottomLeft'
                     treeData={treeData}
                     treeDefaultExpandAll
-                    dropdownStyle={{ maxHeight: 250, overflow: 'auto', minWidth: '400px' }}
                     className='w-[100%]'
                     onChange={(value) => {
                       setParentCategory(value)

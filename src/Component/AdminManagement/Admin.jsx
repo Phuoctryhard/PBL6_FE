@@ -67,9 +67,9 @@ const Admin = () => {
   const [selectedFrom, setSelectedFrom] = useState(null)
   const [selectedTo, setSelectedTo] = useState(null)
   const [selectedAdmin, setSelectedAdmin] = useState(null)
-  const [roles, setRoles] = useState([])
+  const [roles, setRoles] = useState(['Admin', 'Super Admin', 'Manager'])
   const [selectedRoles, setSelectedRoles] = useState()
-  const [adminStatus, setAdminStatus] = useState([])
+  const [adminStatus, setAdminStatus] = useState(['Active', 'Deleted'])
   const [selectedAdminStatus, setSelectedAdminStatus] = useState()
   //#endregion
 
@@ -208,7 +208,7 @@ const Admin = () => {
                     >
                       <button
                         type='button'
-                        className='flex items-center gap-x-2 justify-center'
+                        className='flex items-center gap-x-2 justify-start w-full'
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Refresh className='text-[green]' size={15} /> <span>Restore</span>
@@ -226,7 +226,7 @@ const Admin = () => {
                     >
                       <button
                         type='button'
-                        className='flex items-center gap-x-2 justify-center'
+                        className='flex items-center gap-x-2 justify-start w-full'
                         onClick={(e) => e.stopPropagation()}
                       >
                         <DeleteOutlined className='text-[14px] text-[red]' />
@@ -368,38 +368,14 @@ const Admin = () => {
         return
       }
       const result = await response.json()
-      const data = result.data.data
+      const data = result.data
       const tableData = data
         .map((item) => ({
+          ...item,
           key: item.admin_id,
-          admin_id: item.admin_id,
-          admin_fullname: item.admin_fullname,
-          email: item.email,
-          admin_avatar: item.admin_avatar,
-          admin_is_admin: item.admin_is_admin,
-          admin_is_delete: item.admin_is_delete,
-          email_verified_at: item.email_verified_at,
-          admin_created_at: item.admin_created_at,
           admin_updated_at: item.admin_updated_at
         }))
         .sort((a, b) => new Date(b.admin_created_at) - new Date(a.admin_created_at))
-      const roles = Array.from(
-        new Set(
-          data.map((item) => {
-            switch (item.admin_is_admin) {
-              case 0:
-                return 'Admin'
-              case 1:
-                return 'Super Admin'
-              case 2:
-                return 'Manager'
-            }
-          })
-        )
-      )
-      const adminStatus = Array.from(new Set(data.map((item) => (item.admin_is_delete === 0 ? 'Active' : 'Deleted'))))
-      setAdminStatus(adminStatus)
-      setRoles(roles)
       setFilterData(tableData)
       setData(tableData)
       setTableParams({
@@ -676,7 +652,7 @@ const Admin = () => {
         <div className='flex flex-col gap-1'>
           <BreadCrumbs
             items={[
-              { title: `Users` },
+              { title: `Managers` },
               {
                 title: (
                   <Link to='/admin/manage-admins' tabIndex='-1'>
@@ -689,14 +665,14 @@ const Admin = () => {
           <p>List of admin available</p>
         </div>
         <button
-          className='min-w-[162px] h-[46px] px-[18px] py-[16px] bg-[#F0483E] rounded-[4px] text-[#FFFFFF] flex gap-x-[10px] font-bold items-center text-[14px]'
+          className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
           onClick={() => {
             setOpenModal(true)
             setTypeModal('add')
           }}
         >
+          Add new
           <Add size='20' />
-          Add new admin
         </button>
       </header>
       <Modal

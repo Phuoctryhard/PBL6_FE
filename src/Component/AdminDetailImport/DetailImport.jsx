@@ -153,7 +153,11 @@ const DetailImport = () => {
       }
       const result = await response.json()
       const data = result.data
-      const importsDetail = data.import
+      const importsDetail = {
+        supplier_name: data.supplier_name,
+        import_created_at: data.import_created_at,
+        import_total_amount: data.import_total_amount
+      }
       const importItems = data.import_details
       setImportDetail(importsDetail)
       setImportItems(importItems)
@@ -165,10 +169,9 @@ const DetailImport = () => {
           total: importItems.length
         }
       })
-      setLoading(false)
     } catch (error) {
-      setStatus(500)
-      setMessageResult('Internal server error')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -240,18 +243,20 @@ const DetailImport = () => {
             </div>
             <div className='flex gap-4 justify-end'>
               <span className='font-extralight text-right'>Supplier: </span>
-              <span className='font-medium value-detail text-left whitespace-nowrap'>{importDetail.supplier_name}</span>
+              <span className='font-medium value-detail text-left whitespace-nowrap'>
+                {importDetail?.supplier_name}
+              </span>
             </div>
             <div className='flex gap-4 justify-end'>
               <span className='font-extralight text-right'>Import Date:</span>
               <span className='font-medium value-detail text-left whitespace-nowrap'>
-                {DateFormat(importDetail.import_created_at)}
+                {DateFormat(importDetail?.import_created_at || new Date())}
               </span>
             </div>
             <div className='flex gap-4 justify-end'>
               <span className='font-extralight text-right'>Total Amount:</span>
               <span className='font-medium value-detail text-left whitespace-nowrap'>
-                {importDetail.import_total_amount}
+                {importDetail?.import_total_amount}
               </span>
             </div>
           </div>

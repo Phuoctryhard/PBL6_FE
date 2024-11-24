@@ -570,7 +570,7 @@ const Overview = () => {
           <div className='flex flex-col w-full bg-[#ffffff] rounded-xl border border-solid border-[rgb(29,36,46,0.3)]'>
             <div className='flex items-center justify-between w-full px-5 pt-5 rounded-xl'>
               <h2 className='text-lg font-semibold text-gray-700'>Earning Reports</h2>
-              <div className='flex gap-4 w-max'>
+              <div className='flex w-max'>
                 <ConfigProvider
                   theme={{
                     ...filterTheme,
@@ -583,18 +583,6 @@ const Overview = () => {
                     }
                   }}
                 >
-                  <Select
-                    allowClear
-                    suffixIcon={<ArrowDown2 size='14' color='#1D242E' />}
-                    className='w-40 h-12 flex justify-center items-center'
-                    placeholder='Select Category'
-                    placement='bottomLeft'
-                    options={[
-                      { label: 'Category1', value: 'category1' },
-                      { label: 'Category2', value: 'category2' }
-                    ]}
-                    onChange={() => {}}
-                  />
                   <RangePicker
                     className='h-12 w-60'
                     suffixIcon={<ArrowDown2 size='14' color='#1D242E' />}
