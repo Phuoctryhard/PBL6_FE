@@ -32,7 +32,8 @@ import {
   Pagination,
   Spin,
   Empty,
-  Breadcrumb
+  Breadcrumb,
+  Flex
 } from 'antd'
 export default function CategoryListProduct() {
   const location = useLocation()
@@ -464,77 +465,79 @@ export default function CategoryListProduct() {
         </div>
 
         <div className='col-span-10 '>
-          <Spin spinning={isLoading} delay={500} tip='Loading...'>
-            <div className='flex  px-3 pt-2  gap-x-2'>
-              <p className='p-3 font-medium'>Sắp xếp theo: </p>
-              <button
-                className='p-3  border-2 rounded-lg text-[#787878] hover:text-black'
-                onClick={() => handlePriceDes()}
-              >
-                Giảm giá dần{' '}
-              </button>
-              <button className='p-3  border-2 rounded-lg text-[#787878] hover:text-black' onClick={handlePriceAsc}>
-                Giá tăng dần{' '}
-              </button>
-            </div>
-            <div className='grid grid-cols-5 px-3 py-4  gap-3'>
-              {productsData?.data?.data?.data?.map((element) => {
-                return (
-                  <div className='border border-1 shadow-lg rounded-lg overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105'>
-                    <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
-                      <img src={element?.product_images?.length > 0 ? element.product_images[0] : anhloi} alt='' />
-                    </Link>
-
-                    <div className='p-3'>
-                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
-                        <h3 class='line-clamp-2  font-semibold text-base'>{element.product_name}</h3>
-                      </Link>
-                      {element?.parent_category_name === 'Thuốc kê đơn' ? (
-                        <>
-                          <button
-                            className='text-center w-full mt-4 bg-blue rounded-lg p-2'
-                            onClick={() => {
-                              navigate(`/${generateNameId(element.product_name, element.product_id)}`)
-                            }}
-                          >
-                            Cần tư vấn
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <del class='block h-5 text-sm font-semibold text-neutral-600 mt-2'>115.000 đ</del>
-                          <div className='flex justify-between items-center'>
-                            <span>Sold: {element.product_sold}</span>
-                            <span class='mt-[2px] block h-6 text-base font-bold text-blue '>
-                              {new Intl.NumberFormat('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                              }).format(element.product_price ?? 0)}
-                            </span>
-                          </div>
-                          <div class='flex items-center py-1 text-sm'></div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            {productsData?.data?.data?.data?.length === 0 && (
-              <div style={{ width: '100%', margin: '0 auto' }}>
-                <Empty description='Không có dữ liệu' />
+          <Flex gap='middle' vertical>
+            <Spin spinning={isLoading} delay={500} tip='Loading...'>
+              <div className='flex  px-3 pt-2  gap-x-2'>
+                <p className='p-3 font-medium'>Sắp xếp theo: </p>
+                <button
+                  className='p-3  border-2 rounded-lg text-[#787878] hover:text-black'
+                  onClick={() => handlePriceDes()}
+                >
+                  Giảm giá dần{' '}
+                </button>
+                <button className='p-3  border-2 rounded-lg text-[#787878] hover:text-black' onClick={handlePriceAsc}>
+                  Giá tăng dần{' '}
+                </button>
               </div>
-            )}
-            <Row style={{ display: 'flex', justifyContent: 'center' }}>
-              <Pagination
-                current={page}
-                total={productsData?.data?.data?.data?.length > 0 ? productsData?.data?.data.total : 0}
-                pageSize={pageSize}
-                responsive
-                onChange={(p, s) => handleOnchangePage({ current: p, pageSize: s })}
-              />
-            </Row>
-          </Spin>
+              <div className='grid grid-cols-5 px-3 py-4  gap-3'>
+                {productsData?.data?.data?.data?.map((element) => {
+                  return (
+                    <div className='border border-1 shadow-lg rounded-lg overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105'>
+                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
+                        <img src={element?.product_images?.length > 0 ? element.product_images[0] : anhloi} alt='' />
+                      </Link>
+
+                      <div className='p-3'>
+                        <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
+                          <h3 class='line-clamp-2  font-semibold text-base'>{element.product_name}</h3>
+                        </Link>
+                        {element?.parent_category_name === 'Thuốc kê đơn' ? (
+                          <>
+                            <button
+                              className='text-center w-full mt-4 bg-blue rounded-lg p-2'
+                              onClick={() => {
+                                navigate(`/${generateNameId(element.product_name, element.product_id)}`)
+                              }}
+                            >
+                              Cần tư vấn
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <del class='block h-5 text-sm font-semibold text-neutral-600 mt-2'>115.000 đ</del>
+                            <div className='flex justify-between items-center'>
+                              <span>Đã bán {element.product_sold}</span>
+                              <span class='mt-[2px] block h-6 text-base font-bold text-blue '>
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND'
+                                }).format(element.product_price ?? 0)}
+                              </span>
+                            </div>
+                            <div class='flex items-center py-1 text-sm'></div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              {productsData?.data?.data?.data?.length === 0 && (
+                <div style={{ width: '100%', margin: '0 auto' }}>
+                  <Empty description='Không có dữ liệu' />
+                </div>
+              )}
+              <Row style={{ display: 'flex', justifyContent: 'center' }}>
+                <Pagination
+                  current={page}
+                  total={productsData?.data?.data?.data?.length > 0 ? productsData?.data?.data.total : 0}
+                  pageSize={pageSize}
+                  responsive
+                  onChange={(p, s) => handleOnchangePage({ current: p, pageSize: s })}
+                />
+              </Row>
+            </Spin>
+          </Flex>
         </div>
       </div>
     </div>

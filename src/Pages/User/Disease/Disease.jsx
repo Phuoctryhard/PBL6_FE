@@ -18,6 +18,7 @@ export default function Disease() {
   console.log(data?.data?.data?.disease_common)
   return (
     <>
+    
       <Spin spinning={isLoading}>
         <DiseaseSesson disease_common={data?.data?.data?.disease_common} />
         <DiseaseObject disease_by_target_group={data?.data?.data?.disease_by_target_group} />

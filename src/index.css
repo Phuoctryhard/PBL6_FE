@@ -235,6 +235,9 @@ html {
 .ql-editor .ql-size-huge {
   font-size: 1.5rem !important; /* 24px */
 }
+.ql-editor b {
+  font-weight: bold !important;
+}
 
 .ql-editor .ql-size-large {
   font-size: 1.25rem !important; /* 20px */

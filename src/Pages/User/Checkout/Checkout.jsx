@@ -21,6 +21,7 @@ export default function Checkout() {
   const location = useLocation()
   const [isModalOpen1, setIsModalOpen1] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalOpenBuy, setIsModalOpenBuy] = useState(false)
   const { isAuthenticated, logout, checkedProducts, setCheckedProducts } = useContext(AuthContext)
   const { product_id, cart_quantity, productName, productPrice, productImage, product_discount } = location.state || {}
   //console.log(product_id, cart_quantity, productName, productPrice, productImage, product_discount)
@@ -101,6 +102,7 @@ export default function Checkout() {
     console.log(value, valueDelivery, valueAddress, checkedProducts)
     if (checkedProducts.length > 0 && product_id == null) {
       console.log(value, valueDelivery, valueAddress, checkedProducts)
+      // from cart
       const buyNow = {
         receiver_address_id: valueAddress, //required
         payment_id: value, //required
@@ -109,21 +111,25 @@ export default function Checkout() {
       }
       const res = await OrderApi.Checkout_CartOrder(buyNow)
       if (res) {
+        setCheckedProducts([])
         console.log(res)
         if (res.data.messages[0] === 'Đặt hàng thành công!') {
+          console.log(res.data.messages[0])
           queryClient.invalidateQueries({ queryKey: ['getCart'] })
+          navigate('/account/order-history')
+          //setIsModalOpenBuy(true)
           setCheckedProducts([])
-          setIsModalOpen(true)
         } else {
-          window.location.href = res.data.data
+          // window.location.href = res.data.data
         }
-        // toast.success(data.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
+        toast.success(res.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
       } else {
         toast.error('Thaats bij')
       }
       console.log(buyNow)
     } else if (product_id) {
       console.log('chitiet' + product_id)
+      // from
       const buyNow = {
         receiver_address_id: valueAddress, //required
         payment_id: value, //required
@@ -136,12 +142,12 @@ export default function Checkout() {
       if (res) {
         if (res.data.messages[0] === 'Đặt hàng thành công!') {
           queryClient.invalidateQueries({ queryKey: ['getCart'] })
-          setIsModalOpen(true)
+          setIsModalOpenBuy(true)
         } else {
-          window.location.href = res.data.data
+         window.location.href = res.data.data
         }
       }
-      toast.success(data.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
+      toast.success(res.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
     } else {
       toast.error('Thaats bij')
     }
@@ -401,7 +407,7 @@ export default function Checkout() {
         setvalueDelivery={setvalueDelivery}
         setPriceDelivery={setPriceDelivery}
       />
-      <ModalPaymentSucess isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
+      <ModalPaymentSucess isModalOpen={isModalOpenBuy} setIsModalOpen={setIsModalOpenBuy} />
       <Modal title='Địa chỉ mới' open={isModalOpen1} onOk={handleOk} onCancel={handleCancel} footer={null}>
         <>
           <AddressForm closeModal={() => setIsModalOpen(false)} />

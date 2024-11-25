@@ -248,16 +248,6 @@ const Illness = () => {
     }
   })
 
-  const handleTableChange = (pagination, filters, sorter) => {
-    const params = {
-      pagination,
-      filters,
-      sortOrder: sorter ? sorter.order : undefined,
-      sortField: sorter ? sorter.field : undefined
-    }
-    setTableParams(params)
-  }
-
   const searchDisease = () => {
     const search = searchValue.toLowerCase()
     const result = data.filter((item) => item.disease_name.toLowerCase().includes(search))
@@ -405,40 +395,6 @@ const Illness = () => {
     setEditorHTML(combinedHtml)
   }, [generalOverview, symptoms, cause, riskSubjects, diagnosis, prevention, treatmentMethod])
 
-  const fetchDiseaseByID = async (id) => {
-    try {
-      const response = await AdminDiseaseApi.getDiseaseById(id)
-      const isResponseOK = await handleResponse(response, 'Error fetch disease by ID')
-      if (!isResponseOK) {
-        return
-      } else {
-        const res = await response.json()
-        const resData = res.data
-        return resData
-      }
-    } catch (e) {
-      setStatus(400)
-      setMessageResult(`Error fetch disease by ID: ${e.message}`)
-    }
-  }
-
-  const fetchCategoryDiseaseByID = async (id) => {
-    try {
-      const response = await AdminDiseaseApi.getCategoryDiseaseByID(id)
-      const isResponseOK = await handleResponse(response, 'Error fetch disease by category')
-      if (!isResponseOK) {
-        return
-      } else {
-        const res = await response.json()
-        const resData = res.data
-        return resData
-      }
-    } catch (e) {
-      setStatus(400)
-      setMessageResult(`Error fetch disease by category: ${e.message}`)
-    }
-  }
-
   useEffect(() => {
     if (selectedCategory) {
       const fetchCategoryDisease = async (id) => {
@@ -488,39 +444,6 @@ const Illness = () => {
     fetchDisease(id)
   }
 
-  const handleDeleteDisease = async (id, data) => {
-    try {
-      const response = await AdminDiseaseApi.deleteDisease(id, token, data)
-      if (!response.ok) {
-        const content_type = response.headers.get('content-type')
-        if (content_type && content_type.includes('application/json')) {
-          const res = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setMessageResult(res.messages)
-            setStatus(response.status)
-          }
-        } else if (response.status === 404) {
-          setStatus(response.status)
-          setMessageResult('Request not found')
-        } else {
-          setStatus(response.status)
-          setMessageResult(response.statusText ? response.statusText : 'Error delete disease')
-        }
-        return
-      } else {
-        const res = await response.json()
-        setMessageResult(res.messages)
-        setStatus(response.status)
-        fetchAllDisease()
-      }
-    } catch (error) {
-      setStatus(400)
-      setMessageResult(`Error delete disease: ${error.message}`)
-    }
-  }
-
   const handleDeleteDiseaseFromCategory = async (e) => {
     e.preventDefault()
     try {
@@ -538,8 +461,8 @@ const Illness = () => {
         const res = await response.json()
         setStatus(response.status)
         setMessageResult(res.messages.join('. '))
-        handleCancelDeleteCategory()
         fetchAllDisease()
+        handleCancelDeleteCategory()
       }
     } catch (error) {
       setStatus(400)
@@ -656,6 +579,137 @@ const Illness = () => {
     setOpenModalDeleteCategory(false)
     setCategorySelected(null)
     setDiseaseSelected(null)
+  }
+
+  const handleTableChange = (pagination, filters, sorter) => {
+    const params = {
+      pagination,
+      filters,
+      sortOrder: sorter ? sorter.order : undefined,
+      sortField: sorter ? sorter.field : undefined
+    }
+    setTableParams(params)
+  }
+
+  useEffect(() => {
+    if (data) {
+      searchDisease()
+    }
+  }, [
+    searchValue,
+    tableParams.pagination?.current,
+    tableParams?.sortOrder,
+    tableParams?.sortField,
+    tableParams.pagination?.pageSize,
+    JSON.stringify(tableParams.filters)
+  ])
+  //#endregion
+
+  //#region modal view
+
+  useEffect(() => {
+    const wrappedGeneralOverview = `<div class="flex flex-col"> ${generalOverview} </div>`
+    const wrappedSymptoms = `<div class="section"> ${symptoms} </div>`
+    const wrappedCause = `<div class="section"> ${cause} </div>`
+    const wrappedRiskSubjects = `<div class="section"> ${riskSubjects} </div>`
+    const wrappedDiagnosis = `<div class="section"> ${diagnosis} </div>`
+    const wrappedPrevention = `<div class="section"> ${prevention} </div>`
+    const wrappedTreatmentMethod = `<div class="section"> ${treatmentMethod} </div>`
+
+    const combinedHtml = `
+      ${wrappedGeneralOverview}
+      ${wrappedSymptoms}
+      ${wrappedCause}
+      ${wrappedRiskSubjects}
+      ${wrappedDiagnosis}
+      ${wrappedPrevention}
+      ${wrappedTreatmentMethod}
+    `
+    setEditorHTML(combinedHtml)
+  }, [generalOverview, symptoms, cause, riskSubjects, diagnosis, prevention, treatmentMethod])
+
+  const fetchDiseaseByID = async (id) => {
+    try {
+      const response = await AdminDiseaseApi.getDiseaseById(id)
+      const isResponseOK = await handleResponse(response, 'Error fetch disease by ID')
+      if (!isResponseOK) {
+        return
+      } else {
+        const res = await response.json()
+        const resData = res.data
+        return resData
+      }
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(`Error fetch disease by ID: ${e.message}`)
+    }
+  }
+
+  const fetchCategoryDiseaseByID = async (id) => {
+    try {
+      const response = await AdminDiseaseApi.getCategoryDiseaseByID(id)
+      const isResponseOK = await handleResponse(response, 'Error fetch disease by category')
+      if (!isResponseOK) {
+        return
+      } else {
+        const res = await response.json()
+        const resData = res.data
+        return resData
+      }
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(`Error fetch disease by category: ${e.message}`)
+    }
+  }
+
+  useEffect(() => {
+    if (selectedCategory) {
+      const fetchCategoryDisease = async (id) => {
+        const diseases = await fetchCategoryDiseaseByID(id)
+        if (diseases) {
+          const tableData = diseases.map((item) => ({
+            ...item,
+            key: item.disease_id
+          }))
+          setData(tableData)
+          setFilterData(tableData)
+          setTableParams({
+            ...tableParams,
+            pagination: {
+              ...tableParams.pagination,
+              total: diseases.length
+            }
+          })
+        }
+      }
+      fetchCategoryDisease(selectedCategory)
+    } else {
+      fetchAllDisease()
+    }
+  }, [selectedCategory])
+
+  useEffect(() => {
+    if (data) {
+      searchDisease()
+    }
+  }, [data])
+
+  const handleDeleteDisease = async (id, data) => {
+    try {
+      const response = await AdminDiseaseApi.deleteDisease(id, token, data)
+      const isResponseOK = await handleResponse(response, 'Error delete disease')
+      if (!isResponseOK) {
+        return
+      } else {
+        const res = await response.json()
+        setMessageResult(res.messages)
+        setStatus(response.status)
+        fetchAllDisease()
+      }
+    } catch (error) {
+      setStatus(400)
+      setMessageResult(`Error delete disease: ${error.message}`)
+    }
   }
   //#endregion
 

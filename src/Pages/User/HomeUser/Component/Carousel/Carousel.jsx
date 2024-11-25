@@ -6,7 +6,7 @@ import './dot.css'
 
 export default function CarouselSlideShow() {
   return (
-    <div className='px-24'>
+    <div className='px-24 py-3'>
       <Carousel autoplay dots={{ className: 'custom-dots' }} arrows >
         <div className='flex items-center justify-center bg-[#364d79] h-[500px] overflow-hidden'>
           <img

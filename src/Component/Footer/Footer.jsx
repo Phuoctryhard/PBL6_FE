@@ -18,39 +18,6 @@ export default function Footer() {
                 Hệ thống cửa hàng
               </a>
             </li>
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/giay-phep-kinh-doanh'>
-                Giấy phép kinh doanh
-              </a>
-            </li>
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/page/quy-che-hoat-dong'>
-                Quy chế hoạt động
-              </a>
-            </li>
-            
-            
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/page/phuong-thuc-thanh-toan'>
-                Chính sách thanh toán
-              </a>
-            </li>
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/page/the-le-chuong-trinh-the-thanh-vien'>
-                Thể lệ chương trình thẻ thành viên
-              </a>
-            </li>
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/cau-hoi-thuong-gap.htm'>
-                Câu hỏi thường gặp
-              </a>
-            </li>
-            
-            <li class='grid grid-flow-col items-center justify-start gap-1 pb-2'>
-              <a target='_self' href='/goc-suc-khoe/benh-vien'>
-                Bệnh viện
-              </a>
-            </li>
           </ul>
         </div>
         <div className=''>
@@ -64,31 +31,6 @@ export default function Footer() {
             <li class='pb-2'>
               <a target='' href='/benh'>
                 Tra cứu bệnh
-              </a>
-            </li>
-
-            <li class='pb-2'>
-              <a
-                target=''
-                href='https://www.pharmacity.vn/danh-cho-khach-hang-doanh-nghiep.lp?utm_source=web&amp;utm_medium=category&amp;utm_campaign=doanhnghiep'
-              >
-                Doanh nghiệp
-              </a>
-            </li>
-            
-            <li class='pb-2'>
-              <a target='' href='/cam-nang-mua-sam'>
-                Khuyến mãi HOT
-              </a>
-            </li>
-            <li class='pb-2'>
-              <a target='' href='/goc-suc-khoe'>
-                Góc sức khỏe
-              </a>
-            </li>
-            <li class='pb-2'>
-              <a target='' href='/cham-soc-suc-khoe'>
-                Chăm sóc sức khỏe
               </a>
             </li>
           </ul>

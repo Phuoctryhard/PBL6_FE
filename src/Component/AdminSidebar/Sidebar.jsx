@@ -59,19 +59,28 @@ const Sidebar = forwardRef((_, ref) => {
     { id: 'manage-admins', name: 'Admin' }
   ]
 
+  // const Orders = [
+  //   { id: 'order-payments', name: 'Payments' },
+  //   { id: 'order-deliveries', name: 'Deliveries' }
+  // ]
+
   //show subNav
   const [showInventory, setShowInventory] = useState(false)
   const [showUser, setShowUser] = useState(false)
+  // const [showOrders, setShowOrders] = useState(false)
+  // const [maxHeightOrders, setMaxHeightOrders] = useState('0px')
   const [maxHeightProduct, setMaxHeightProduct] = useState('0px')
   const [maxHeightUser, setMaxHeightUser] = useState('0px')
   const productRef = useRef(null)
   const userRef = useRef(null)
+  // const orderRef = useRef(null)
 
   //handle nav and subNav click
   const handleNavClick = (navId) => {
     setActiveNav(navId)
     setShowInventory(navId === 'inventory' ? !showInventory : false)
     setShowUser(navId === 'users' ? !showUser : false)
+    // setShowOrders(navId === 'orders' ? !showOrders : false)
   }
 
   const handleSubNavClick = (itemId) => {
@@ -101,6 +110,14 @@ const Sidebar = forwardRef((_, ref) => {
     }
   }, [showUser])
 
+  // useEffect(() => {
+  //   if (showOrders) {
+  //     setMaxHeightOrders(`${orderRef.current.scrollHeight}px`)
+  //   } else {
+  //     setMaxHeightOrders('0px')
+  //   }
+  // }, [showOrders])
+
   //handle subNav active when refresh page
   useEffect(() => {
     const path = location.pathname
@@ -116,6 +133,11 @@ const Sidebar = forwardRef((_, ref) => {
         setShowUser(true)
         setSelectedId(navID)
       }
+      // else if (navID === 'order-payments' || navID === 'order-deliveries') {
+      //   setActiveNav(null)
+      //   setShowOrders(true)
+      //   setSelectedId(navID)
+      // }
     } else {
       handleNavClick(navID)
     }
@@ -313,8 +335,50 @@ const Sidebar = forwardRef((_, ref) => {
             setSelectedId(null)
           }}
         >
-          <SideBarItem name='Orders' iconName={<Bill className='w-6' />} />
+          <SideBarItem
+            name='Orders'
+            iconName={<Bill className='w-6' />}
+            // arrowIcon={
+            //   <ArrowDown2
+            //     size={16}
+            //     color='#ffffff'
+            //     onClick={() => {
+            //       handleNavClick('orders')
+            //       setSelectedId(null)
+            //     }}
+            //   />
+            // }
+          />
         </NavLink>
+        {
+          // <div
+          //   ref={orderRef}
+          //   className={`bg-[#283342] overflow-hidden transition-[max-height] duration-[0.5s] ease-in-out`}
+          //   style={{
+          //     maxHeight: maxHeightOrders
+          //   }}
+          // >
+          //   <ul>
+          //     {Orders.map((item) => (
+          //       <li
+          //         key={item.id}
+          //         className=''
+          //         onClick={() => {
+          //           handleSubNavClick(item.id)
+          //         }}
+          //         style={{ backgroundColor: item.id === selectedId ? '#008f99' : '' }}
+          //       >
+          //         <NavLink
+          //           to={`/admin/${item.id}`}
+          //           className='pl-[62px] px-[24px] h-[46px] flex items-center justify-start cursor-pointer'
+          //         >
+          //           {item.name}
+          //         </NavLink>
+          //       </li>
+          //     ))}
+          //   </ul>
+          // </div>
+        }
         <NavLink
           to='/admin/deliveries'
           className={activeNav === 'delivery' ? 'bg-[#008f99]' : ''}

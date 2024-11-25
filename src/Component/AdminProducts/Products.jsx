@@ -11,7 +11,6 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
-import PurePanel from 'antd/es/tooltip/PurePanel'
 const { RangePicker } = DatePicker
 
 //#region theme for ant design components
