@@ -26,6 +26,7 @@ export default function Adress() {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const showModal = () => {
+    console.log(':oki')
     setIsModalOpen(true)
   }
   const handleOk = () => {
@@ -89,7 +90,15 @@ export default function Adress() {
                       <span className='mx-2'>|</span>
                       <span>0865446276</span>
                     </div>
-                    <div className='my-2'>{element.receiver_address}</div>
+                    <div className='my-2'>
+                      {element.receiver_address +
+                        ' , ' +
+                        element.ward_name +
+                        ' , ' +
+                        element.district_name +
+                        ' , ' +
+                        element.province_name}
+                    </div>
                     <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
                       Nhà riêng
                     </span>
@@ -105,15 +114,15 @@ export default function Adress() {
                     </div>
                   </div>
                 </div>
-                <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
-                  <>
-                    <AddressForm closeModal={() => setIsModalOpen(false)} queryClient={queryClient} />
-                  </>
-                </Modal>
               </>
             )
           }
         })}
+        <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
+          <>
+            <AddressForm closeModal={() => setIsModalOpen(false)} queryClient={queryClient} />
+          </>
+        </Modal>
         <div className='w-full flex  text-center justify-center'>
           <Pagination
             current={currentPage}

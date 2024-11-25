@@ -10,6 +10,7 @@ import AdminDiseaseApi from './disease'
 import AdminOrderApi from './orders'
 import AdminDeliveryAPI from './delivery'
 import AdminPaymentApi from './payment'
+import AdminOverView from './overview'
 export {
   BrandsAPI,
   CategoriesAPI,
@@ -22,5 +23,6 @@ export {
   AdminDiseaseApi,
   AdminOrderApi,
   AdminDeliveryAPI,
-  AdminPaymentApi
+  AdminPaymentApi,
+  AdminOverView
 }

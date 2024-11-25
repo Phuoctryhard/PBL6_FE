@@ -12,19 +12,23 @@ import { AuthContext } from '../../../../context/app.context'
 import categoryAPI from '../../../../Api/user/category.js'
 import Anh from './_480f2c92-d896-48ef-978c-6c37301968f7-removebg-preview.png'
 import CategoryMain from '../Component/CategoryMain/CategoryMain.jsx'
-export default function Search(class1 = 'text-blue') {
+import Anhloi from './anhloi.png'
+import { DownOutlined, SmileOutlined } from '@ant-design/icons'
+import { Dropdown, Space } from 'antd'
+import { Divider } from 'antd'
+import { useForm } from 'react-hook-form'
+import { getValue } from '@testing-library/user-event/dist/utils/index.js'
+import productAPI from '../../../../Api/user/product.js'
+import { generateNameId } from '../../../../until/index.js'
+export default function Search() {
+  const [filteredData, setFilteredData] = useState([])
+  // current hiện tại
+  const [page, setCurrent] = useState(1)
+  const [pageSize, setPageSize] = useState(15)
+  const [search, setSearch] = useState('')
   const { isAuthenticated, logout, isProfile } = useContext(AuthContext)
   const [openCategory, setopenCategory] = useState(false)
-  const handleClickCategory = (categoryName) => {
-    // Điều hướng về trang gốc rồi thêm categoryName
-    // navigate(`/category/${categoryName}`)
-    navigate({
-      pathname: '/category',
-      search: `?${createSearchParams({
-        category_name: `${categoryName}`
-      })}`
-    })
-  }
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   // get list category
   // Queries
@@ -35,20 +39,13 @@ export default function Search(class1 = 'text-blue') {
     cacheTime: 10 * 60 * 1000 // Dữ liệu được giữ trong cache tối đa 10 phút
   })
 
-  //console.log(ListCategory?.data?.data)
+  console.log(ListCategory?.data?.data)
 
   var handleClick = () => {
     setopenCategory(!openCategory)
   }
   const navigate = useNavigate()
-  const handleDrop = () => {
-    // navigate({
-    //   pathname: '/category',
-    //   search: `?${createSearchParams({
-    //     keyword: 'John'
-    //   })}`
-    // })
-  }
+
   const { data } = useQuery({
     queryKey: ['getCart'],
     queryFn: CartAPI.getCart,
@@ -190,32 +187,45 @@ export default function Search(class1 = 'text-blue') {
       <div className='w-full  '>
         <p className='text-xl font-thin '>Sản phẩm mới thêm </p>
         {data?.data?.data ? (
-          data.data.data.map((element) => {
-            return (
-              <div className='flex justify-between w-full py-2 mt-3 hover:bg-gray-300' key={element.cart_id}>
-                <div div className='flex gap-x-1  '>
-                  <div className='h-20 w-20  '>
-                    <img
-                      src={element?.product_images[0] ? element?.product_images[0] : ''}
-                      alt=''
-                      className='object-cover h-full w-full'
-                    />
-                  </div>
+          data?.data?.data
+            ?.filter((element) => {
+              return element.product_quantity > 0
+            })
+            .map((element) => {
+              console.log(element)
 
-                  <p className='truncate overflow-hidden whitespace-nowrap w-[250px] text-base font-normal'>
-                    {element.product_name}
-                  </p>
+              return (
+                <div className='flex justify-between w-full py-2 mt-3 hover:bg-gray-300' key={element.cart_id}>
+                  <div div className='flex gap-x-1  '>
+                    <div className='h-20 w-20  '>
+                      <img
+                        src={element?.product_images[0] ? element?.product_images[0] : Anhloi}
+                        alt=''
+                        className='object-cover h-full w-full'
+                      />
+                    </div>
+
+                    <p className='truncate overflow-hidden whitespace-nowrap w-[250px] text-base font-normal'>
+                      {element.product_name}
+                    </p>
+                  </div>
+                  <div className='text-red-500 pr-2'>9{element.cart_price}</div>
                 </div>
-                <div className='text-red-500 pr-2'>9{element.cart_price}</div>
-              </div>
-            )
-          })
+              )
+            })
         ) : (
           <div>No items in cart.</div>
         )}
       </div>
       <div className='flex justify-between items-center my-2'>
-        <span>{data?.data?.data?.length} Thêm hàng vào giỏ </span>
+        <span>
+          {
+            data?.data?.data?.filter((element) => {
+              return element.product_quantity > 0
+            }).length
+          }
+          Thêm hàng vào giỏ{' '}
+        </span>
         <button className='bg-[#1A51A2] px-3 py-2  rounded-lg text-white ' onClick={handleNavigate}>
           Xem giỏ hàng 1
         </button>
@@ -286,112 +296,212 @@ export default function Search(class1 = 'text-blue') {
       )}
     </>
   )
+
+  // Hàm để mở dropdown khi focus vào input
+
+  const handleDrop1 = () => {
+    console.log(search)
+    setIsDropdownOpen(true)
+  }
+
+  // Hàm để đóng dropdown khi blur (rời khỏi input)
+  const handleBlur = (e) => {
+    setTimeout(() => {
+      setIsDropdownOpen(false)
+    }, 500) // Đợi một chút trước khi đóng dropdown để tránh bị đóng quá sớm
+  }
+  // onchage
+  const handleSearch = (e) => {
+    console.log(e.target.value)
+    if (e.target.value) {
+      setSearch(e.target.value)
+    } else {
+      setSearch('')
+    }
+  }
+
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      search: '' // Đảm bảo giá trị mặc định là rỗng
+    }
+  })
+
+  const handleOnSubmit = handleSubmit(
+    (data) => {
+      // Chuyển đổi data thành query string
+      console.log(data)
+      const searchParams = new URLSearchParams({ search }).toString()
+      console.log(searchParams)
+      navigate({
+        pathname: '/category',
+        search: `?${searchParams}`
+      })
+    },
+    (error) => {
+      console.log(error)
+    }
+  )
+
+  // laays dataa vee header
+  const { data: productsDataDropdown, isLoading } = useQuery({
+    // queryKey: ['product', queryParams],
+    // queryconfig như category hay order hay sort_by thay đổi thì nó useQuery lại
+    queryKey: ['products', search],
+    // khi queryParams thay đổi thì useQuery tính năn như useEffect
+    queryFn: () => {
+      // fix loi du lieu : as ProductListConfig
+      return productAPI.getAllProduct({ search: search, page: page, paginate: pageSize })
+    }
+    // staleTime: 60000 // 1 phút, dữ liệu sẽ không được tính là stale trong vòng 1 phút
+  })
+  const handleClickCategory = (categoryName) => {
+    // Điều hướng về trang gốc rồi thêm categoryName
+    //navigate(`/category/${categoryName}`)
+    navigate({
+      pathname: `/category`,
+      search: `?${createSearchParams({
+        category_name: `${categoryName}`
+      })}`
+    })
+  }
+
   return (
     <>
       <div className='z-20 mx-auto w-full  md:pb-3 md:pt-4 bg-[#1a51a2]'>
         <div className='flex items-center md:mb-4 px-24 '>
           <div className='flex w-full flex-col-reverse items-start md:flex-row gap-5'>
             {' '}
-            <div className='hidden md:flex shrink-0 '>
-
+            <div className='hidden md:flex shrink-0  w-[20%]' onClick={() => navigate('/')}>
               <img
-                class='w-32 h-20 cursor-pointer bg-white object-cover rounded-md'
+                class='w-40 h-20 cursor-pointer bg-white object-cover rounded-md'
                 src='/assets/images/Logo_Pbl6.png'
                 alt='Logo'
               />
             </div>
-            <div className='z-[11] grid w-full grid-cols-1 md:z-[10]'>
+            <div className=' grid w-full grid-cols-1 relative'>
               <div className='w-full'>
-                <div className='mx-auto w-full'>
-                  <div className=' text-white flex bg-white rounded-md items-center justify-center'>
-                    <button className='ml-2'>
-                      <span className='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full w-6 h-10 text-black'>
-                        <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                          <path
-                            fillRule='evenodd'
-                            clipRule='evenodd'
-                            d='M15.5 15.4366C15.7936 15.143 16.2697 15.143 16.5634 15.4366L21.7798 20.7163C22.0734 21.01 22.0734 21.4861 21.7798 21.7797C21.4861 22.0734 21.01 22.0734 20.7164 21.7797L15.5 16.5C15.2064 16.2064 15.2064 15.7303 15.5 15.4366Z'
-                            fill='currentColor'
-                          ></path>
-                          <path
-                            fillRule='evenodd'
-                            clipRule='evenodd'
-                            d='M10.5 3.57732C6.67671 3.57732 3.57732 6.67671 3.57732 10.5C3.57732 14.3233 6.67671 17.4227 10.5 17.4227C14.3233 17.4227 17.4227 14.3233 17.4227 10.5C17.4227 6.67671 14.3233 3.57732 10.5 3.57732ZM2 10.5C2 5.80558 5.80558 2 10.5 2C15.1944 2 19 5.80558 19 10.5C19 15.1944 15.1944 19 10.5 19C5.80558 19 2 15.1944 2 10.5Z'
-                            fill='currentColor'
-                          ></path>
-                        </svg>
-                      </span>
-                    </button>
-                    <input
-                      className='w-full border-neutral-500  focus:ring-neutral-500 focus:border-neutral-700 outline-none p-3.5 search-input flex h-10 items-center justify-start rounded-sm border-0  py-1 pl-10 text-start text-sm font-medium text-neutral-800  truncate '
-                      placeholder='Tên thuốc, triệu chứng, vitamin và thực phẩm chức năng'
-                      onFocus={handleDrop}
-                    />
+                <form className='col-span-9 mb-1 ' onSubmit={handleOnSubmit}>
+                  <div className='mx-auto w-full'>
+                    <div className=' text-white flex bg-white rounded-md items-center justify-center'>
+                      <button type='submit' className='ml-2'>
+                        <span className='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full w-6 h-10 text-black'>
+                          <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                            <path
+                              fillrule='evenodd'
+                              cliprule='evenodd'
+                              d='M15.5 15.4366C15.7936 15.143 16.2697 15.143 16.5634 15.4366L21.7798 20.7163C22.0734 21.01 22.0734 21.4861 21.7798 21.7797C21.4861 22.0734 21.01 22.0734 20.7164 21.7797L15.5 16.5C15.2064 16.2064 15.2064 15.7303 15.5 15.4366Z'
+                              fill='currentColor'
+                            />
+                            <path
+                              fillrule='evenodd'
+                              cliprule='evenodd'
+                              d='M10.5 3.57732C6.67671 3.57732 3.57732 6.67671 3.57732 10.5C3.57732 14.3233 6.67671 17.4227 10.5 17.4227C14.3233 17.4227 17.4227 14.3233 17.4227 10.5C17.4227 6.67671 14.3233 3.57732 10.5 3.57732ZM2 10.5C2 5.80558 5.80558 2 10.5 2C15.1944 2 19 5.80558 19 10.5C19 15.1944 15.1944 19 10.5 19C5.80558 19 2 15.1944 2 10.5Z'
+                              fill='currentColor'
+                            />
+                          </svg>
+                        </span>
+                      </button>
+
+                      <input
+                        className='w-full border-neutral-500 focus:ring-neutral-500 focus:border-neutral-700 outline-none p-3.5 search-input flex h-10 items-center justify-start rounded-sm border-0 py-2 pl-10 text-start text-sm font-medium text-neutral-800 truncate'
+                        placeholder='Tên thuốc, triệu chứng, vitamin và thực phẩm chức năng'
+                        autoComplete='off'
+                        {...register('search')} // Đăng ký với React Hook Form
+                        onFocus={(e) => {
+                          handleDrop1(e) // Gọi hàm onFocus của bạn
+                        }}
+                        onBlur={(e) => {
+                          handleBlur(e) // Gọi hàm onBlur của bạn
+                        }}
+                        onChange={(e) => {
+                          handleSearch(e) // Gọi hàm onChange của bạn
+                          // Đảm bảo React Hook Form nhận được sự thay đổi
+                          // Bạn có thể làm thêm các thao tác nếu cần
+                        }}
+                      />
+                    </div>
+                  </div>
+                </form>
+              </div>
+              {isDropdownOpen && (
+                <div className='absolute w-full mt-1 bg-white shadow-lg rounded-md border border-neutral-300 top-[100%] z-10 max-h-96 overflow-y-auto'>
+                  {!search && (
+                    <>
+                      <div className='p-5'>
+                        <div className='flex justify-between items-center mb-2 mt-2 '>
+                          <span className='font-semibold'>Tìm kiếm gần đây</span>
+                          Xóa tất cả
+                        </div>
+                      </div>
+
+                      <div className='p-5'>
+                        <div className='font-semibold mb-2'>Tìm kiếm phổ biến</div>
+                        <div className='flex flex-wrap gap-2 m-2'>
+                          {['khẩu trang', 'hạ sốt', 'giảm ho đau họng', 'collagen', 'chăm sóc mẹ bầu'].map(
+                            (tag, index) => (
+                              <button
+                                key={index}
+                                className='px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200 text-sm'
+                                onClick={() => console.log(`Tìm kiếm phổ biến: ${tag}`)}
+                              >
+                                {tag}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  <div className='p-5'>
+                    {search &&
+                      Array.from(
+                        new Map(
+                          productsDataDropdown?.data?.data?.data.map((item) => [item.category_name, item]) // Map category_name thành unique key
+                        ).values()
+                      )
+                        .slice(0, 15) // Giới hạn hiển thị 3 loại
+                        .map((element) => {
+                          return (
+                            <div key={element.id} className=''>
+                              <div className='font-semibold'>Danh mục</div>
+                              <div
+                                className='flex items-center mt-2 gap-x-1'
+                                onClick={() => handleClickCategory(element.category_name)}
+                              >
+                                <div className='w-[10%] shrink-0 '>
+                                  <img
+                                    className='rounded-lg border shadow-sm w-14 h-14'
+                                    src={element?.product_images ? element?.product_images[0] : ''}
+                                    alt={element.category_name || ''}
+                                  />
+                                </div>
+                                <div className='w-[80%]'>{element.category_name}</div>
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                    <Divider></Divider>
+                    {search &&
+                      productsDataDropdown?.data?.data?.data.map((element) => {
+                        return (
+                          <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
+                            <div className='flex items-center mt-2 gap-x-1'>
+                              <div className='w-[10%] shrink-0 '>
+                                <img
+                                  className='rounded-lg border shadow-sm w-14 h-14'
+                                  src={element?.product_images ? element?.product_images[0] : ''}
+                                  alt=''
+                                />
+                              </div>
+                              <div className='w-[80%] line-clamp-2 font-medium'>{element.product_name}</div>
+                            </div>
+                          </Link>
+                        )
+                      })}
                   </div>
                 </div>
-              </div>
-              <div className='flex mt-[4px] space-x-3 text-white test-xs '>
-                <div className='h-5'>
-                  <a href=''>
-                    <span title='khẩu trang' class='text-[14px] leading-[20px]'>
-                      khẩu trang
-                    </span>
-                  </a>
-                </div>
-                <div className='h-5'>
-                  <a href=''>
-                    <span title='khẩu trang' class='text-[14px] leading-[20px]'>
-                      hạ sốt
-                    </span>
-                  </a>
-                </div>
-                <div className='h-5'>
-                  <a href=''>
-                    <span title='khẩu trang' class='text-[14px] leading-[20px]'>
-                      giải rượu
-                    </span>
-                  </a>
-                </div>
-
-                <div className='h-5'>
-                  <a href=''>
-                    <span title='khẩu trang' class='text-[14px] leading-[20px]'>
-                      nhỏ mắt
-                    </span>
-                  </a>
-                </div>
-
-                <div className='h-5'>
-                  <a href=''>
-                    <span title='khẩu trang' class='text-[14px] leading-[20px]'>
-                      collagen
-                    </span>
-                  </a>
-                </div>
-                <div className='h-5'>
-                  <a href=''>
-                    <span title='khẩu trang' class='text-[14px] leading-[20px]'>
-                      chăm sóc mẹ bầu
-                    </span>
-                  </a>
-                </div>
-
-                <div className='lg:h-5 lg:block hidden'>
-                  <a href=''>
-                    <span title='khẩu trang' class='text-[14px] leading-[20px]'>
-                      kem chống nắng
-                    </span>
-                  </a>
-                </div>
-
-                <div className=' lg:h-5 lg:block hidden'>
-                  <a href=''>
-                    <span title='khẩu trang' class='text-[14px] leading-[20px]'>
-                      Mua 1 tặng 1
-                    </span>
-                  </a>
-                </div>
-              </div>
+              )}
             </div>
             <div className='flex relative'>
               <Popover content={content} placement='bottomRight' overlayStyle={{ width: '300px' }}>
@@ -413,7 +523,14 @@ export default function Search(class1 = 'text-blue') {
                 </button>
               </Popover>
               <Popover content={ShopingCart} placement='bottomRight' className='' overlayStyle={{ width: '450px' }}>
-                <Badge count={data?.data?.data?.length > 0 ? data.data.data.length : ''} offset={[-15, 7]}>
+                <Badge
+                  count={
+                    data?.data?.data?.filter((element) => {
+                      return element.product_quantity > 0
+                    }).length
+                  }
+                  offset={[-15, 7]}
+                >
                   <div className='h-10 px-3'>
                     <svg
                       xmlns='http://www.w3.org/2000/svg'
@@ -517,63 +634,3 @@ export default function Search(class1 = 'text-blue') {
     </>
   )
 }
-
-// <div className='col-span-2 bg-yellow-500  pt-3 bordder border-r-2'>
-// <div className='flex flex-col rounded-lg'>
-//   {ListCategory?.data?.data &&
-//     ListCategory.data.data.map((element, index) => {
-//       return (
-//         <div
-//           className={`flex p-3 gap-2 text-black mb-3 mr-2 items-center rounded-lg font-medium hover:bg-[#EBFAFB] ${index === 0 ? 'bg-[#EBFAFB]' : ''}`}
-//         >
-//           <div className='w-[40px] h-[40px] '>
-//             <img src={element.category_thumbnail} alt='nopic' className='w-full h-full object-cover' />
-//           </div>
-
-//           <span className='capitalize text-[15px]'>{element.category_name}</span>
-//         </div>
-//       )
-//     })}
-// </div>
-// </div>
-// {/* children */}
-// <div className='col-span-4 bg-yellow-500 rounded-lg pt-3   '>
-// <div className='flex gap-4  cursor-pointer '>
-//   {ListCategory?.data?.data &&
-//     ListCategory?.data?.data.map((element) => {
-//       return element.children.map((elChildren) => {
-//         return (
-//           <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2 '>
-//             <div
-//               onClick={() => handleClickCategory(elChildren.category_name)}
-//               className='w-[100px] h-[100px]'
-//             >
-//               <img
-//                 src={elChildren.category_thumbnail}
-//                 alt='anh'
-//                 className='w-full h-full object-cover rounded-md border'
-//               />
-//             </div>
-//             <p className='text-center text-sm font-medium text-gray-700'>{elChildren.category_name}</p>
-//           </div>
-//         )
-//       })
-//     })}
-
-//   <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2  '>
-//     <div className='w-[100px] h-[100px]  rounded-md border  flex justify-center items-center '>
-//       <svg
-//         xmlns='http://www.w3.org/2000/svg'
-//         fill='none'
-//         viewBox='0 0 24 24'
-//         strokeWidth={1.5}
-//         stroke='currentColor'
-//         className='size-6 w-full '
-//       >
-//         <path strokeLinecap='round' strokeLinejoin='round' d='m8.25 4.5 7.5 7.5-7.5 7.5' />
-//       </svg>
-//     </div>
-//     <p className='text-center text-sm font-medium text-gray-700'>Xem tất cả</p>
-//   </div>
-// </div>
-// </div>

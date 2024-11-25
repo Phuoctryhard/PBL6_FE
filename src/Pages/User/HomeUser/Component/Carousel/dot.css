@@ -1,0 +1,7 @@
+.custom-dots li button {
+  @apply w-3 h-3 bg-gray-500 rounded-full; /* Dấu chấm kích thước nhỏ và bo tròn */
+}
+
+.custom-dots li.slick-active button {
+  @apply bg-blue; /* Đổi màu khi đang hoạt động */
+}

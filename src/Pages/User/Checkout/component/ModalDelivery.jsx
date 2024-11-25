@@ -5,16 +5,22 @@ export default function ModalDelivery({
   setModalDelivery,
   getDelivery,
   valueDelivery,
-  setvalueDelivery
+  setvalueDelivery,
+  setPriceDelivery
 }) {
   const handleOk = () => {
     setvalueDelivery(value)
+    const { delivery_fee } = getDelivery?.data?.data.find((element) => {
+      return +element.delivery_method_id === value
+    })
+    setPriceDelivery(+delivery_fee)
     setModalDelivery(false)
   }
   const handleCancel = () => {
+    setValue(valueDelivery)
     setModalDelivery(false)
   }
-  const [value, setValue] = useState()
+  const [value, setValue] = useState(valueDelivery)
   useEffect(() => {
     if (valueDelivery) {
       setValue(valueDelivery)
@@ -30,21 +36,21 @@ export default function ModalDelivery({
           getDelivery.data?.data.map((element) => {
             return (
               <>
-                <div key={element.delivery_id} className='flex flex-col md:flex-row mt-3'>
+                <div key={element.delivery_method_id} className='flex flex-col md:flex-row mt-3'>
                   <div className='w-[100%]'>
                     <div className='my-2 flex items-center gap-2'>
                       <input
                         type='radio'
                         className='w-4 h-4 border border-gray-300 rounded-full'
-                        value={element.delivery_id}
-                        checked={value === element.delivery_id}
+                        value={element.delivery_method_id}
+                        checked={value === element.delivery_method_id}
                         onChange={(e) => handleUpdateDelivery(e)}
                       />
-                      <span className='font-bold'>{element.delivery_method}</span>
+                      <span className='font-bold'>{element.delivery_method_name}</span>
                     </div>
                     <div className='my-2'>
                       {' '}
-                      Dự kiến giao hàng: 1-5 ngày {element.delivery_description} không bao gồm thứ 7, chủ nhật
+                      Dự kiến giao hàng:{element.delivery_method_description} không bao gồm thứ 7, chủ nhật
                     </div>
                   </div>
                   <div className='w-[20%] flex justify-end items-center gap-x-5'></div>

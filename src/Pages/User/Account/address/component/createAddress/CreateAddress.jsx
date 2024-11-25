@@ -4,8 +4,8 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useQuery } from '@tanstack/react-query'
 import AddressApi from '../../../../../../Api/user/address'
-import { useMutation, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-
+import { useMutation, QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '../../../../../../index.js'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 // Schema validation với Yup
@@ -22,10 +22,11 @@ const schema = yup
       .required('Vui lòng nhập số điện thoại.'),
     city: yup.string().required('Vui lòng nhập thông tin.'),
     district: yup.string().required('Vui lòng nhập thông tin.'),
-    ward: yup.string().required('Vui lòng nhập thông tin.')
+    ward: yup.string().required('Vui lòng nhập thông tin.'),
+    numberHome: yup.string().required('Vui lòng nhập thông tin.')
   })
   .required()
-export default function AddressForm({ closeModal, queryClient }) {
+export default function AddressForm({ closeModal }) {
   const [wards, setWards] = useState([])
   const [districts, setDistricts] = useState([])
   const [provinces, setProvinces] = useState([])
@@ -37,6 +38,7 @@ export default function AddressForm({ closeModal, queryClient }) {
     register,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors }
   } = useForm({
     resolver: yupResolver(schema)
@@ -52,18 +54,28 @@ export default function AddressForm({ closeModal, queryClient }) {
   })
 
   const onSubmit = (data) => {
-    const NameWards = wards.find((element) => {
-      return +element.id == data.ward
-    })
+    // const NameWards = wards.find((element) => {
+    //   return element.id == data.ward
+    // })
+    if (data.numberHome) {
+      data.numberHome = data.numberHome.replace(/,/g, '')
+    }
+    // console.log(data)
+    //console.log(NameWards)
     console.log(data)
-    const addressMain = NameWards.name + ',' + data.District + ',' + data.Province
+    // const addressMain = data.numberHome + ',' + NameWards.name + ',' + data.District + ',' + data.Province
+
     const address_Receive = {
       receiver_name: data.fullName,
       receiver_phone: data.phoneNumber, //required
-      receiver_address: addressMain
+      receiver_address: data.numberHome,
+      province_id: +data.city,
+      district_id: +data.district,
+      ward_id: +data.ward
     }
     console.log(address_Receive)
     mutation.mutate(address_Receive)
+    reset()
     closeModal()
   }
   useEffect(() => {
@@ -80,7 +92,7 @@ export default function AddressForm({ closeModal, queryClient }) {
         return element.id == selectedDProviceId
       })
 
-      setValue('Province', NameProvice.name)
+      //setValue('Province', NameProvice.name)
       console.log(data.data)
       setDistricts(data.data) // Cập nhật danh sách huyen
     }
@@ -93,11 +105,12 @@ export default function AddressForm({ closeModal, queryClient }) {
         return element.id == selectedDistrictId
       })
       console.log(NameDistrict.name)
-      setValue('District', NameDistrict.name)
+      // setValue('District', NameDistrict.name)
       setWards(award.data) // Cập nhật danh sách xã
     }
   }
   const handleBack = () => {
+    reset()
     closeModal()
   }
   return (
@@ -173,6 +186,16 @@ export default function AddressForm({ closeModal, queryClient }) {
             })}
         </select>
         <p className='text-red-500 text-sm mt-1'>{errors.ward?.message}</p>
+      </div>
+
+      <div className='mb-4'>
+        <label className='block text-sm font-medium text-gray-700 mb-1'>Số nhà số đường</label>
+        <input
+          {...register('numberHome')}
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.numberHome ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'}`}
+          placeholder='Nhập số nhà số đường'
+        />
+        <p className='text-red-500 text-sm mt-1'>{errors.numberHome?.message}</p>
       </div>
 
       <div className='flex justify-between mt-6'>

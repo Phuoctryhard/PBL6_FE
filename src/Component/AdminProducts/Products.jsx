@@ -303,7 +303,9 @@ const AdminProducts = () => {
       return ''
     }
     const results = data.filter((item) => {
-      const matchesProductName = item.product_name.toLowerCase().includes(searchValue.toLowerCase())
+      const matchProductInfo =
+        item.product_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.product_id.toString().includes(searchValue)
       const matchesBrandName = selectedBrand
         ? item.brand_name.toLowerCase().includes(selectedBrand.toLowerCase())
         : true
@@ -312,7 +314,7 @@ const AdminProducts = () => {
           ? formatDate(item.product_created_at) >= formatDate(selectedFrom) &&
             formatDate(item.product_created_at) <= formatDate(selectedTo)
           : true
-      return matchesProductName && matchesBrandName && matchesDateRange
+      return matchProductInfo && matchesBrandName && matchesDateRange
     })
 
     const tableData = results

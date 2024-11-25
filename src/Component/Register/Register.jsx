@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import anh from './Green Creative Pharmacy Concept Logo Design.png'
+import anh from './_480f2c92-d896-48ef-978c-6c37301968f7.png'
 import { schemaRegister } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -109,8 +109,8 @@ export default function Register() {
               </div>
               <div className='mt-8 text-center'>
                 <div className='flex items-center justify-center'>
-                  <span className=' text-slate-400'>Bạn đã có tài khoản Pharmacity? </span>
-                  <Link to='/Register' className='text-red-600 ml-1'>
+                  <span className=' text-slate-400'>Bạn đã có tài khoản? </span>
+                  <Link to='/login' className='text-red-600 ml-1'>
                     Đăng nhập
                   </Link>
                 </div>

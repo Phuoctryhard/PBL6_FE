@@ -1,5 +1,5 @@
 import { useAuth } from '../../context/app.context'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SideBarItem } from './Component/SideBarItem'
 import {
@@ -7,11 +7,8 @@ import {
   ArrowDown2,
   More,
   Bill,
-  Blogger,
   Element,
-  FavoriteChart,
   Hospital,
-  Keyboard,
   MedalStar,
   ReceiptEdit,
   Setting2,
@@ -19,7 +16,6 @@ import {
   UserAdd,
   UserSquare,
   Logout,
-  Card,
   Car
 } from 'iconsax-react'
 import './Sidebar.css'
@@ -27,7 +23,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const Sidebar = () => {
+const Sidebar = forwardRef((_, ref) => {
   const token = localStorage.getItem('accesstoken')
   const navigate = useNavigate()
   const { isProfile, logout } = useAuth()
@@ -63,34 +59,31 @@ const Sidebar = () => {
     { id: 'manage-admins', name: 'Admin' }
   ]
 
-  // const Orders = [
-  //   { id: 'order-payments', name: 'Payments' },
-  //   { id: 'order-deliveries', name: 'Deliveries' }
-  // ]
-
   //show subNav
   const [showInventory, setShowInventory] = useState(false)
   const [showUser, setShowUser] = useState(false)
-  // const [showOrders, setShowOrders] = useState(false)
-  // const [maxHeightOrders, setMaxHeightOrders] = useState('0px')
   const [maxHeightProduct, setMaxHeightProduct] = useState('0px')
   const [maxHeightUser, setMaxHeightUser] = useState('0px')
   const productRef = useRef(null)
   const userRef = useRef(null)
-  // const orderRef = useRef(null)
 
   //handle nav and subNav click
   const handleNavClick = (navId) => {
     setActiveNav(navId)
     setShowInventory(navId === 'inventory' ? !showInventory : false)
     setShowUser(navId === 'users' ? !showUser : false)
-    // setShowOrders(navId === 'orders' ? !showOrders : false)
   }
 
   const handleSubNavClick = (itemId) => {
     setSelectedId(itemId)
     setActiveNav(null)
   }
+
+  useImperativeHandle(ref, () => ({
+    handleNavClick,
+    handleSubNavClick,
+    setSelectedId
+  }))
 
   useEffect(() => {
     if (showInventory) {
@@ -108,27 +101,11 @@ const Sidebar = () => {
     }
   }, [showUser])
 
-  // useEffect(() => {
-  //   if (showOrders) {
-  //     setMaxHeightOrders(`${orderRef.current.scrollHeight}px`)
-  //   } else {
-  //     setMaxHeightOrders('0px')
-  //   }
-  // }, [showOrders])
-
   //handle subNav active when refresh page
   useEffect(() => {
     const path = location.pathname
     const navID = path.split('/')[2]
-    const subNavID = [
-      'products',
-      'categories',
-      'Users',
-      'manage-admins',
-      'manage-users'
-      // 'order-payments',
-      // 'order-deliveries'
-    ]
+    const subNavID = ['products', 'categories', 'Users', 'manage-admins', 'manage-users']
     if (subNavID.includes(navID)) {
       if (navID === 'products' || navID === 'categories' || navID === 'orders') {
         setActiveNav(null)
@@ -139,11 +116,6 @@ const Sidebar = () => {
         setShowUser(true)
         setSelectedId(navID)
       }
-      // else if (navID === 'order-payments' || navID === 'order-deliveries') {
-      //   setActiveNav(null)
-      //   setShowOrders(true)
-      //   setSelectedId(navID)
-      // }
     } else {
       handleNavClick(navID)
     }
@@ -297,7 +269,7 @@ const Sidebar = () => {
                 size={16}
                 color='#ffffff'
                 onClick={() => {
-                  handleNavClick('products')
+                  handleNavClick('inventory')
                   setSelectedId(null)
                 }}
               />
@@ -341,50 +313,8 @@ const Sidebar = () => {
             setSelectedId(null)
           }}
         >
-          <SideBarItem
-            name='Orders'
-            iconName={<Bill className='w-6' />}
-            // arrowIcon={
-            //   <ArrowDown2
-            //     size={16}
-            //     color='#ffffff'
-            //     onClick={() => {
-            //       handleNavClick('orders')
-            //       setSelectedId(null)
-            //     }}
-            //   />
-            // }
-          />
+          <SideBarItem name='Orders' iconName={<Bill className='w-6' />} />
         </NavLink>
-        {
-          // <div
-          //   ref={orderRef}
-          //   className={`bg-[#283342] overflow-hidden transition-[max-height] duration-[0.5s] ease-in-out`}
-          //   style={{
-          //     maxHeight: maxHeightOrders
-          //   }}
-          // >
-          //   <ul>
-          //     {Orders.map((item) => (
-          //       <li
-          //         key={item.id}
-          //         className=''
-          //         onClick={() => {
-          //           handleSubNavClick(item.id)
-          //         }}
-          //         style={{ backgroundColor: item.id === selectedId ? '#008f99' : '' }}
-          //       >
-          //         <NavLink
-          //           to={`/admin/${item.id}`}
-          //           className='pl-[62px] px-[24px] h-[46px] flex items-center justify-start cursor-pointer'
-          //         >
-          //           {item.name}
-          //         </NavLink>
-          //       </li>
-          //     ))}
-          //   </ul>
-          // </div>
-        }
         <NavLink
           to='/admin/deliveries'
           className={activeNav === 'delivery' ? 'bg-[#008f99]' : ''}
@@ -491,6 +421,6 @@ const Sidebar = () => {
       </div>
     </nav>
   )
-}
+})
 
 export default Sidebar

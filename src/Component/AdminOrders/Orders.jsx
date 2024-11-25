@@ -6,7 +6,7 @@ import { useAuth } from '../../context/app.context'
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { AdminOrderApi, AdminDeliveryAPI, AdminPaymentApi } from '../../Api/admin'
-import { Eye, Edit, SearchNormal, ArrowDown2 } from 'iconsax-react'
+import { Eye, Edit, SearchNormal, ArrowDown2, Setting } from 'iconsax-react'
 import { DashOutlined } from '@ant-design/icons'
 
 const filterTheme = {
@@ -62,14 +62,15 @@ const Orders = () => {
 
   //#region Filter data
   const [searchValue, setSearchValue] = useState('')
-  const [orderStatus, setOrderStatus] = useState(null)
-  const [paymentMethod, setPaymentMethod] = useState(null)
-  const [deliveryMethod, setDeliveryMethod] = useState(null)
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState(null)
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null)
-  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState(null)
-  const [selectedFrom, setSelectedFrom] = useState(null)
-  const [selectedTo, setSelectedTo] = useState(null)
+  const [paymentMethod, setPaymentMethod] = useState()
+  const [deliveryMethod, setDeliveryMethod] = useState()
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState()
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState()
+  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState()
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState()
+  const [selectedDeliveryStatus, setSelectedDeliveryStatus] = useState()
+  const [selectedFrom, setSelectedFrom] = useState()
+  const [selectedTo, setSelectedTo] = useState()
   //#endregion
 
   //#region Table data
@@ -249,6 +250,8 @@ const Orders = () => {
       dataIndex: 'payment_method_name',
       key: 'payment_method_name',
       sorter: (a, b) => a.payment_method_name.localeCompare(b.payment_method_name),
+      filters: paymentMethod,
+      onFilter: (value, record) => record.payment_method_name.indexOf(value) === 0,
       ellipsis: true
     },
     {
@@ -256,6 +259,8 @@ const Orders = () => {
       dataIndex: 'delivery_method_name',
       key: 'delivery_method_name',
       sorter: (a, b) => a.delivery_method_name.localeCompare(b.delivery_method_name),
+      filters: deliveryMethod,
+      onFilter: (value, record) => record.delivery_method_name.indexOf(value) === 0,
       ellipsis: true
     },
     {
@@ -356,20 +361,29 @@ const Orders = () => {
         const resData = res.data
         const formattedData = resData.map((item) => {
           return {
-            key: item.order_id,
             ...item,
+            key: item.order_id,
             order_created_at: DateFormatView(item.order_created_at),
             order_updated_at: DateFormatView(item.order_updated_at)
           }
         })
-        setData(formattedData)
-        setFilterData(formattedData)
+
+        const uniqueKey = new Set()
+        const uniqueData = []
+        formattedData.forEach((item) => {
+          if (!uniqueKey.has(item.order_id)) {
+            uniqueKey.add(item.order_id)
+            uniqueData.push(item)
+          }
+        })
+        setData(uniqueData)
+        setFilterData(uniqueData)
         setLoading(false)
         setTableParams({
           ...tableParams,
           pagination: {
             ...tableParams.pagination,
-            total: resData.length
+            total: uniqueData.length
           }
         })
       }
@@ -386,10 +400,10 @@ const Orders = () => {
       if (isResponseOk) {
         const res = await response.json()
         const resData = res.data
-        const selectData = resData.map((item) => ({
-          value: item.payment_method_id,
+        const selectData = resData.map((item, index) => ({
+          value: item.payment_method_name,
           label: item.payment_method_name,
-          key: item.payment_method_id
+          text: item.payment_method_name
         }))
         setPaymentMethod(selectData)
       }
@@ -404,9 +418,9 @@ const Orders = () => {
         const res = await response.json()
         const resData = res.data
         const selectData = resData.map((item) => ({
-          value: item.delivery_method_id,
+          value: item.delivery_method_name,
           label: item.delivery_method_name,
-          key: item.delivery_method_id
+          text: item.delivery_method_name
         }))
         setDeliveryMethod(selectData)
       }
@@ -415,7 +429,7 @@ const Orders = () => {
 
   const searchOrder = () => {
     const filterData = data.filter((item) => {
-      return (
+      const matchInfo =
         item.order_id.toString().includes(searchValue) ||
         item.user_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.receiver_name.toLowerCase().includes(searchValue.toLowerCase()) ||
@@ -424,8 +438,15 @@ const Orders = () => {
         item.ward_name.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.district_name.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.province_name.toLowerCase().includes(searchValue.toLowerCase())
-      )
+      const matchOrderStatus = selectedOrderStatus !== undefined ? item.order_status === selectedOrderStatus : true
+      const matchPaymentStatus =
+        selectedPaymentStatus !== undefined ? item.payment_status === selectedPaymentStatus : true
+      const matchDeliveryStatus =
+        selectedDeliveryStatus !== undefined ? item.delivery_status === selectedDeliveryStatus : true
+
+      return matchInfo && matchOrderStatus && matchPaymentStatus && matchDeliveryStatus
     })
+
     setFilterData(filterData)
     setTableParams({
       ...tableParams,
@@ -449,8 +470,8 @@ const Orders = () => {
   }, [
     searchValue,
     selectedOrderStatus,
-    selectedPaymentMethod,
-    selectedDeliveryMethod,
+    selectedPaymentStatus,
+    selectedDeliveryStatus,
     tableParams.pagination?.current,
     tableParams?.sortOrder,
     tableParams?.sortField,
@@ -529,37 +550,34 @@ const Orders = () => {
             <Select
               suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
               allowClear
-              placeholder='Select payment method'
+              placeholder='Select payment status'
               placement='bottomLeft'
-              options={paymentMethod}
+              options={[
+                { value: 'completed', label: 'Completed' },
+                { value: 'failed', label: 'Failed' },
+                { value: 'pending', label: 'Pending' }
+              ]}
               className='w-[250px] h-[50px]'
               onChange={(value) => {
-                setSelectedPaymentMethod(value === undefined ? undefined : value)
+                setSelectedPaymentStatus(value === undefined ? undefined : value)
               }}
             />
             <Select
               suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
               allowClear
-              placeholder='Select delivery method'
+              placeholder='Select delivery status'
               placement='bottomLeft'
-              options={deliveryMethod}
+              options={[
+                { value: 'completed', label: 'Completed' },
+                { value: 'cancelled', label: 'Cancelled' },
+                { value: 'pending', label: 'Pending' }
+              ]}
               className='w-[250px] h-[50px]'
               onChange={(value) => {
-                setSelectedDeliveryMethod(value === undefined ? undefined : value)
+                setSelectedDeliveryStatus(value === undefined ? undefined : value)
               }}
             />
           </ConfigProvider>
-          {/* <ConfigProvider theme={filterTheme}>
-            <Select
-              suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
-              allowClear
-              placeholder='Select delivery method'
-              placement='bottomLeft'
-              options={deliveryMethod}
-              className='w-[250px] h-[50px]'
-              onChange={(value) => {}}
-            />
-          </ConfigProvider> */}
         </div>
         <AdminTable
           columns={columns}

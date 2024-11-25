@@ -1,6 +1,7 @@
 import React from 'react'
-
+import { Link } from 'react-router-dom'
 export default function PartBody({ disease_Body }) {
+  console.log(disease_Body)
   return (
     <div>
       <div className=''>
@@ -19,21 +20,23 @@ export default function PartBody({ disease_Body }) {
             {disease_Body?.map((element) => {
               return (
                 <div class='flex items-center gap-2 rounded-md shadow-lg'>
-                  <img
-                    class='rounded-md object-cover md:h-[80px] md:w-[80px] w-[80px] h-[80px]'
-                    src={element.category_thumbnail}
-                    alt=''
-                    loading='lazy'
-                    width='500'
-                    height='500'
-                  />
-                  <div class='flex-1 text-sm font-medium'>
-                    <div class='font-medium capitalize text-sm line-clamp-3'>
-                      <a href='#'>
-                        <div class=' break-word line-clamp-2 text-sm font-semibold'>{element.category_name}</div>
-                      </a>
+                  <Link to={`/benh/${element.category_id}`}>
+                    <img
+                      class='rounded-md object-cover md:h-[80px] md:w-[80px] w-[80px] h-[80px]'
+                      src={element.category_thumbnail}
+                      alt=''
+                      loading='lazy'
+                      width='500'
+                      height='500'
+                    />
+                    <div class='flex-1 text-sm font-medium'>
+                      <div class='font-medium capitalize text-sm line-clamp-3'>
+                        <a href='#'>
+                          <div class=' break-word line-clamp-2 text-sm font-semibold'>{element.category_name}</div>
+                        </a>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               )
             })}

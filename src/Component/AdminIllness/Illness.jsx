@@ -201,8 +201,8 @@ const Illness = () => {
                           }
                           const res = await response.json()
                           const category = res.data.map((d) => ({
-                            key: d.category_id,
-                            value: d.category_id,
+                            key: d.category_disease_id,
+                            value: d.category_disease_id,
                             label: d.category_name
                           }))
                           if (category) {
@@ -408,20 +408,8 @@ const Illness = () => {
   const fetchDiseaseByID = async (id) => {
     try {
       const response = await AdminDiseaseApi.getDiseaseById(id)
-      if (!response.ok) {
-        const content_type = response.headers.get('content-type')
-        if (content_type && content_type.includes('application/json')) {
-          const res = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setMessageResult(res.messages)
-            setStatus(400)
-          }
-        } else {
-          setStatus(response.status)
-          setMessageResult(response.statusText ? response.statusText : 'Error fetch disease by ID')
-        }
+      const isResponseOK = await handleResponse(response, 'Error fetch disease by ID')
+      if (!isResponseOK) {
         return
       } else {
         const res = await response.json()
@@ -541,7 +529,6 @@ const Illness = () => {
         return
       }
       const formData = new FormData()
-      console.log(categorySelected)
       formData.append('category_disease_id', categorySelected)
       const response = await AdminDiseaseApi.deleteDiseaseFromCategory(formData, token)
       const isResponseOK = await handleResponse(response, 'Error delete disease from category')
@@ -551,6 +538,7 @@ const Illness = () => {
         const res = await response.json()
         setStatus(response.status)
         setMessageResult(res.messages.join('. '))
+        handleCancelDeleteCategory()
         fetchAllDisease()
       }
     } catch (error) {

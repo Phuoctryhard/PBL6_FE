@@ -739,7 +739,7 @@ const Suppliers = () => {
               <Select
                 suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                 allowClear
-                placeholder='- Choose status -'
+                placeholder='Select status'
                 placement='bottomLeft'
                 options={[
                   { label: 'Active', value: 0 },

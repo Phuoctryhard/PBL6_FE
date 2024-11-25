@@ -21,10 +21,10 @@ const ModalComponent = ({ svgElement, receiver_address_id, queryClient }) => {
         toast.success('Xóa thành công')
         // Invalidate and refetch
         queryClient.invalidateQueries({ queryKey: ['getAddress'] })
-        console.log('Xóa thất bại')
       },
-      onError: () => {
-        console.log('Xóa thất bại')
+      onError: (data) => {
+        console.log(data?.response?.data?.messages[0])
+        toast.error( data?.response?.data?.messages[0])
       }
     })
     setIsModalOpen(false)

@@ -1,3 +1,5 @@
+export const LocalStorageEventTarget = new EventTarget()
+
 export const getAccessToken = () => {
   const token = localStorage.getItem('accesstoken')
   return token ? `Bearer ${token}` : ''
@@ -20,6 +22,13 @@ export const saveProfile = (profile) => {
 
 export const clearProfile = () => {
   localStorage.removeItem('profile')
+}
+export const clearAll = () => {
+  localStorage.removeItem('accesstoken')
+  localStorage.removeItem('profile')
+   const clearLSEvent = new Event('clearLS')
+   LocalStorageEventTarget.dispatchEvent(clearLSEvent)
+
 }
 
 export const BASE_URL = 'https://lucifernsz.com/PBL6-BE/public/api'

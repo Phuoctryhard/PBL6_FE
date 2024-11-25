@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { Select } from 'antd'
 import { Modal } from 'antd'
 import { useQueries } from '@tanstack/react-query'
-
+import { queryClient } from '../../../../../../index.js'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import AddressApi from '../../../../../../Api/user/address'
 // Schema validation với Yup
@@ -25,10 +25,11 @@ const schema = yup
       .required('Vui lòng nhập số điện thoại.'),
     city: yup.string().required('Vui lòng nhập thông tin.'),
     district: yup.string().required('Vui lòng nhập thông tin.'),
-    ward: yup.string().required('Vui lòng nhập thông tin.')
+    ward: yup.string().required('Vui lòng nhập thông tin.'),
+    numberHome: yup.string().required('Vui lòng nhập thông tin.')
   })
   .required()
-export default function UpdateAddress({ queryClient, receiver_address_id }) {
+export default function UpdateAddress({ receiver_address_id }) {
   const [wards, setWards] = useState([])
   const [districts, setDistricts] = useState([])
   const [provinces, setProvinces] = useState([])
@@ -44,8 +45,14 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
   } = useForm({
     resolver: yupResolver(schema)
   })
-  console.log('oki' + receiver_address_id)
   const handleBack = () => {
+    setValue('fullName', data.data.data.receiver_name)
+    setValue('phoneNumber', data.data.data.receiver_phone)
+    setValue('city', data.data.data.province_name)
+    setValue('district', data.data.data.district_name)
+    setValue('ward', data.data.data.ward_name)
+    setValue('numberHome', data.data.data.receiver_address)
+
     setIsModalOpenUpdate(false)
   }
 
@@ -71,11 +78,19 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
     }
   })
   const onSubmit = (data) => {
-    const addressMain = data.ward + ',' + data.district + ',' + data.city
+    console.log(data)
+    if (data.numberHome) {
+      data.numberHome = data.numberHome.replace(/,/g, '')
+    }
+    //const addressMain = data.numberHome + ',' + data.ward + ',' + data.district + ',' + data.city
+
     const address_Receive = {
       receiver_name: data.fullName,
       receiver_phone: data.phoneNumber, //required
-      receiver_address: addressMain
+      receiver_address: data.numberHome,
+      province_id: +data.city,
+      district_id: +data.district,
+      ward_id: +data.ward
     }
     const id = receiver_address_id
     console.log(id)
@@ -107,22 +122,18 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
 
   useEffect(() => {
     if (data) {
-      const addressParts = data.data.data.receiver_address.split(',')
+      console.log(data)
 
-      const ward = addressParts[0] // Phường Tiên Nội
-      const district = addressParts[1] // Thị xã Duy Tiên
-      const province = addressParts[2] // Tỉnh Hà Nam
       setValue('fullName', data.data.data.receiver_name)
       setValue('phoneNumber', data.data.data.receiver_phone)
-      setValue('city', province)
-      setValue('district', district)
-      setValue('ward', ward)
-      console.log('display ')
+      setValue('city', data.data.data.province_name)
+      setValue('district', data.data.data.district_name)
+      setValue('ward', data.data.data.ward_name)
+      setValue('numberHome', data.data.data.receiver_address)
+
       if (provincesData) {
         setProvinces(provincesData.data.data)
       }
-      // console.log(provincesData.data.data)
-      // console.log(data.data)
     }
   }, [data, setValue, provincesData])
   // if (isLoading) return <div>Loading...</div>
@@ -131,16 +142,16 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
     {
       // Xử lý sự kiện khi thay đổi giá trị
       console.log('Giá trị đã chọn:', value)
-      setValue('city', value) // Cập nhật giá trị cho form state
       setValue('district', '')
       setValue('ward', '')
       //tinh  quang binh => lay ra danh sach huyen theo id tinh
-      const { id } = provinces.find((element) => {
-        return element.name == value
-      })
+      // const { id } = provinces.find((element) => {
+      //   return element.name == value
+      // })
+      setValue('city', value) // Cập nhật giá trị cho form state
       // tìm kiem huyen theo id tinh
-      if (id) {
-        const { data } = await AddressApi.getDistricts(id)
+      if (value) {
+        const { data } = await AddressApi.getDistricts(value)
         setDistricts(data.data) // Cập nhật danh sách huyen
       }
     }
@@ -149,13 +160,13 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
   const handleDistrictChange = async (value) => {
     // lay ra id cua huyen
     console.log(value)
-    setValue('district', value)
     setValue('ward', '')
-    const { id } = districts.find((element) => {
-      return element.name == value
-    })
-    if (id) {
-      const { data: award } = await AddressApi.getWards(id)
+    // const { id } = districts.find((element) => {
+    //   return element.name == value
+    // })
+    setValue('district', value)
+    if (value) {
+      const { data: award } = await AddressApi.getWards(value)
       setWards(award.data) // Cập nhật danh sách xã
     }
   }
@@ -163,12 +174,14 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
   const handleFocus = async () => {
     // lay id tinh
     const currentCity = getValues('city')
-    const { id } = provinces.find((element) => {
-      return element.name == currentCity
-    })
+    console.log(currentCity)
+    // const { id } = provinces.find((element) => {
+    //   return element.id === currentCity
+    // })
     // tìm kiem huyen theo id tinh
-    if (id) {
-      const { data } = await AddressApi.getDistricts(id)
+    if (currentCity) {
+      const { data } = await AddressApi.getDistricts(currentCity)
+      console.log(currentCity)
       setDistricts(data.data) // Cập nhật danh sách huyen
     }
   }
@@ -188,6 +201,8 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
     //   setWards(award.data) // Cập nhật danh sách huyen
     // }
   }
+  console.log(provinces)
+  console.log(districts)
   return (
     <>
       <button className='text-blue ' onClick={showModalUpdate}>
@@ -241,7 +256,7 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
                     onChange={handleProviceChange}
                   >
                     {provinces.map((province, index) => (
-                      <Option key={index} value={province.name}>
+                      <Option key={index} value={province.id}>
                         {province.name}
                       </Option>
                     ))}
@@ -269,7 +284,7 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
                     onFocus={handleFocus} // Hiển thị data khi focus
                   >
                     {districts.map((district, index) => (
-                      <Option key={index} value={district.name}>
+                      <Option key={index} value={district.id}>
                         {district.name}
                       </Option>
                     ))}
@@ -295,7 +310,7 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
                     onFocus={handleFocusWard}
                   >
                     {wards.map((ward, index) => (
-                      <Option key={index} value={ward.name}>
+                      <Option key={index} value={ward.id}>
                         {ward.name}
                       </Option>
                     ))}
@@ -305,7 +320,15 @@ export default function UpdateAddress({ queryClient, receiver_address_id }) {
               {errors.ward && <p style={{ color: 'red' }}>{errors.ward.message}</p>}
             </div>
           </div>
-
+          <div className='mb-4'>
+            <label className='block text-sm font-medium text-gray-700 mb-1'>Số nhà số đường</label>
+            <input
+              {...register('numberHome')}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${errors.numberHome ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-indigo-500'}`}
+              placeholder='Nhập số nhà số đường'
+            />
+            <p className='text-red-500 text-sm mt-1'>{errors.numberHome?.message}</p>
+          </div>
           <div className='flex justify-between mt-6'>
             <button type='button' className='px-4 py-2 bg-gray-300 text-gray-700 rounded-md' onClick={handleBack}>
               Quay lại

@@ -13,14 +13,13 @@ const ModalListAddress = ({
   setValueAddress
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const showModal = () => {
-    setIsModalOpen(true)
-  }
+
   const handleOk = () => {
     setValueAddress(+value)
     setOpenListAddress(false)
   }
   const handleCancel = () => {
+    setValue(+valueAddress)
     setOpenListAddress(false)
   }
   const handleUpdateAddress = (e) => {
@@ -34,7 +33,7 @@ const ModalListAddress = ({
   }, [valueAddress])
   return (
     <>
-      <Modal title={title} open={OpenListAddress} onOk={handleOk} onCancel={handleCancel} centered>
+      <Modal title={title} open={OpenListAddress} centered footer={null}>
         <>
           {getAddress &&
             getAddress?.data?.data.map((element) => {
@@ -56,14 +55,27 @@ const ModalListAddress = ({
                         <span className='mx-2'>|</span>
                         <span>{element.receiver_phone}</span>
                       </div>
-                      <div className='my-2'>{element.receiver_address}nh</div>
-                      <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
+                      <div className='my-2'>
+                        {element.receiver_address +
+                          ' , ' +
+                          element.receiver_address +
+                          ' , ' +
+                          element.ward_name +
+                          ' , ' +
+                          element.district_name +
+                          ' , ' +
+                          element.province_name}
+                        }
+                      </div>
+                      <span
+                        class={`mt-2 rounded-sm px-1 py-[4px] text-xs font-medium   ${'' + valueAddress == element.receiver_address_id ? 'text-[#CE4712] bg-[#FFE0C7]' : ''} `}
+                      >
                         {'' + valueAddress == element.receiver_address_id ? 'Mặc định' : ''}
                       </span>
                     </div>
                     <div className='w-[20%]  '>
                       <div className='flex flex-grow justify-end gap-x-5 items-center'>
-                        <UpdateAddress />
+                        <UpdateAddress receiver_address_id={+element.receiver_address_id} />
                       </div>
                     </div>
                   </div>
@@ -72,8 +84,8 @@ const ModalListAddress = ({
               )
             })}
         </>
-        <div className=' flex gap-x-10'>
-          <div className='font-bold'>Thêm địa chỉ</div>
+        <div className=' flex gap-x-10 justify-between '>
+          <div className='font-bold '>Thêm địa chỉ</div>
           <div
             className='text-white  '
             onClick={() => {
@@ -94,6 +106,14 @@ const ModalListAddress = ({
                 d='M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'
               />
             </svg>
+          </div>
+          <div className='flex gap-2'>
+            <button className='px-3 py-2 bg-blue rounded-lg' onClick={handleCancel}>
+              Cancel
+            </button>
+            <button className='px-3 py-2 bg-blue rounded-lg' onClick={handleOk}>
+              Lưu
+            </button>
           </div>
         </div>
       </Modal>
