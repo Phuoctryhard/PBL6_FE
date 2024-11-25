@@ -95,18 +95,7 @@ export default function useRouterElement() {
             </MainLayoutUser>
           )
         },
-        {
-          path: '/auth/verify-email/:user',
-          element: <VerifyEmail />
-        },
-        {
-          path: '/category',
-          element: (
-            <MainLayoutUser>
-              <CategoryListProduct />
-            </MainLayoutUser>
-          )
-        },
+
         {
           path: '/detail',
           element: (
@@ -168,10 +157,7 @@ export default function useRouterElement() {
       path: '/success',
       element: <StatusPayos />
     },
-    {
-      path: '/auth/verify-email/admin',
-      element: <AdminVerifyEmail />
-    },
+
     {
       path: '/auth/forgot-password/admin',
       element: <AdminResetPassword />
@@ -403,6 +389,14 @@ export default function useRouterElement() {
       ]
     },
     {
+      path: '/category',
+      element: (
+        <MainLayoutUser>
+          <CategoryListProduct />
+        </MainLayoutUser>
+      )
+    },
+    {
       path: '/benh',
       element: (
         <MainLayoutUser>
@@ -410,7 +404,14 @@ export default function useRouterElement() {
         </MainLayoutUser>
       )
     },
-    {},
+    {
+      path: '/auth/verify-email/user',
+      element: <VerifyEmail />
+    },
+    {
+      path: '/auth/verify-email/admin',
+      element: <AdminVerifyEmail />
+    },
     {
       path: '/benh/:slug',
       element: (

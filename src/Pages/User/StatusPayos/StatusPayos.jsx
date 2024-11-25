@@ -25,6 +25,7 @@ export default function StatusPayos() {
         }
       })
     } else {
+      toast.success('Thanh toán đơn hàng thành công')
       navigate('/account/order-history') // Chờ 3 giây trước khi chuyển trang
     }
   }, []) // Chỉ chạy khi status hoặc orderCode thay đổi

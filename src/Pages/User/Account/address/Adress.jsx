@@ -5,7 +5,7 @@ import AddressForm from './component/createAddress/CreateAddress'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import AddressApi from '../../../../Api/user/address'
 import UpdateAddress from './component/updateAddressRecieve/UpdateAddress'
-import { Pagination, Spin } from 'antd'
+import { Pagination, Spin, Flex } from 'antd'
 
 export default function Adress() {
   const [currentPage, setCurrentPage] = useState(1) // Trang hiện tại
@@ -78,60 +78,62 @@ export default function Adress() {
           Thêm địa chỉ
         </button>
       </div>
-      <Spin spinning={isLoading} tip='Loading...'>
-        {currentData?.map((element) => {
-          {
-            return (
-              <>
-                <div className='flex flex-col md:flex-row mt-3'>
-                  <div className='w-[80%]'>
-                    <div className='my-2'>
-                      <span className='font-bold'>{element.receiver_name}</span>
-                      <span className='mx-2'>|</span>
-                      <span>0865446276</span>
+      <Flex gap='middle' vertical>
+        <Spin spinning={isLoading} tip='Loading...'>
+          {currentData?.map((element) => {
+            {
+              return (
+                <>
+                  <div className='flex flex-col md:flex-row mt-3'>
+                    <div className='w-[80%]'>
+                      <div className='my-2'>
+                        <span className='font-bold'>{element.receiver_name}</span>
+                        <span className='mx-2'>|</span>
+                        <span>0865446276</span>
+                      </div>
+                      <div className='my-2'>
+                        {element.receiver_address +
+                          ' , ' +
+                          element.ward_name +
+                          ' , ' +
+                          element.district_name +
+                          ' , ' +
+                          element.province_name}
+                      </div>
+                      <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
+                        Nhà riêng
+                      </span>
                     </div>
-                    <div className='my-2'>
-                      {element.receiver_address +
-                        ' , ' +
-                        element.ward_name +
-                        ' , ' +
-                        element.district_name +
-                        ' , ' +
-                        element.province_name}
+                    <div className='w-[20%]  '>
+                      <div className='flex flex-grow justify-end gap-x-5 items-center'>
+                        <UpdateAddress queryClient={queryClient} receiver_address_id={element.receiver_address_id} />
+                        <ModalComponent
+                          svgElement={svgElement}
+                          receiver_address_id={element.receiver_address_id}
+                          queryClient={queryClient}
+                        />
+                      </div>
                     </div>
-                    <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
-                      Nhà riêng
-                    </span>
                   </div>
-                  <div className='w-[20%]  '>
-                    <div className='flex flex-grow justify-end gap-x-5 items-center'>
-                      <UpdateAddress queryClient={queryClient} receiver_address_id={element.receiver_address_id} />
-                      <ModalComponent
-                        svgElement={svgElement}
-                        receiver_address_id={element.receiver_address_id}
-                        queryClient={queryClient}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </>
-            )
-          }
-        })}
-        <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
-          <>
-            <AddressForm closeModal={() => setIsModalOpen(false)} queryClient={queryClient} />
-          </>
-        </Modal>
-        <div className='w-full flex  text-center justify-center'>
-          <Pagination
-            current={currentPage}
-            pageSize={pageSize}
-            total={data?.data?.data.length}
-            onChange={onPageChange}
-          />
-        </div>
-      </Spin>
+                </>
+              )
+            }
+          })}
+          <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
+            <>
+              <AddressForm closeModal={() => setIsModalOpen(false)} queryClient={queryClient} />
+            </>
+          </Modal>
+          <div className='w-full flex  text-center justify-center'>
+            <Pagination
+              current={currentPage}
+              pageSize={pageSize}
+              total={data?.data?.data.length}
+              onChange={onPageChange}
+            />
+          </div>
+        </Spin>
+      </Flex>
     </div>
   )
 }

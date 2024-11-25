@@ -10,6 +10,7 @@ export default function VerifyEmail() {
   // const { user } = useParams() // Lấy phần ":user" từ URL
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') // Lấy token từ query params
+  console.log(token)
   const navigate = useNavigate()
   const mutate = useMutation({
     mutationFn: authAPI.verifyEmail
@@ -26,13 +27,16 @@ export default function VerifyEmail() {
     mutate.mutate(tokenEmail, {
       onSuccess: () => {
         console.log('Thành công ')
-        toast.success('Wow so easy !')
+        toast.success('Xác thực thành công !')
         setTimeout(() => {
-          navigate('/login')
-        }, 1000) // 1000ms = 1 giây
+          window.close() // Đóng trang sau 3 giây
+        }, 3000) // 1000ms = 1 giây
       },
       onError() {
         console.log('Thấtbai ')
+        setTimeout(() => {
+          window.close() // Đóng trang sau 3 giây
+        }, 3000) //
         toast.error('Fail !')
       }
     })

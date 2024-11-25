@@ -9,6 +9,7 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/app.context'
+import { Facebook, Gift, Google } from 'iconsax-react'
 export default function Login() {
   const { login } = useContext(AuthContext)
   const navigate = useNavigate()
@@ -67,7 +68,7 @@ export default function Login() {
                   name='email'
                   className='p-3 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm shadow-sm'
                 />
-                <div className='mt-1 text-red-600 text-sm min-h-[1.5rem]'>{errors.email?.message}</div>
+                <div className='mt-1 text-[#05a] text-sm min-h-[1.5rem]'>{errors.email?.message}</div>
               </div>
               <div className='mt-2'>
                 <input
@@ -78,26 +79,31 @@ export default function Login() {
                   autoComplete='on'
                   className=' p-3 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm shadow-sm '
                 />
-                <div className='mt-1 text-red-600 text-sm min-h-[1.5rem]'>{errors.password?.message}</div>
+                <div className='mt-1 text-[#05a] text-sm min-h-[1.5rem]'>{errors.password?.message}</div>
               </div>
               <div className='mt-2'>
-                <button className='w-full text-center bg-orange py-4 px-2 uppercase rounded-sm text-white hover:bg-opacity-90'>
+                <button className='w-full text-center bg-[#05a] py-4 px-2 uppercase rounded-sm text-white hover:bg-opacity-90'>
                   Đăng nhập
                 </button>
               </div>
-              <div className='mt-5 flex justify-between text-[#05a] text-sm flex-wrap gap-2 text-center'>
+              <div className='mt-5 flex justify-end text-[#05a] text-sm flex-wrap gap-2 text-center'>
                 <span>Quên mật khẩu</span>
-                <span>Đăng nhập với SMS</span>
               </div>
               <div className='flex items-center gap-2 mt-3'>
                 <div className='h-[1px] grow bg-gray-200'></div>
                 <span className='text-gray-500'>hoặc</span>
                 <div className='h-[1px] grow bg-gray-200'></div>
               </div>
-              <div className='mt-8 text-center'>
+              <div className='text-gray-600 flex justify-center space-x-4 mt-1'>
+                <Google size='32' color='#555555' />
+                <Facebook size='32' color='#555555' />
+                <Gift size='32' color='#555555' />
+              </div>
+
+              <div className='mt-4 text-center'>
                 <div className='flex items-center justify-center gap-[0.5rem] flex-wrap'>
                   <span className='text-slate-400'>Bạn chưa có tài khoản? </span>
-                  <Link to='/Register' className='text-red-600 ml-1'>
+                  <Link to='/Register' className='text-blue ml-1'>
                     Đăng Kí
                   </Link>
                 </div>

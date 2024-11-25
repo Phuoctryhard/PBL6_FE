@@ -227,7 +227,7 @@ export default function Search() {
           Thêm hàng vào giỏ{' '}
         </span>
         <button className='bg-[#1A51A2] px-3 py-2  rounded-lg text-white ' onClick={handleNavigate}>
-          Xem giỏ hàng 1
+          Xem giỏ hàng
         </button>
       </div>
     </div>
@@ -367,9 +367,9 @@ export default function Search() {
 
   return (
     <>
-      <div className='z-20 mx-auto w-full  md:pb-3 md:pt-4 bg-[#1a51a2]'>
+      <div className='z-20 mx-auto w-full  md:pb-3 md:pt-4 bg-[#2e69c1]'>
         <div className='flex items-center md:mb-4 px-24 '>
-          <div className='flex w-full flex-col-reverse items-start md:flex-row gap-5'>
+          <div className='flex w-full flex-col-reverse items-start md:flex-row gap-2'>
             {' '}
             <div className='hidden md:flex shrink-0  w-[20%]' onClick={() => navigate('/')}>
               <img
@@ -378,7 +378,7 @@ export default function Search() {
                 alt='Logo'
               />
             </div>
-            <div className=' grid w-full grid-cols-1 relative'>
+            <div className=' grid  grid-cols-1  w-[70%] relative'>
               <div className='w-full'>
                 <form className='col-span-9 mb-1 ' onSubmit={handleOnSubmit}>
                   <div className='mx-auto w-full'>
@@ -453,6 +453,8 @@ export default function Search() {
                     </>
                   )}
                   <div className='p-5'>
+                    {search && <div className='font-semibold'>Danh mục</div>}
+
                     {search &&
                       Array.from(
                         new Map(
@@ -463,7 +465,6 @@ export default function Search() {
                         .map((element) => {
                           return (
                             <div key={element.id} className=''>
-                              <div className='font-semibold'>Danh mục</div>
                               <div
                                 className='flex items-center mt-2 gap-x-1'
                                 onClick={() => handleClickCategory(element.category_name)}
@@ -552,11 +553,11 @@ export default function Search() {
               <div className='border-color-white absolute bottom-[6px] right-0 top-[6px] hidden border-l-[1px] md:inline-block'></div>
             </div>
             {isAuthenticated ? (
-              <div className='flex items-center'>
+              <div className='flex '>
                 <Popover content={profile} placement='bottomRight' overlayStyle={{ width: '230px' }}>
                   <div className='flex items-center cursor-pointer'>
                     <Avatar1 user_avatar={isProfile?.user_avatar} />
-                    <div className='w-full h-10 flex items-center justify-center ml-1'>{isProfile?.user_fullname}</div>
+                    <div className='w-full h-10 flex items-center  ml-1'>{isProfile?.user_fullname}</div>
                   </div>
                 </Popover>
               </div>

@@ -8,7 +8,7 @@ import anh1 from './anh1.jpg'
 import CartAPI from '../../../../Api/user/cart'
 import { toast } from 'react-toastify'
 import { queryClient } from '../../../..'
-import { getIdfromNameId } from '../../../../until'
+import { formatCurrency, getIdfromNameId } from '../../../../until'
 import ProductLoader from '../ProductDetailLoader/ProductDetailLoader'
 import ImageGallery from 'react-image-gallery'
 import { message, Modal, Divider } from 'antd'
@@ -18,6 +18,8 @@ import { useNavigate } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import ModalChatZalo from '../Component/ModalChatZalo'
 export default function DetailProduct() {
+  const [Errorquantity, setErrorquantity] = useState('')
+
   const navigate = useNavigate()
   const [quantity, setQuantity] = useState(1)
   const { idproduct } = useParams()
@@ -56,7 +58,8 @@ export default function DetailProduct() {
   const mutateAddProductCart = useMutation({
     mutationFn: CartAPI.addproduct_inCart,
     onError: (error) => {
-      console.error('Lỗi khi thêm sản phẩm vào giỏ hàng:', error.response.data.message[0])
+      console.log(error)
+      toast.error(error.response.data.messages[0], { autoClose: 1500 })
     },
     onSuccess: (data) => {
       console.log(data.data.messages[0])
@@ -66,9 +69,13 @@ export default function DetailProduct() {
   })
   //if (isLoading) return <Loading />
 
-  const handleQuantity = (value) => {
+  const handleQuantity = (value, product_quantity) => {
     const newValue = parseInt(value.replace(/\D/g, '').replace(/^0+/, ''), 10) || ''
-    setQuantity(newValue)
+    // console.log(newValue)
+    // console.log(product_quantity)
+    if (newValue > product_quantity) {
+      setQuantity(product_quantity)
+    } else setQuantity(newValue)
   }
   const handleBlurQuantity = (event) => {
     if (event.target.value === '') {
@@ -81,9 +88,12 @@ export default function DetailProduct() {
       return prev - 1
     })
   }
-  const handlePlusQuantity = () => {
+  const handlePlusQuantity = (product_quantity) => {
     setQuantity((prev) => {
-      return prev + 1
+      if (prev < product_quantity) {
+        return prev + 1
+      }
+      return product_quantity
     })
   }
   const sanitizedDescription = DOMPurify.sanitize(data?.data?.data?.product_description)
@@ -184,7 +194,7 @@ export default function DetailProduct() {
                   </h1>
                   <div class='flex items-center justify-between mb-3 md:mb-4 mt-2'>
                     <div class='flex content-start items-center space-x-1 py-[calc(2rem/16)]'>
-                      <p class='text-sm leading-5 text-neutral-600'>P22255</p>
+                      <p class='text-sm leading-5 text-neutral-600'>{''}</p>
                       <span class='h-1 w-1 rounded-full bg-neutral-600'></span>
                       <a class='text-sm leading-5 text-[#1A51A2]' href='/thuong-hieu/urgo'>
                         Thương hiệu: {data.data.data.brand_name}
@@ -205,7 +215,9 @@ export default function DetailProduct() {
                         </h3>
                         <div class='order-1 flex items-center justify-start md:order-2'>
                           <p class='relative order-2 whitespace-nowrap text-base font-semibold text-neutral-600 md:order-1 md:me-2  md:text-xl'>
-                            {data.data.data.product_discount ? `${data.data.data.product_discount} ₫` : ''}
+                            {formatCurrency(data.data.data.product_discount) > 0
+                              ? `${formatCurrency(data.data.data.product_discount)} `
+                              : ''}
                             <span class='absolute inset-x-0 top-1/2 h-[1px] w-full -translate-y-1/2 bg-neutral-600'></span>
                           </p>
                         </div>
@@ -223,8 +235,9 @@ export default function DetailProduct() {
                         </div>
                       </div>
 
-                      <div class='flex content-center justify-between mb-3 '>
+                      <div class='flex content-center gap-x-5 mb-3 '>
                         <p class='text-sm text-neutral-900'>Đã bán {data?.data?.data.product_sold}</p>
+                        <p class='text-sm text-neutral-900'>Số lượng: {data?.data?.data.product_quantity}</p>
                       </div>
                     </>
                   )}
@@ -286,28 +299,32 @@ export default function DetailProduct() {
                       <div class='grid grid-cols-1 gap-1.5 md:grid-cols-[1fr,291px]'>
                         <p class='text-[14px] leading-[20px] font-semibold md:text-base'>Tên sản phẩm</p>
                         <div class='[&amp;_a:not(.ignore-css_a)]:text-hyperLink md:text-base'>
-                          Sản phẩm hỗ trợ điều trị viêm da và chứng khô da Eczekalm
+                          {data.data.data.product_name}
                         </div>
                       </div>
                       <div class='grid grid-cols-1 gap-1.5 md:grid-cols-[1fr,291px]'>
                         <p class='text-[14px] leading-[20px] font-semibold md:text-base'>Danh mục</p>
                         <div class='[&amp;_a:not(.ignore-css_a)]:text-hyperLink md:text-base'>
-                          {data.data.data.category_type}
+                          {data.data.data.parent_category_name}
                         </div>
                       </div>
                       <div class='grid grid-cols-1 gap-1.5 md:grid-cols-[1fr,291px]'>
                         <p class='text-[14px] leading-[20px] font-semibold md:text-base'>Công dụng</p>
                         <div class='[&amp;_a:not(.ignore-css_a)]:text-hyperLink md:text-base'>
-                          <p>Chất hỗ trợ trong trường hợp viêm da cơ địa (cấp tính và mãn tính)</p>
+                          <p>{data.data.data.product_uses}</p>
                         </div>
                       </div>
                       <div class='grid grid-cols-1 gap-1.5 md:grid-cols-[1fr,291px]'>
                         <p class='text-[14px] leading-[20px] font-semibold md:text-base'>Nhà sản xuất</p>
-                        <div class='[&amp;_a:not(.ignore-css_a)]:text-hyperLink md:text-base'>ALMA S.r.l</div>
+                        <div class='[&amp;_a:not(.ignore-css_a)]:text-hyperLink md:text-base'>
+                          {data.data.data.place_of_manufacture}
+                        </div>
                       </div>
                       <div class='grid grid-cols-1 gap-1.5 md:grid-cols-[1fr,291px]'>
                         <p class='text-[14px] leading-[20px] font-semibold md:text-base'>Quy cách</p>
-                        <div class='[&amp;_a:not(.ignore-css_a)]:text-hyperLink md:text-base'>Hộp 1 tuýp x 50ml</div>
+                        <div class='[&amp;_a:not(.ignore-css_a)]:text-hyperLink md:text-base'>
+                          {data.data.data.product_package}
+                        </div>
                       </div>
                       <div class='grid grid-cols-1 gap-1.5 md:grid-cols-[1fr,291px]'>
                         <p class='text-[14px] leading-[20px] font-semibold md:text-base'>Lưu ý</p>
@@ -376,7 +393,6 @@ export default function DetailProduct() {
                     </div>
                   </div>
                 </div>
-                // {/*end 4 cols ffffff:    */}
               </div>
 
               <div className='col-span-3 bg-white ml-2 '>
@@ -433,7 +449,7 @@ export default function DetailProduct() {
                           <input
                             type='text'
                             inputMode='numeric' // Hiển thị bàn phím số trên thiết bị di động
-                            onChange={(e) => handleQuantity(e.target.value)}
+                            onChange={(e) => handleQuantity(e.target.value, data?.data?.data.product_quantity)}
                             className='w-[27px] h-5 outline-none text-center appearance-none'
                             maxLength={3}
                             min={1}
@@ -445,7 +461,7 @@ export default function DetailProduct() {
 
                           <button
                             className='p-2 rounded-full bg-slate-100 hover:bg-slate-300'
-                            onClick={handlePlusQuantity}
+                            onClick={() => handlePlusQuantity(data?.data?.data.product_quantity)}
                           >
                             +
                           </button>

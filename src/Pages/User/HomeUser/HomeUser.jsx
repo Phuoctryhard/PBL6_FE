@@ -1,11 +1,12 @@
 import Footer from '../../../Component/Footer/Footer.jsx'
-import Category from './Component/CategoryProduct/Category.jsx'
+
 import ProductList from '../ProductUser/ProductList/ProductList.jsx'
 
 import Header from './Component/HeaderUser/Header.jsx'
 import Disease from '../Disease/Disease.jsx'
-import CategoryMain from './Component/CategoryMain/CategoryMain.jsx'
+
 import CarouselSlideShow from './Component/Carousel/Carousel.jsx'
+import Desease from './Component/Disease/Desease.jsx'
 
 export default function HomeUser() {
   return (
@@ -13,11 +14,8 @@ export default function HomeUser() {
       <Header />
       <CarouselSlideShow />
       <ProductList />
-      <Disease />
-
+      <Desease />
       <Footer />
     </div>
   )
 }
-// <CategoryMain/>
-// <Category />
