@@ -9,8 +9,14 @@ const ScrollContext = createContext()
 export const useScrollToTop = () => {
   return useContext(ScrollContext)
 }
+
+export const useTriggerSidebar = () => {
+  return useContext(ScrollContext)
+}
+
 export default function MainLayout({ children, scrollBar = 'htmlBar' }) {
   const ref = useRef()
+  const sidebarRef = useRef()
   useEffect(() => {
     const style = document.createElement('style')
     style.innerHTML = `
@@ -32,12 +38,26 @@ export default function MainLayout({ children, scrollBar = 'htmlBar' }) {
       ref.current.getScrollElement().scrollTop = 0
     }
   }
+
+  const triggerSidebar = (navParentID, navChildrenID = undefined) => {
+    const sidebar = sidebarRef.current
+    if (sidebar) {
+      if (!navChildrenID) {
+        sidebar.handleNavClick(navParentID)
+        sidebar.setSelectedId(null)
+      } else {
+        sidebar.handleNavClick(navParentID)
+        sidebar.setSelectedId(null)
+        sidebar.handleSubNavClick(navChildrenID)
+      }
+    }
+  }
   return (
     <div className='w-full max-w-[100%] flex'>
-      <Sidebar />
-      <div className='w-[calc(100%-256px)] h-[100vh]'>
-        <Header />
-        <ScrollContext.Provider value={scrollToTop}>
+      <ScrollContext.Provider value={(scrollToTop, triggerSidebar)}>
+        <Sidebar ref={sidebarRef} />
+        <div className='w-[calc(100%-256px)] h-[100vh]'>
+          <Header />
           <main className='test flex w-full h-[calc(100%-60px)] bg-[#f8f9fb]'>
             {scrollBar === 'simpleBar' ? (
               <SimpleBar style={{ width: '100%', maxHeight: '100%' }} autoHide ref={ref}>
@@ -47,8 +67,8 @@ export default function MainLayout({ children, scrollBar = 'htmlBar' }) {
               <div className='component__content h-full w-full px-[40px] pt-[30px] overflow-y-auto'>{children}</div>
             )}
           </main>
-        </ScrollContext.Provider>
-      </div>
+        </div>
+      </ScrollContext.Provider>
     </div>
   )
 }

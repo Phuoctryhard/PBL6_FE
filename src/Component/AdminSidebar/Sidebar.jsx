@@ -1,5 +1,5 @@
 import { useAuth } from '../../context/app.context'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SideBarItem } from './Component/SideBarItem'
 import {
@@ -7,11 +7,8 @@ import {
   ArrowDown2,
   More,
   Bill,
-  Blogger,
   Element,
-  FavoriteChart,
   Hospital,
-  Keyboard,
   MedalStar,
   ReceiptEdit,
   Setting2,
@@ -19,7 +16,6 @@ import {
   UserAdd,
   UserSquare,
   Logout,
-  Card,
   Car
 } from 'iconsax-react'
 import './Sidebar.css'
@@ -27,7 +23,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const Sidebar = () => {
+const Sidebar = forwardRef((_, ref) => {
   const token = localStorage.getItem('accesstoken')
   const navigate = useNavigate()
   const { isProfile, logout } = useAuth()
@@ -92,6 +88,12 @@ const Sidebar = () => {
     setActiveNav(null)
   }
 
+  useImperativeHandle(ref, () => ({
+    handleNavClick,
+    handleSubNavClick,
+    setSelectedId
+  }))
+
   useEffect(() => {
     if (showInventory) {
       setMaxHeightProduct(`${productRef.current.scrollHeight}px`)
@@ -120,15 +122,7 @@ const Sidebar = () => {
   useEffect(() => {
     const path = location.pathname
     const navID = path.split('/')[2]
-    const subNavID = [
-      'products',
-      'categories',
-      'Users',
-      'manage-admins',
-      'manage-users'
-      // 'order-payments',
-      // 'order-deliveries'
-    ]
+    const subNavID = ['products', 'categories', 'Users', 'manage-admins', 'manage-users']
     if (subNavID.includes(navID)) {
       if (navID === 'products' || navID === 'categories' || navID === 'orders') {
         setActiveNav(null)
@@ -297,7 +291,7 @@ const Sidebar = () => {
                 size={16}
                 color='#ffffff'
                 onClick={() => {
-                  handleNavClick('products')
+                  handleNavClick('inventory')
                   setSelectedId(null)
                 }}
               />
@@ -491,6 +485,6 @@ const Sidebar = () => {
       </div>
     </nav>
   )
-}
+})
 
 export default Sidebar
