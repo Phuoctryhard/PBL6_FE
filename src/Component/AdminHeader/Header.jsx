@@ -1,14 +1,14 @@
-import React, { useEffect } from 'react'
-import { useState } from 'react'
-import { SearchNormal, FilterSearch, ArrowDown, ArrowDown2 } from 'iconsax-react'
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react'
+import { SearchNormal, FilterSearch, ArrowDown2, Notification, More } from 'iconsax-react'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
-import { Select, ConfigProvider } from 'antd'
+import { Select, ConfigProvider, Dropdown } from 'antd'
 import { ProductsAPI, AdminOrderApi, ImportsAPI } from '../../Api/admin'
 import qs from 'qs'
 import { message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+import { DeleteOutlined } from '@ant-design/icons'
 const languageSelectTheme = {
   token: {
     colorTextQuaternary: '#1D242E', // Disabled text color
@@ -26,10 +26,9 @@ const languageSelectTheme = {
     }
   }
 }
-export default function Header() {
-  //access token
+const Header = forwardRef((_, ref) => {
   const token = localStorage.getItem('accesstoken')
-  const { triggerSidebar } = useAdminMainLayoutFunction()
+  const { triggerSidebar, setIsLogin } = useAdminMainLayoutFunction()
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -62,7 +61,61 @@ export default function Header() {
   const [productData, setProductData] = useState([])
   const [orderData, setOrderData] = useState([])
   const [importData, setImportData] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [notifyData, setNotifyData] = useState([])
+  const [badgeCount, setBadgeCount] = useState(0)
+  //#region show notify
+  const [showNotify, setShowNotify] = useState(false)
+  const [showOptionNotify, setShowOptionNotify] = useState(false)
+  const notifyRef = useRef(null)
+  let closeTimeout
+
+  useImperativeHandle(ref, () => ({
+    setNotifyData
+  }))
+
+  //handle marked read
+  const handleMarkedRead = async (orderID) => {
+    try {
+      const newNotify = notifyData.map((notify) => {
+        if (notify.order_id === orderID) {
+          return { ...notify, isRead: true }
+        }
+        return notify
+      })
+
+      let badgeCount = 0
+      const newNotifyLength = newNotify.filter((notify) => !notify.isRead).length
+      if (newNotifyLength > 0 && newNotifyLength <= 99) {
+        badgeCount = newNotifyLength
+      } else if (newNotifyLength > 99) {
+        badgeCount = '99+'
+      }
+      setBadgeCount(badgeCount)
+      setNotifyData(newNotify)
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
+  }
+
+  //handle show notify
+  const handleMouseEnterShowNotify = () => {
+    clearTimeout(closeTimeout)
+    setShowNotify(true)
+  }
+
+  const handleMouseLeaveCloseNotify = () => {
+    closeTimeout = setTimeout(() => {
+      if (!showOptionNotify) setShowNotify(false)
+      else setShowNotify(true)
+    }, 200)
+  }
+
+  useEffect(() => {
+    if (!showOptionNotify) {
+      handleMouseLeaveCloseNotify()
+    }
+  }, [showOptionNotify])
 
   const [filterSelected, setFilterSelected] = useState('product')
 
@@ -84,17 +137,45 @@ export default function Header() {
 
   const fetchAllOrders = async () => {
     try {
-      setLoading(true)
       const res = await AdminOrderApi.getAllOrder(token)
       if (res) {
         const resData = res.data
+        const filterOrderNeedConfirmation = resData
+          .filter((o) => {
+            const payment_transactions = ['VNPAY', 'PAYOS', 'MOMO']
+            const payment_COD = 'COD'
+            const match_transactions =
+              payment_transactions.includes(o.payment_method_name) &&
+              o.payment_status === 'completed' &&
+              o.order_status === 'pending'
+            const match_COD =
+              o.payment_method_name === payment_COD && o.order_status === 'pending' && o.payment_status === 'pending'
+            return match_transactions || match_COD
+          })
+          .map((o) => {
+            return { ...o, isRead: false }
+          })
+
+        const filterLength = filterOrderNeedConfirmation.length
+        let badgeCount = 0
+        if (filterLength > 0 && filterLength <= 99) {
+          badgeCount = filterLength
+        } else if (filterLength > 99) {
+          badgeCount = '99+'
+        }
+
+        setBadgeCount(badgeCount)
+        setNotifyData(filterOrderNeedConfirmation)
         setOrderData(resData)
       }
     } catch (error) {
+      if (error.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
       setStatus(400)
       setMessageResult(error.message)
     } finally {
-      setLoading(false)
     }
   }
 
@@ -200,6 +281,10 @@ export default function Header() {
               className='flex items-center gap-2 hover:bg-[rgb(0,143,153,0.1)] hover:cursor-pointer w-full p-2 rounded-md justify-center'
               to={`/admin/products/${p.product_id}`}
               onClick={() => {
+                const path = window.location.pathname
+                if (!path.includes('/admin/products')) {
+                  triggerSidebar('inventory', 'products')
+                }
                 setSearchValue('')
                 navigate(`/admin/products/${p.product_id}`, { replace: true })
               }}
@@ -385,8 +470,10 @@ export default function Header() {
               />
               <SearchNormal className='absolute right-0 top-[50%] -translate-y-1/2 mr-3' />
               <div
-                className='searchResultBox absolute w-full h-[18.75rem] bg-white top-[120%] z-[100] overflow-hidden border border-solid border-[#bdc5d1] rounded-md'
-                style={{ display: searchValue.length > 0 ? 'block' : 'none' }}
+                className='absolute w-full h-[18.75rem] bg-white top-[120%] z-[100] overflow-hidden border border-solid border-[#bdc5d1] rounded-md'
+                style={{
+                  display: searchValue.length > 0 ? 'block' : 'none'
+                }}
               >
                 <SimpleBar style={{ width: '100%', height: '100%' }}>
                   <div className='w-full h-full bg-white flex flex-col justify-between overflow-auto py-2 px-4'>
@@ -405,6 +492,7 @@ export default function Header() {
                       size={20}
                     />
                   }
+                  onBlur={() => setIsDropdownOpen(false)}
                   defaultValue='product'
                   className='w-28 h-10'
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -420,20 +508,172 @@ export default function Header() {
               </ConfigProvider>
             </div>
           </div>
-          <div className='time flex flex-col items-end text-sm text-[#1D242E] gap-y-1.5 justify-center w-[14rem]'>
-            <div className='flex items-center justify-end'>
+          <div className='flex justify-center items-center'>
+            <div className='time flex items-center text-sm text-[#1D242E] w-[16rem] justify-end gap-1'>
               <div
-                className='w-[18px] h-[18px] rounded-[50%] mr-[11px]'
-                style={{
-                  backgroundColor: greetingColor
-                }}
-              ></div>
-              <span className='font-bold'>{greeting}</span>
+                className='relative'
+                ref={notifyRef}
+                onMouseEnter={handleMouseEnterShowNotify}
+                onMouseLeave={handleMouseLeaveCloseNotify}
+              >
+                <Notification size={30} color='#1D242E' />
+                <div className='absolute w-5 h-5 rounded-[50%] bg-red-600 text-white right-[-15%] top-0 flex justify-center items-center px-2'>
+                  <span className='text-xs'>{badgeCount}+</span>
+                </div>
+                <div
+                  className='flex flex-col absolute top-[161%] right-[-200%] z-[100]'
+                  style={{
+                    transform: showNotify ? 'scale(1)' : 'scale(0)',
+                    opacity: showNotify ? 1 : 0,
+                    visibility: showNotify ? 'visible' : 'hidden',
+                    transformOrigin: 'top right',
+                    transition: 'all 0.5s ease'
+                  }}
+                >
+                  <div className='w-[25rem] h-[18.75rem] bg-white z-[100] border-solid border border-[#bdc5d1] rounded-xl flex flex-col'>
+                    <div className='w-full flex justify-between items-center p-4'>
+                      <h2 className='text-base text-black font-semibold text-center w-full'>Thông báo mới</h2>
+                    </div>
+                    {notifyData.length <= 0 ? (
+                      <div className='w-full flex flex-col gap-2 flex-1 justify-center items-center p-4'>
+                        <img
+                          src='/assets/images/notify.svg'
+                          alt='Notify Image'
+                          className='max-w-[7rem] h-[7rem] object-cover'
+                        />
+                        <span className='text-sm text-black text-center font-semibold'>Chưa có thông báo mới!</span>
+                      </div>
+                    ) : (
+                      <div className='w-full h-full flex flex-col gap-2 overflow-auto' style={{}}>
+                        {notifyData.map((notify) => {
+                          return (
+                            <div
+                              key={notify.order_id}
+                              className={`flex items-center gap-4 hover:bg-[rgb(0,143,153,0.1)] hover:cursor-pointer w-full rounded-md p-4 relative`}
+                            >
+                              <div className='flex gap-1'>
+                                <button
+                                  className={`w-[95%] flex items-center gap-4 before:w-1 before:h-1 before:rounded-[50%] before:absolute before:left-2 before:top-1/2 before:-translate-y-1/2 ${notify.isRead ? 'before:bg-transparent' : 'before:bg-blue'}`}
+                                  onClick={() => {
+                                    handleMarkedRead(notify.order_id)
+                                    triggerSidebar('orders')
+                                    navigate(`/admin/orders/${notify.order_id}`, {
+                                      replace: true,
+                                      state: { notifyData }
+                                    })
+                                    setShowNotify(false)
+                                  }}
+                                >
+                                  <img
+                                    src={
+                                      notify?.order_detail[0].product_images
+                                        ? JSON.parse(notify.order_detail[0].product_images)?.map(
+                                            (image) => `${image}`
+                                          )[0]
+                                        : '/assets/images/default-image.png'
+                                    }
+                                    alt={notify?.order_detail[0].product_name}
+                                    className='w-12 h-12'
+                                    onError={(e) => {
+                                      e.target.onerror = null
+                                      e.target.src = '/assets/images/default-image.png'
+                                    }}
+                                  />
+                                  <div className='flex flex-col text-left text-sm text-black gap-1'>
+                                    <span>Bạn có đơn hàng với id: {notify.order_id} cần được xác nhận</span>
+                                    <div>
+                                      <span>Người nhận: </span>
+                                      <span>{notify.receiver_name}</span>
+                                    </div>
+                                    <div>
+                                      <span>Địa chỉ: </span>
+                                      <span>
+                                        {notify.receiver_address}, {notify.ward_name}, {notify.district_name},{' '}
+                                        {notify.province_name}
+                                      </span>
+                                    </div>
+                                    <div className='text-xs text-gray-400 font-light mt-3'>
+                                      <span>{formatDate(notify.created_at)}</span>
+                                    </div>
+                                  </div>
+                                </button>
+                              </div>
+                              <div className='rotate-90'>
+                                <Dropdown
+                                  destroyPopupOnHide
+                                  trigger={['click']}
+                                  onOpenChange={(open) => {
+                                    if (open) setShowOptionNotify(true)
+                                    else setShowOptionNotify(false)
+                                  }}
+                                  placement='bottomRight'
+                                  menu={{
+                                    items: [
+                                      {
+                                        key: '1',
+                                        label: (
+                                          <button
+                                            type='button'
+                                            className='flex items-center gap-1'
+                                            onClick={() => {
+                                              try {
+                                                const orderID = notify.order_id
+                                                const newNotify = notifyData.filter(
+                                                  (notify) => notify.order_id !== orderID
+                                                )
+                                                let badgeCount = 0
+                                                const newNotifyLength = newNotify.filter(
+                                                  (notify) => !notify.isRead
+                                                ).length
+                                                if (newNotifyLength > 0 && newNotifyLength <= 99) {
+                                                  badgeCount = newNotifyLength
+                                                } else if (newNotifyLength > 99) {
+                                                  badgeCount = '99+'
+                                                }
+                                                setBadgeCount(badgeCount)
+                                                setNotifyData(newNotify)
+                                              } catch (e) {
+                                                setStatus(400)
+                                                setMessageResult(e.message)
+                                              }
+                                            }}
+                                          >
+                                            <DeleteOutlined className='text-sm text-[red]' /> Xóa thông báo này
+                                          </button>
+                                        )
+                                      }
+                                    ]
+                                  }}
+                                >
+                                  <More size={20} color='#1D242E' />
+                                </Dropdown>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className='flex flex-col items-end justify-center gap-1.5 w-full max-w-[85%]'>
+                <div className='flex items-center justify-end'>
+                  <div
+                    className='w-[18px] h-[18px] rounded-[50%] mr-[11px]'
+                    style={{
+                      backgroundColor: greetingColor
+                    }}
+                  ></div>
+                  <span className='font-bold'>{greeting}</span>
+                </div>
+                <span className='text-right w-max'>{time}</span>
+              </div>
             </div>
-            <span className='text-right w-max'>{time}</span>
           </div>
         </div>
       </div>
     </header>
   )
-}
+})
+
+export default Header

@@ -57,6 +57,7 @@ export default function MainLayout({ children, scrollBar = 'htmlBar' }) {
 
   const ref = useRef()
   const sidebarRef = useRef()
+  const headerRef = useRef()
   const [isNetworkConnection, setIsNetworkConnection] = useState(navigator.onLine)
 
   useEffect(() => {
@@ -121,13 +122,20 @@ export default function MainLayout({ children, scrollBar = 'htmlBar' }) {
     }
   }
 
+  const setHeaderNotifyData = (data) => {
+    const header = headerRef.current
+    if (header) {
+      header.setNotifyData(data)
+    }
+  }
+
   return isNetworkConnection ? (
     isLogin && (
       <div className='w-full max-w-[100%] flex'>
-        <AdminMainLayoutContext.Provider value={{ scrollToTop, triggerSidebar, setIsLogin }}>
+        <AdminMainLayoutContext.Provider value={{ scrollToTop, triggerSidebar, setIsLogin, setHeaderNotifyData }}>
           <Sidebar ref={sidebarRef} />
           <div className='w-[calc(100%-256px)] h-[100vh]'>
-            <Header />
+            <Header ref={headerRef} />
             <main className='test flex w-full h-[calc(100%-60px)] bg-[#f8f9fb]'>
               {scrollBar === 'simpleBar' ? (
                 <SimpleBar style={{ width: '100%', maxHeight: '100%' }} autoHide ref={ref}>

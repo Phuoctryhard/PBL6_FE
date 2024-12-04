@@ -162,11 +162,11 @@ const Customer = () => {
             <span
               className='text-xs px-4 py-1 rounded-xl'
               style={{
-                color: text === 1 ? '#f5222d' : '#008efa',
-                backgroundColor: text === 1 ? '#fdebeb' : 'rgb(0, 142, 250, 0.1)'
+                color: record.user_is_delete === 1 ? '#f5222d' : '#008efa',
+                backgroundColor: record.user_is_delete === 1 ? '#fdebeb' : 'rgb(0, 142, 250, 0.1)'
               }}
             >
-              {text === 1 ? 'Deleted' : 'Active'}
+              {record.user_is_delete === 1 ? 'Deleted' : 'Active'}
             </span>
           </div>
         )

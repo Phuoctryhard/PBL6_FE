@@ -398,6 +398,7 @@ const Admin = () => {
       searchAdmins()
     }
   }, [
+    data,
     searchValue,
     tableParams.pagination?.current,
     tableParams?.sortOrder,

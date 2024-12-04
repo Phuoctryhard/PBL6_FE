@@ -9,7 +9,7 @@ import { CloseOutlined } from '@ant-design/icons'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 let currentSlide = 0
 const ViewProduct = () => {
-  const { setIsLogin, triggerSidebar } = useAdminMainLayoutFunction()
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
     messageApi.open({
@@ -147,7 +147,6 @@ const ViewProduct = () => {
   }, [])
 
   useEffect(() => {
-    triggerSidebar('inventory', 'products')
     fetchProducts()
   }, [productID])
 

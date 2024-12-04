@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { AdminOrderApi, ProductsAPI } from '../../Api/admin'
 import 'react-toastify/dist/ReactToastify.css'
@@ -9,11 +9,16 @@ import { AdminTable } from '../'
 import jsPDF from 'jspdf'
 import domtoimage from 'dom-to-image'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const ViewOrder = () => {
-  const { setIsLogin, triggerSidebar } = useAdminMainLayoutFunction()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { setIsLogin, setHeaderNotifyData } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
   const { id } = useParams()
+  const { notifyData } = location.state || {}
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
 
@@ -107,6 +112,10 @@ const ViewOrder = () => {
                   src={record.product_image ? record.product_image : '/assets/images/default-product.png'}
                   alt='Product'
                   className='w-32 h-32 object-cover rounded-[4px]'
+                  onError={(e) => {
+                    e.target.onerror = null
+                    e.target.src = '/assets/images/default-product.png'
+                  }}
                 />
                 <div className='flex'>
                   <span className='font-medium text-sm'>{record.product_name}</span>
@@ -239,6 +248,33 @@ const ViewOrder = () => {
     }
   }
 
+  const handleUpdateStatus = async (orderId) => {
+    try {
+      if (!orderId) throw new Error('Order ID is required')
+      const res = await AdminOrderApi.updateStatus(orderId, token)
+      if (res) {
+        setStatus(res.status)
+        setMessageResult(res?.messages.join('. ') || res?.message)
+        if (notifyData) {
+          const newNotifyData = notifyData.filter((item) => item.order_id !== Number(orderId))
+          setHeaderNotifyData(newNotifyData)
+        }
+
+        toast.success('Update order status successfully!', {
+          autoClose: 3000
+        })
+        navigate('/admin/orders', {
+          state: {
+            orderID: orderId
+          }
+        })
+      }
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
+  }
+
   useEffect(() => {
     fetchOrderByIDs()
   }, [id])
@@ -322,7 +358,9 @@ const ViewOrder = () => {
           <button
             className='h-[46px] px-4 py-3 bg-[rgb(0,143,153,0.05)] rounded-lg text-[rgb(0,143,153)] flex gap-2 font-semibold items-center text-sm justify-center border-dashed border border-[rgb(0,143,153)]'
             type='button'
-            onClick={() => {}}
+            onClick={() => {
+              handleUpdateStatus(id)
+            }}
           >
             <span>Update</span>
             <span>
@@ -352,7 +390,7 @@ const ViewOrder = () => {
               className='object-cover w-[9rem] h-auto'
               onError={(e) => {
                 e.target.onerror = null
-                e.target.src = '/assets/images/default-avatar.png'
+                e.target.src = '/assets/images/Logo_Pbl6.png'
               }}
             />
             <div className='flex justify-center items-center gap-4 pt-8'>
@@ -426,6 +464,10 @@ const ViewOrder = () => {
                   src={data?.user_avatar ? data.user_avatar : '/assets/images/default-avatar.png'}
                   alt='Avatar'
                   className='w-32 h-32 rounded-[50%] object-cover border border-dashed border-gray-800 ml-auto'
+                  onError={(e) => {
+                    e.target.onerror = null
+                    e.target.src = '/assets/images/default-avatar.png'
+                  }}
                 />
               </div>
             </div>

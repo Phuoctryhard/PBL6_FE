@@ -1,9 +1,7 @@
 import { BreadCrumbs, AdminTable } from '../'
 import { message, Dropdown, Tooltip, Select, ConfigProvider, DatePicker } from 'antd'
-import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { AdminOrderApi, AdminDeliveryAPI, AdminPaymentApi } from '../../Api/admin'
 import { Eye, Edit, SearchNormal, ArrowDown2 } from 'iconsax-react'
@@ -40,6 +38,7 @@ const filterTheme = {
   }
 }
 const Orders = () => {
+  const location = useLocation()
   const token = localStorage.getItem('accesstoken')
 
   const [messageApi, contextHolder] = message.useMessage()
@@ -121,7 +120,15 @@ const Orders = () => {
         <Tooltip
           title={
             <div className='flex items-center gap-x-2 justify-start'>
-              <img src={record.user_avatar} alt={text} className='w-[48px] h-[48px] object-cover rounded-full' />
+              <img
+                src={record.user_avatar}
+                alt={text}
+                className='w-[48px] h-[48px] object-cover rounded-full'
+                onError={(e) => {
+                  e.target.onerror = null
+                  e.target.src = '/assets/images/default-avatar.png'
+                }}
+              />
               <span>{text}</span>
             </div>
           }
@@ -130,7 +137,15 @@ const Orders = () => {
           trigger={['hover']}
         >
           <div className='flex items-center gap-x-2 justify-start'>
-            <img src={record.user_avatar} alt={text} className='w-[48px] h-[48px] object-cover rounded-full' />
+            <img
+              src={record.user_avatar}
+              alt={text}
+              className='w-[48px] h-[48px] object-cover rounded-full'
+              onError={(e) => {
+                e.target.onerror = null
+                e.target.src = '/assets/images/default-avatar.png'
+              }}
+            />
             <span>{text}</span>
           </div>
         </Tooltip>
@@ -554,8 +569,6 @@ const Orders = () => {
       const matchOrderStatus = selectedOrderStatus !== undefined ? item.order_status === selectedOrderStatus : true
       const matchPaymentStatus =
         selectedPaymentStatus !== undefined ? item.payment_status === selectedPaymentStatus : true
-      // const matchDeliveryStatus =
-      //   selectedDeliveryStatus !== undefined ? item.delivery_status === selectedDeliveryStatus : true
       const matchPaymentMethod = payment_method_name
         ? payment_method_name.some((p) => p === item.payment_method_name)
         : true
@@ -572,13 +585,7 @@ const Orders = () => {
           : true
 
       return (
-        matchInfo &&
-        matchOrderStatus &&
-        matchPaymentStatus &&
-        // matchDeliveryStatus &&
-        matchPaymentMethod &&
-        matchDeliveryMethod &&
-        matchDate
+        matchInfo && matchOrderStatus && matchPaymentStatus && matchPaymentMethod && matchDeliveryMethod && matchDate
       )
     })
     setFilterData(filterData)
@@ -624,6 +631,13 @@ const Orders = () => {
     fetchAllPaymentMethods()
     fetchAllDeliveryMethods()
   }, [])
+
+  useEffect(() => {
+    if (location.state?.orderID) {
+      const orderID = location.state.orderID
+      setSearchValue(orderID)
+    }
+  }, [location])
 
   useEffect(() => {
     if (data) {

@@ -571,7 +571,7 @@ const Categories = () => {
         setMessageResult('Category was updated successfully')
       }
     } catch (error) {
-      if (e.message.includes('401')) {
+      if (error.message.includes('401')) {
         setIsLogin(false)
         return
       }
