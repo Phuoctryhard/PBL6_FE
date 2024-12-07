@@ -10,6 +10,7 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/app.context'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
 
@@ -42,15 +43,7 @@ const filterTheme = {
   }
 }
 const Categories = () => {
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
+  const { setIsLogin } = useAdminMainLayoutFunction()
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -315,7 +308,7 @@ const Categories = () => {
       results = data1D.filter((item) => {
         const matchCategoryInfo =
           item.category_name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.category_id.toString().includes(searchValue) ||
+          item.category_id.toString() === searchValue ||
           item.category_type.toLowerCase().includes(searchValue.toLowerCase())
         const matchesStatus = selectedStatus !== undefined ? item.category_is_delete === selectedStatus : true
         return matchCategoryInfo && matchesStatus
@@ -349,17 +342,10 @@ const Categories = () => {
       ...params
     })
     try {
-      const response = await CategoriesAPI.searchCategories(token, query)
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Error fetching categories: with status ${response.status}`)
-        }
+      const result = await CategoriesAPI.searchCategories(token, query)
+      if (!result) {
         return
       }
-      const result = await response.json()
       const data = result.data
       setData1D(data)
       const treeDataConvert = convertDataToTree(data)
@@ -385,6 +371,12 @@ const Categories = () => {
         }
       })
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setLoading(false)
     }
@@ -493,51 +485,39 @@ const Categories = () => {
   }
 
   const handleDeleteCategory = async (id) => {
-    const response = await CategoriesAPI.deleteCategories(id, token)
-    const isResponseOK = await handleResponse(response, `Error delete category with id: ${id}`)
-    if (!isResponseOK) {
-      return
+    try {
+      const response = await CategoriesAPI.deleteCategories(id, token)
+      if (!response) {
+        return
+      }
+      setStatus(200)
+      setMessageResult(`Delete category with id: ${id} successfully.`)
+    } catch (err) {
+      if (err.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(err.message)
     }
-    setStatus(200)
-    setMessageResult(`Delete category with id: ${id} successfully.`)
   }
 
   const handleRestoreCategory = async (id) => {
-    const response = await CategoriesAPI.restoreCategories(id, token)
-    const isResponseOK = await handleResponse(response, `Error restore category with id: ${id}`)
-    if (!isResponseOK) {
-      return
-    }
-    setStatus(200)
-    setMessageResult(`Restore category with id: ${id} successfully.`)
-  }
-
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          if (res.message) {
-            setMessageResult(res.message)
-            setStatus(response.status)
-          } else if (res.messages) {
-            setMessageResult(res.messages.join('. '))
-            setStatus(response.status)
-          } else {
-            setStatus(400)
-            setMessageResult(defaultErrorText)
-          }
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
+    try {
+      const response = await CategoriesAPI.restoreCategories(id, token)
+      if (!response) {
+        return
       }
-      return false
+      setStatus(200)
+      setMessageResult(`Restore category with id: ${id} successfully.`)
+    } catch (err) {
+      if (err.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(err.message)
     }
-    return true
   }
 
   const handleSubmit = async (e) => {
@@ -581,9 +561,7 @@ const Categories = () => {
       } else if (typeModal === 'update') {
         response = await CategoriesAPI.updateCategories(selectedCategory, formData, token)
       }
-
-      const isResponseOK = await handleResponse(response, `Error ${typeModal} category fetch`)
-      if (!isResponseOK) {
+      if (!response) {
         return
       }
       setStatus(200)
@@ -593,6 +571,12 @@ const Categories = () => {
         setMessageResult('Category was updated successfully')
       }
     } catch (error) {
+      if (error.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(error.message)
     } finally {
       setSubmitLoading(false)
     }
@@ -944,13 +928,7 @@ const Categories = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchCategories(token, {
-                  search: searchValue
-                })
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>

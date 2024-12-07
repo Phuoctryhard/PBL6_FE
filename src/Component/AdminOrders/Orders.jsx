@@ -1,14 +1,14 @@
 import { BreadCrumbs, AdminTable } from '../'
-import { message, Dropdown, Tooltip, Select, ConfigProvider } from 'antd'
-import { toast } from 'react-toastify'
+import { message, Dropdown, Tooltip, Select, ConfigProvider, DatePicker } from 'antd'
 import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { AdminOrderApi, AdminDeliveryAPI, AdminPaymentApi } from '../../Api/admin'
-import { Eye, Edit, SearchNormal, ArrowDown2, Setting } from 'iconsax-react'
-import { DashOutlined } from '@ant-design/icons'
+import { Eye, Edit, SearchNormal, ArrowDown2 } from 'iconsax-react'
+import { DashOutlined, DeleteOutlined } from '@ant-design/icons'
+import qs from 'qs'
 
+const { RangePicker } = DatePicker
 const filterTheme = {
   token: {
     colorTextQuaternary: '#1D242E',
@@ -38,16 +38,8 @@ const filterTheme = {
   }
 }
 const Orders = () => {
-  const navigate = useNavigate()
+  const location = useLocation()
   const token = localStorage.getItem('accesstoken')
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -65,8 +57,6 @@ const Orders = () => {
   const [paymentMethod, setPaymentMethod] = useState()
   const [deliveryMethod, setDeliveryMethod] = useState()
   const [selectedOrderStatus, setSelectedOrderStatus] = useState()
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState()
-  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState()
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState()
   const [selectedDeliveryStatus, setSelectedDeliveryStatus] = useState()
   const [selectedFrom, setSelectedFrom] = useState()
@@ -103,32 +93,6 @@ const Orders = () => {
     return `${formattedDate}`
   }
 
-  const DateFormatData = (date) => {
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-      const [day, month, year] = date.split('/')
-      return `${year}-${month}-${day}`
-    }
-
-    // Check if the date is in ISO 8601 format
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
-      const parsedDate = new Date(date)
-      const day = String(parsedDate.getDate()).padStart(2, '0')
-      const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-      const year = parsedDate.getFullYear()
-      return `${year}-${month}-${day}`
-    }
-
-    // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
-    if (Date.parse(date)) {
-      const parsedDate = new Date(date)
-      const day = String(parsedDate.getDate()).padStart(2, '0')
-      const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-      const year = parsedDate.getFullYear()
-      return `${year}-${month}-${day}`
-    }
-    return ''
-  }
-
   // Table columns
   const columns = [
     {
@@ -136,6 +100,7 @@ const Orders = () => {
       dataIndex: 'order_id',
       key: 'order_id',
       width: '5%',
+      showSorterTooltip: false,
       sorter: (a, b) => a.order_id - b.order_id,
       ellipsis: true
     },
@@ -143,6 +108,11 @@ const Orders = () => {
       title: 'User',
       dataIndex: 'user_fullname',
       key: 'user_fullname',
+      showSorterTooltip: {
+        title: 'User',
+        placement: 'topLeft',
+        trigger: ['hover']
+      },
       sorter: (a, b) => a.user_fullname.localeCompare(b.user_fullname),
       width: '15%',
       ellipsis: true,
@@ -150,7 +120,15 @@ const Orders = () => {
         <Tooltip
           title={
             <div className='flex items-center gap-x-2 justify-start'>
-              <img src={record.user_avatar} alt={text} className='w-[48px] h-[48px] object-cover rounded-full' />
+              <img
+                src={record.user_avatar}
+                alt={text}
+                className='w-[48px] h-[48px] object-cover rounded-full'
+                onError={(e) => {
+                  e.target.onerror = null
+                  e.target.src = '/assets/images/default-avatar.png'
+                }}
+              />
               <span>{text}</span>
             </div>
           }
@@ -159,7 +137,15 @@ const Orders = () => {
           trigger={['hover']}
         >
           <div className='flex items-center gap-x-2 justify-start'>
-            <img src={record.user_avatar} alt={text} className='w-[48px] h-[48px] object-cover rounded-full' />
+            <img
+              src={record.user_avatar}
+              alt={text}
+              className='w-[48px] h-[48px] object-cover rounded-full'
+              onError={(e) => {
+                e.target.onerror = null
+                e.target.src = '/assets/images/default-avatar.png'
+              }}
+            />
             <span>{text}</span>
           </div>
         </Tooltip>
@@ -170,6 +156,11 @@ const Orders = () => {
       dataIndex: 'receiver',
       key: 'receiver',
       sorter: (a, b) => a.receiver_name.localeCompare(b.receiver_name),
+      showSorterTooltip: {
+        title: 'Receiver',
+        placement: 'topLeft',
+        trigger: ['hover']
+      },
       ellipsis: true,
       width: '15%',
       render: (text, record) => (
@@ -198,9 +189,105 @@ const Orders = () => {
       )
     },
     {
+      title: `Payment Status`,
+      dataIndex: 'payment_status',
+      key: 'payment_status',
+      sorter: (a, b) => a.payment_status.localeCompare(b.payment_status),
+      ellipsis: true,
+      showSorterTooltip: {
+        title: 'Payment status',
+        placement: 'topLeft',
+        trigger: ['hover']
+      },
+      render: (text, record) => {
+        let color
+        let backgroundColor
+        let borderColor
+        let status = record.payment_status
+        switch (status) {
+          case 'completed':
+            color = '#065F46'
+            backgroundColor = '#D1FAE5'
+            borderColor = '#6EE7B7'
+            break
+          case 'failed':
+            borderColor = '#FCA5A5'
+            backgroundColor = '#FEE2E2'
+            color = '#991B1B'
+            break
+          case 'pending':
+            color = '#1E40AF'
+            backgroundColor = '#DBEAFE'
+            borderColor = '#93C5FD'
+            break
+        }
+        return (
+          <span
+            style={{ color, backgroundColor, border: `1px solid ${borderColor}` }}
+            className='inline-block justify-center items-center py-[2px] px-[10px] rounded whitespace-nowrap text-xs'
+          >
+            {status}
+          </span>
+        )
+      }
+    },
+    // {
+    //   title: 'Delivery status',
+    //   dataIndex: 'delivery_status',
+    //   key: 'delivery_status',
+    //   showSorterTooltip: {
+    //     title: 'Delivery status',
+    //     placement: 'topLeft',
+    //     trigger: ['hover']
+    //   },
+    //   sorter: (a, b) => a.delivery_status.localeCompare(b.delivery_status),
+    //   ellipsis: true,
+    //   render: (text, record) => {
+    //     let color
+    //     let backgroundColor
+    //     let borderColor
+    //     let status = record.order_status
+    //     switch (status) {
+    //       case 'delivered':
+    //         color = '#065F46'
+    //         backgroundColor = '#D1FAE5'
+    //         borderColor = '#6EE7B7'
+    //         break
+    //       case 'cancelled':
+    //         borderColor = '#FCA5A5'
+    //         backgroundColor = '#FEE2E2'
+    //         color = '#991B1B'
+    //         break
+    //       case 'shipped':
+    //         borderColor = '#D1D5DB'
+    //         backgroundColor = '#F3F4F6'
+    //         color = '#1F2937'
+    //         break
+    //       case 'pending':
+    //         color = '#1E40AF'
+    //         backgroundColor = '#DBEAFE'
+    //         borderColor = '#93C5FD'
+    //         break
+    //     }
+    //     return (
+    //       <span
+    //         style={{ color, backgroundColor, border: `1px solid ${borderColor}` }}
+    //         className='inline-block justify-center items-center py-[2px] px-[10px] rounded whitespace-nowrap text-xs'
+    //       >
+    //         {status}
+    //       </span>
+    //     )
+    //   }
+    // },
+    {
       title: 'Order Status',
       dataIndex: 'order_status',
       key: 'order_status',
+      showSorterTooltip: {
+        title: 'Order status',
+        placement: 'topLeft',
+        trigger: ['hover']
+      },
       sorter: (a, b) => a.order_status.localeCompare(b.order_status),
       ellipsis: true,
       render: (text, record) => {
@@ -209,7 +296,7 @@ const Orders = () => {
         let borderColor
         let status = record.order_status
         switch (status) {
-          case 'completed':
+          case 'confirmed':
             color = '#065F46'
             backgroundColor = '#D1FAE5'
             borderColor = '#6EE7B7'
@@ -249,15 +336,27 @@ const Orders = () => {
       title: 'Payment',
       dataIndex: 'payment_method_name',
       key: 'payment_method_name',
+      showSorterTooltip: {
+        title: 'Payment method',
+        placement: 'topLeft',
+        trigger: ['hover']
+      },
       sorter: (a, b) => a.payment_method_name.localeCompare(b.payment_method_name),
       filters: paymentMethod,
-      onFilter: (value, record) => record.payment_method_name.indexOf(value) === 0,
+      onFilter: (value, record) => {
+        return record.payment_method_name.indexOf(value) === 0
+      },
       ellipsis: true
     },
     {
       title: 'Delivery Method',
       dataIndex: 'delivery_method_name',
       key: 'delivery_method_name',
+      showSorterTooltip: {
+        title: 'Delivery method',
+        placement: 'topLeft',
+        trigger: ['hover']
+      },
       sorter: (a, b) => a.delivery_method_name.localeCompare(b.delivery_method_name),
       filters: deliveryMethod,
       onFilter: (value, record) => record.delivery_method_name.indexOf(value) === 0,
@@ -266,6 +365,11 @@ const Orders = () => {
     {
       title: 'Total',
       dataIndex: 'order_total_amount',
+      showSorterTooltip: {
+        title: 'Total amount',
+        placement: 'topLeft',
+        trigger: ['hover']
+      },
       key: 'order_total_amount',
       sorter: (a, b) => a.order_total_amount - b.order_total_amount,
       ellipsis: true
@@ -293,9 +397,30 @@ const Orders = () => {
               {
                 key: '3',
                 label: (
-                  <button type='button' className='flex items-center gap-x-2 justify-center' onClick={() => {}}>
+                  <button
+                    type='button'
+                    className='flex items-center gap-x-2 justify-start w-full'
+                    onClick={() => {
+                      handleUpdateStatus(record.order_id)
+                    }}
+                  >
                     <Edit className='text-[#bc9143]' size={15} />
-                    <span>Edit</span>
+                    <span>Update status</span>
+                  </button>
+                )
+              },
+              {
+                key: '4',
+                label: (
+                  <button
+                    type='button'
+                    className='flex items-center gap-x-2 justify-start w-full'
+                    onClick={() => {
+                      handleCancelOrder(record.order_id)
+                    }}
+                  >
+                    <DeleteOutlined className='text-[14px] text-[red]' />
+                    <span>Cancel</span>
                   </button>
                 )
               }
@@ -331,63 +456,31 @@ const Orders = () => {
     setTableParams(params)
   }
 
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          setMessageResult(res.message)
-          setStatus(response.status)
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
-      }
-      return false
-    }
-    return true
-  }
-
   const fetchAllOrders = async () => {
     setLoading(true)
     try {
-      const response = await AdminOrderApi.getAllOrder(token)
-      const isResponseOk = await handleResponse(response, 'Error fetch all orders')
-      if (isResponseOk) {
-        const res = await response.json()
+      const res = await AdminOrderApi.getAllOrder(token)
+      if (res) {
         const resData = res.data
         const formattedData = resData.map((item) => {
           return {
             ...item,
-            key: item.order_id,
-            order_created_at: DateFormatView(item.order_created_at),
-            order_updated_at: DateFormatView(item.order_updated_at)
+            key: item.order_id
           }
         })
-
-        const uniqueKey = new Set()
-        const uniqueData = []
-        formattedData.forEach((item) => {
-          if (!uniqueKey.has(item.order_id)) {
-            uniqueKey.add(item.order_id)
-            uniqueData.push(item)
-          }
-        })
-        setData(uniqueData)
-        setFilterData(uniqueData)
-        setLoading(false)
+        setData(formattedData)
+        setFilterData(formattedData)
         setTableParams({
           ...tableParams,
           pagination: {
             ...tableParams.pagination,
-            total: uniqueData.length
+            total: formattedData.length
           }
         })
       }
     } catch (error) {
+      setStatus(400)
+      setMessageResult(error.message)
     } finally {
       setLoading(false)
     }
@@ -395,10 +488,8 @@ const Orders = () => {
 
   const fetchAllPaymentMethods = async () => {
     try {
-      const response = await AdminPaymentApi.getAllPaymentMethod(token)
-      const isResponseOk = await handleResponse(response, 'Error fetch all payment methods')
-      if (isResponseOk) {
-        const res = await response.json()
+      const res = await AdminPaymentApi.getAllPaymentMethod(token)
+      if (res) {
         const resData = res.data
         const selectData = resData.map((item, index) => ({
           value: item.payment_method_name,
@@ -407,15 +498,16 @@ const Orders = () => {
         }))
         setPaymentMethod(selectData)
       }
-    } catch (error) {}
+    } catch (error) {
+      setStatus(400)
+      setMessageResult(error.message)
+    }
   }
 
   const fetchAllDeliveryMethods = async () => {
     try {
-      const response = await AdminDeliveryAPI.getAllDeliveryMethod(token)
-      const isResponseOk = await handleResponse(response, 'Error fetch all delivery methods')
-      if (isResponseOk) {
-        const res = await response.json()
+      const res = await AdminDeliveryAPI.getAllDeliveryMethod(token)
+      if (res) {
         const resData = res.data
         const selectData = resData.map((item) => ({
           value: item.delivery_method_name,
@@ -424,29 +516,78 @@ const Orders = () => {
         }))
         setDeliveryMethod(selectData)
       }
-    } catch (error) {}
+    } catch (error) {
+      setStatus(400)
+      setMessageResult(error.message)
+    }
   }
 
   const searchOrder = () => {
+    const { filters = {} } = tableParams
+    const { delivery_method_name, payment_method_name } = filters
+    const formatDate = (date) => {
+      let format = date
+
+      // Check if the date is in DD/MM/YYYY format
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+        const [day, month, year] = date.split('/')
+        format = `${year}-${month}-${day}`
+      }
+
+      // Check if the date is in ISO 8601 format
+      else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) {
+        const parsedDate = new Date(date)
+        const day = String(parsedDate.getDate()).padStart(2, '0')
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+        const year = parsedDate.getFullYear()
+        format = `${year}-${month}-${day}`
+      }
+
+      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+      else if (Date.parse(date)) {
+        const parsedDate = new Date(date)
+        const day = String(parsedDate.getDate()).padStart(2, '0')
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+        const year = parsedDate.getFullYear()
+        format = `${year}-${month}-${day}`
+      }
+
+      return format ? new Date(format) : null
+    }
     const filterData = data.filter((item) => {
+      const orderDetail = item.order_detail[0]
       const matchInfo =
-        item.order_id.toString().includes(searchValue) ||
+        item.order_id.toString() === searchValue ||
         item.user_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.receiver_name.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.receiver_phone.includes(searchValue) ||
         item.receiver_address.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.ward_name.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.district_name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        item.province_name.toLowerCase().includes(searchValue.toLowerCase())
+        item.province_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        orderDetail.product_name.toLowerCase().includes(searchValue.toLowerCase())
       const matchOrderStatus = selectedOrderStatus !== undefined ? item.order_status === selectedOrderStatus : true
       const matchPaymentStatus =
         selectedPaymentStatus !== undefined ? item.payment_status === selectedPaymentStatus : true
-      const matchDeliveryStatus =
-        selectedDeliveryStatus !== undefined ? item.delivery_status === selectedDeliveryStatus : true
+      const matchPaymentMethod = payment_method_name
+        ? payment_method_name.some((p) => p === item.payment_method_name)
+        : true
+      const matchDeliveryMethod = delivery_method_name
+        ? delivery_method_name.some((d) => d === item.delivery_method_name)
+        : true
+      const matchDate =
+        selectedFrom && selectedTo
+          ? formatDate(item.order_created_at) &&
+            formatDate(selectedFrom) &&
+            formatDate(selectedTo) &&
+            formatDate(item.order_created_at) >= formatDate(selectedFrom) &&
+            formatDate(item.order_created_at) <= formatDate(selectedTo)
+          : true
 
-      return matchInfo && matchOrderStatus && matchPaymentStatus && matchDeliveryStatus
+      return (
+        matchInfo && matchOrderStatus && matchPaymentStatus && matchPaymentMethod && matchDeliveryMethod && matchDate
+      )
     })
-
     setFilterData(filterData)
     setTableParams({
       ...tableParams,
@@ -457,6 +598,34 @@ const Orders = () => {
     })
   }
 
+  const handleUpdateStatus = async (orderId) => {
+    try {
+      const res = await AdminOrderApi.updateStatus(orderId, token)
+      if (res) {
+        setStatus(res.status)
+        setMessageResult(res?.messages.join('. ') || res?.message)
+        fetchAllOrders()
+      }
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
+  }
+
+  const handleCancelOrder = async (orderId) => {
+    try {
+      const res = await AdminOrderApi.cancelOrder(orderId, token, qs.stringify({ status: 'cancelled' }))
+      if (res) {
+        setStatus(res.status)
+        setMessageResult('Order has been cancelled successfully')
+        fetchAllOrders()
+      }
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
+  }
+
   useEffect(() => {
     fetchAllOrders()
     fetchAllPaymentMethods()
@@ -464,14 +633,23 @@ const Orders = () => {
   }, [])
 
   useEffect(() => {
+    if (location.state?.orderID) {
+      const orderID = location.state.orderID
+      setSearchValue(orderID)
+    }
+  }, [location])
+
+  useEffect(() => {
     if (data) {
       searchOrder()
     }
   }, [
+    data,
     searchValue,
     selectedOrderStatus,
     selectedPaymentStatus,
-    selectedDeliveryStatus,
+    // selectedDeliveryStatus,
+    selectedFrom,
     tableParams.pagination?.current,
     tableParams?.sortOrder,
     tableParams?.sortField,
@@ -510,22 +688,18 @@ const Orders = () => {
       </header>
       <div className='p-5 my-6 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp flex flex-col gap-4'>
         <div className='flex justify-between items-center gap-x-3'>
-          <div className='flex items-center w-[250px] justify-between text-[14px] rounded-[4px] relative'>
+          <div className='flex items-center w-full max-w-[25%] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search user'
-              className='border-[1px] border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[15px] px-[15px] rounded-[4px] focus:border-[#1D242E]'
+              className='border border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[0.938rem] px-[0.938rem] rounded focus:border-[#1D242E]'
               value={searchValue}
               autoFocus
               onChange={(e) => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchAllOrders()
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
@@ -536,13 +710,13 @@ const Orders = () => {
               placeholder='Select order status'
               placement='bottomLeft'
               options={[
-                { value: 'completed', label: 'Completed' },
+                { value: 'confirmed', label: 'Confirmed' },
                 { value: 'cancelled', label: 'Cancelled' },
                 { value: 'delivered', label: 'Delivered' },
                 { value: 'shipped', label: 'Shipped' },
                 { value: 'pending', label: 'Pending' }
               ]}
-              className='w-[250px] h-[50px]'
+              className='w-1/4 h-[50px]'
               onChange={(value) => {
                 setSelectedOrderStatus(value ? value : undefined)
               }}
@@ -557,12 +731,12 @@ const Orders = () => {
                 { value: 'failed', label: 'Failed' },
                 { value: 'pending', label: 'Pending' }
               ]}
-              className='w-[250px] h-[50px]'
+              className='w-1/4 h-[50px]'
               onChange={(value) => {
                 setSelectedPaymentStatus(value === undefined ? undefined : value)
               }}
             />
-            <Select
+            {/* <Select
               suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
               allowClear
               placeholder='Select delivery status'
@@ -572,9 +746,17 @@ const Orders = () => {
                 { value: 'cancelled', label: 'Cancelled' },
                 { value: 'pending', label: 'Pending' }
               ]}
-              className='w-[250px] h-[50px]'
+              className='w-1/2 h-[50px]'
               onChange={(value) => {
                 setSelectedDeliveryStatus(value === undefined ? undefined : value)
+              }}
+            /> */}
+            <RangePicker
+              className='w-1/4 h-[50px]'
+              format={'DD/MM/YYYY'}
+              onChange={(date, dateString) => {
+                setSelectedFrom(dateString[0])
+                setSelectedTo(dateString[1])
               }}
             />
           </ConfigProvider>

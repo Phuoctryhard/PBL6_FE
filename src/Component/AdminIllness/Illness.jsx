@@ -11,6 +11,8 @@ import React from 'react'
 import { Add } from 'iconsax-react'
 import { CloseOutlined } from '@ant-design/icons'
 import { AdminDiseaseApi, CategoriesAPI } from '../../Api/admin'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+
 import './Illness.css'
 
 const filterTheme = {
@@ -36,16 +38,10 @@ const filterTheme = {
 }
 
 const Illness = () => {
+  const { setIsLogin } = useAdminMainLayoutFunction()
+  const { triggerSidebar } = useAdminMainLayoutFunction()
   const navigate = useNavigate()
   const token = localStorage.getItem('accesstoken')
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -58,26 +54,6 @@ const Illness = () => {
 
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          setMessageResult(res.messages.join('. '))
-          setStatus(response.status)
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
-      }
-      return false
-    }
-    return true
-  }
 
   //#region Filter data
   const [searchValue, setSearchValue] = useState('')
@@ -194,12 +170,10 @@ const Illness = () => {
                     onClick={() => {
                       try {
                         const fetchCategory = async (id) => {
-                          const response = await AdminDiseaseApi.getCategoryByDiseaseID(id, token)
-                          const isResponseOK = await handleResponse(response, 'Error fetch category disease')
-                          if (!isResponseOK) {
+                          const res = await AdminDiseaseApi.getCategoryByDiseaseID(id, token)
+                          if (!res) {
                             return
                           }
-                          const res = await response.json()
                           const category = res.data.map((d) => ({
                             key: d.category_disease_id,
                             value: d.category_disease_id,
@@ -213,8 +187,12 @@ const Illness = () => {
                         setOpenModalDeleteCategory(true)
                         setDiseaseSelected(record.disease_id)
                       } catch (e) {
+                        if (e.message.includes('401')) {
+                          setIsLogin(false)
+                          return
+                        }
                         setStatus(400)
-                        setMessageResult(`Error delete disease from category: ${e.message}`)
+                        setMessageResult(`${e.message}`)
                       }
                     }}
                   >
@@ -236,7 +214,6 @@ const Illness = () => {
   ]
 
   const [data, setData] = useState([])
-  const [diseases, setDiseases] = useState([])
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState()
   const [filterData, setFilterData] = useState([])
@@ -250,7 +227,9 @@ const Illness = () => {
 
   const searchDisease = () => {
     const search = searchValue.toLowerCase()
-    const result = data.filter((item) => item.disease_name.toLowerCase().includes(search))
+    const result = data.filter(
+      (item) => item.disease_name.toLowerCase().includes(search) || item.disease_id.toString() === searchValue
+    )
     const tableData = result
     setFilterData(tableData)
     setTableParams({
@@ -265,24 +244,10 @@ const Illness = () => {
   const fetchAllDisease = async () => {
     setLoading(true)
     try {
-      const response = await AdminDiseaseApi.getAllDisease(token)
-      if (!response.ok) {
-        const content_type = response.headers.get('content-type')
-        if (content_type && content_type.includes('application/json')) {
-          const res = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setMessageResult(res.message)
-            setStatus(response.status)
-          }
-        } else {
-          setStatus(response.status)
-          setMessageResult(response.statusText ? response.statusText : 'Error fetch all disease')
-        }
+      const res = await AdminDiseaseApi.getAllDisease(token)
+      if (!res) {
         return
       } else {
-        const res = await response.json()
         const resData = res.data.data
         const tableData = resData.map((item) => ({
           ...item,
@@ -299,6 +264,12 @@ const Illness = () => {
         })
       }
     } catch (error) {
+      if (error.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(`${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -306,12 +277,10 @@ const Illness = () => {
 
   const fetchAllCategoryDisease = async () => {
     try {
-      const response = await CategoriesAPI.getAllCategories(token)
-      const isResponseOK = await handleResponse(response, 'Error fetch all category disease')
-      if (!isResponseOK) {
+      const res = await CategoriesAPI.getAllCategories(token)
+      if (!res) {
         return
       } else {
-        const res = await response.json()
         const resData = res.data
         const category = resData.filter((d) => d.parent_type === 'disease')
         const selectData = category.map((d) => ({
@@ -323,7 +292,7 @@ const Illness = () => {
       }
     } catch (error) {
       setStatus(400)
-      setMessageResult(`Error fetch all category disease: ${error.message}`)
+      setMessageResult(`${error.message}`)
     }
   }
 
@@ -396,28 +365,33 @@ const Illness = () => {
   }, [generalOverview, symptoms, cause, riskSubjects, diagnosis, prevention, treatmentMethod])
 
   useEffect(() => {
-    if (selectedCategory) {
-      const fetchCategoryDisease = async (id) => {
-        const diseases = await fetchCategoryDiseaseByID(id)
-        if (diseases) {
-          const tableData = diseases.map((item) => ({
-            ...item,
-            key: item.disease_id
-          }))
-          setData(tableData)
-          setFilterData(tableData)
-          setTableParams({
-            ...tableParams,
-            pagination: {
-              ...tableParams.pagination,
-              total: diseases.length
-            }
-          })
+    try {
+      if (selectedCategory) {
+        const fetchCategoryDisease = async (id) => {
+          const diseases = await fetchCategoryDiseaseByID(id)
+          if (diseases) {
+            const tableData = diseases.map((item) => ({
+              ...item,
+              key: item.disease_id
+            }))
+            setData(tableData)
+            setFilterData(tableData)
+            setTableParams({
+              ...tableParams,
+              pagination: {
+                ...tableParams.pagination,
+                total: diseases.length
+              }
+            })
+          }
         }
+        fetchCategoryDisease(selectedCategory)
+      } else {
+        fetchAllDisease()
       }
-      fetchCategoryDisease(selectedCategory)
-    } else {
-      fetchAllDisease()
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(`${e.message}`)
     }
   }, [selectedCategory])
 
@@ -428,20 +402,25 @@ const Illness = () => {
   }, [data])
 
   const viewDisease = (id) => {
-    const fetchDisease = async (id) => {
-      const disease = await fetchDiseaseByID(id)
-      if (disease) {
-        setDiseaseName(disease.disease_name)
-        setGeneralOverview(disease.general_overview)
-        setSymptoms(disease.symptoms)
-        setCause(disease.cause)
-        setRiskSubjects(disease.risk_subjects)
-        setDiagnosis(disease.diagnosis)
-        setPrevention(disease.prevention)
-        setTreatmentMethod(disease.treatment_method)
+    try {
+      const fetchDisease = async (id) => {
+        const disease = await fetchDiseaseByID(id)
+        if (disease) {
+          setDiseaseName(disease.disease_name)
+          setGeneralOverview(disease.general_overview)
+          setSymptoms(disease.symptoms)
+          setCause(disease.cause)
+          setRiskSubjects(disease.risk_subjects)
+          setDiagnosis(disease.diagnosis)
+          setPrevention(disease.prevention)
+          setTreatmentMethod(disease.treatment_method)
+        }
       }
+      fetchDisease(id)
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(`${e.message}`)
     }
-    fetchDisease(id)
   }
 
   const handleDeleteDiseaseFromCategory = async (e) => {
@@ -453,20 +432,22 @@ const Illness = () => {
       }
       const formData = new FormData()
       formData.append('category_disease_id', categorySelected)
-      const response = await AdminDiseaseApi.deleteDiseaseFromCategory(formData, token)
-      const isResponseOK = await handleResponse(response, 'Error delete disease from category')
-      if (!isResponseOK) {
+      const res = await AdminDiseaseApi.deleteDiseaseFromCategory(formData, token)
+      if (!res) {
         return
       } else {
-        const res = await response.json()
-        setStatus(response.status)
+        setStatus(200)
         setMessageResult(res.messages.join('. '))
         fetchAllDisease()
         handleCancelDeleteCategory()
       }
-    } catch (error) {
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
       setStatus(400)
-      setMessageResult(`Error delete disease from category: ${error.message}`)
+      setMessageResult(`${e.message}`)
     }
   }
 
@@ -482,24 +463,10 @@ const Illness = () => {
 
   const fetchSelectData = async () => {
     try {
-      const response = await CategoriesAPI.getAllCategories(token)
-      if (!response.ok) {
-        const content_type = response.headers.get('content-type')
-        if (content_type && content_type.includes('application/json')) {
-          const res = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setMessageResult(res.messages)
-            setStatus(response.status)
-          }
-        } else {
-          setStatus(response.status)
-          setMessageResult(response.statusText ? response.statusText : 'Error fetch tree data category')
-        }
+      const res = await CategoriesAPI.getAllCategories(token)
+      if (!res) {
         return
       } else {
-        const res = await response.json()
         const resData = res.data
         const diseaseCategory = resData.filter((d) => d.parent_type === 'disease')
         const selectData = diseaseCategory.map((d) => ({
@@ -510,8 +477,12 @@ const Illness = () => {
         setSelectData(selectData)
       }
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
       setStatus(400)
-      setMessageResult(`Error fetch tree data: ${e.message}`)
+      setMessageResult(`${e.message}`)
     }
   }
 
@@ -541,21 +512,8 @@ const Illness = () => {
       const formData = new FormData()
       formData.append('category_id', categorySelected)
       formData.append('disease_id', diseaseSelected)
-      const response = await AdminDiseaseApi.addDiseaseToCategory(formData, token)
-      if (!response.ok) {
-        const content_type = response.headers.get('content-type')
-        if (content_type && content_type.includes('application/json')) {
-          const res = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setMessageResult(res.messages)
-            setStatus(response.status)
-          }
-        } else {
-          setStatus(response.status)
-          setMessageResult(response.statusText ? response.statusText : 'Error add disease to category')
-        }
+      const res = await AdminDiseaseApi.addDiseaseToCategory(formData, token)
+      if (!res) {
         return
       } else {
         setStatus(200)
@@ -563,8 +521,12 @@ const Illness = () => {
         handleCancel()
       }
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
       setStatus(400)
-      setMessageResult(`Error add disease to category: ${e.message}`)
+      setMessageResult(`${e.message}`)
     } finally {
       setSubmitLoading(false)
     }
@@ -630,12 +592,10 @@ const Illness = () => {
 
   const fetchDiseaseByID = async (id) => {
     try {
-      const response = await AdminDiseaseApi.getDiseaseById(id)
-      const isResponseOK = await handleResponse(response, 'Error fetch disease by ID')
-      if (!isResponseOK) {
+      const res = await AdminDiseaseApi.getDiseaseById(id)
+      if (!res) {
         return
       } else {
-        const res = await response.json()
         const resData = res.data
         return resData
       }
@@ -647,44 +607,47 @@ const Illness = () => {
 
   const fetchCategoryDiseaseByID = async (id) => {
     try {
-      const response = await AdminDiseaseApi.getCategoryDiseaseByID(id)
-      const isResponseOK = await handleResponse(response, 'Error fetch disease by category')
-      if (!isResponseOK) {
+      const res = await AdminDiseaseApi.getCategoryDiseaseByID(id)
+      if (!res) {
         return
       } else {
-        const res = await response.json()
         const resData = res.data
         return resData
       }
     } catch (e) {
       setStatus(400)
-      setMessageResult(`Error fetch disease by category: ${e.message}`)
+      setMessageResult(` ${e.message}`)
     }
   }
 
   useEffect(() => {
-    if (selectedCategory) {
-      const fetchCategoryDisease = async (id) => {
-        const diseases = await fetchCategoryDiseaseByID(id)
-        if (diseases) {
-          const tableData = diseases.map((item) => ({
-            ...item,
-            key: item.disease_id
-          }))
-          setData(tableData)
-          setFilterData(tableData)
-          setTableParams({
-            ...tableParams,
-            pagination: {
-              ...tableParams.pagination,
-              total: diseases.length
-            }
-          })
+    try {
+      if (selectedCategory) {
+        const fetchCategoryDisease = async (id) => {
+          const diseases = await fetchCategoryDiseaseByID(id)
+          if (diseases) {
+            const tableData = diseases.map((item) => ({
+              ...item,
+              key: item.disease_id
+            }))
+            setData(tableData)
+            setFilterData(tableData)
+            setTableParams({
+              ...tableParams,
+              pagination: {
+                ...tableParams.pagination,
+                total: diseases.length
+              }
+            })
+          }
         }
+        fetchCategoryDisease(selectedCategory)
+      } else {
+        fetchAllDisease()
       }
-      fetchCategoryDisease(selectedCategory)
-    } else {
-      fetchAllDisease()
+    } catch (err) {
+      setStatus(400)
+      setMessageResult(`${err.message}`)
     }
   }, [selectedCategory])
 
@@ -696,19 +659,21 @@ const Illness = () => {
 
   const handleDeleteDisease = async (id, data) => {
     try {
-      const response = await AdminDiseaseApi.deleteDisease(id, token, data)
-      const isResponseOK = await handleResponse(response, 'Error delete disease')
-      if (!isResponseOK) {
+      const res = await AdminDiseaseApi.deleteDisease(id, token, data)
+      if (!res) {
         return
       } else {
-        const res = await response.json()
         setMessageResult(res.messages)
-        setStatus(response.status)
+        setStatus(200)
         fetchAllDisease()
       }
-    } catch (error) {
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
       setStatus(400)
-      setMessageResult(`Error delete disease: ${error.message}`)
+      setMessageResult(`${e.message}`)
     }
   }
   //#endregion
@@ -727,6 +692,7 @@ const Illness = () => {
   }, [status, messageResult])
   //#endregion
 
+  //#region fetch data from api
   return (
     <section className='w-full'>
       {contextHolder}
@@ -742,13 +708,17 @@ const Illness = () => {
           />
           <p>Summary of common diseases</p>
         </div>
-        <Link
-          to='/admin/disease/add'
+        <button
+          // to='/admin/disease/add'
           className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+          onClick={() => {
+            navigate('/admin/disease/add')
+            triggerSidebar('disease')
+          }}
         >
           Add new
           <Add size='20' />
-        </Link>
+        </button>
       </header>
       <Modal
         title='Add to category'
@@ -901,11 +871,7 @@ const Illness = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchAllDisease()
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
@@ -921,7 +887,6 @@ const Illness = () => {
                 filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
                 className='h-12 w-[250px]'
                 onChange={(value) => {
-                  console.log(value)
                   setSelectedCategory(value === undefined ? undefined : value)
                 }}
               />

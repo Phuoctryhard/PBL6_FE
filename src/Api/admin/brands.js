@@ -1,46 +1,34 @@
 import { BASE_URL } from '../../until'
+import { fetchWithAuth } from './handleErrorAPI'
 const rootBrands = `${BASE_URL}/brands`
 const BrandsAPI = {
-  getBrands: async () => await fetch(rootBrands),
-  addBrands: async (formData, token) =>
-    await fetch(`${rootBrands}/add`, {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + token
-      },
-      body: formData
-    }),
+  getBrands: async () => await fetchWithAuth(rootBrands, 'GET', undefined, 'fetch all brands'),
+  addBrands: async (formData, token) => await fetchWithAuth(`${rootBrands}/add`, 'POST', token, 'add brand', formData),
   updateBrands: async (id, formData, token) =>
-    await fetch(`${rootBrands}/update/${id}`, {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + token
-      },
-      body: formData
-    }),
+    await fetchWithAuth(`${rootBrands}/update/${id}`, 'POST', token, 'update brand', formData),
   deleteBrands: async (id, token) =>
-    await fetch(`${rootBrands}/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: 'Bearer ' + token
-      },
-      body: JSON.stringify({
+    await fetchWithAuth(
+      `${rootBrands}/${id}`,
+      'DELETE',
+      token,
+      'delete brand',
+      JSON.stringify({
         brand_is_delete: 1
-      })
-    }),
+      }),
+      'application/json'
+    ),
   restoreBrands: async (id, token) =>
-    await fetch(`${rootBrands}/delete/${id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: 'Bearer ' + token
-      },
-      body: JSON.stringify({
+    await fetchWithAuth(
+      `${rootBrands}/delete/${id}`,
+      'POST',
+      token,
+      'restore brand',
+      JSON.stringify({
         brand_is_delete: 0
-      })
-    }),
-  searchBrands: async (data) => await fetch(`${rootBrands}?${data}`)
+      }),
+      'application/json'
+    ),
+  searchBrands: async (data) => await fetchWithAuth(`${rootBrands}?${data}`, 'GET', undefined, 'search brand')
 }
 
 export default BrandsAPI

@@ -1,60 +1,37 @@
-import { getAllByPlaceholderText } from '@testing-library/react'
 import { BASE_URL } from '../../until'
+import { fetchWithAuth } from './handleErrorAPI'
 const rootCategories = `${BASE_URL}/categories`
 const CategoriesAPI = {
-  getCategories: async () => await fetch(rootCategories),
-  getAllCategories: async (token) =>
-    await fetch(`${rootCategories}/all`, {
-      method: 'GET',
-      headers: {
-        authorization: 'Bearer ' + token
-      }
-    }),
+  getCategories: async () => await fetchWithAuth(rootCategories, 'GET', undefined, 'fetch all categories'),
+  getAllCategories: async (token) => await fetchWithAuth(`${rootCategories}/all`, 'GET', token, 'fetch all categories'),
   addCategories: async (formData, token) =>
-    await fetch(`${rootCategories}/add`, {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + token
-      },
-      body: formData
-    }),
+    await fetchWithAuth(`${rootCategories}/add`, 'POST', token, 'add category', formData),
   updateCategories: async (id, formData, token) =>
-    await fetch(`${rootCategories}/update/${id}`, {
-      method: 'POST',
-      headers: {
-        authorization: 'Bearer ' + token
-      },
-      body: formData
-    }),
+    await fetchWithAuth(`${rootCategories}/update/${id}`, 'POST', token, 'update category', formData),
   deleteCategories: async (id, token) =>
-    await fetch(`${rootCategories}/delete/${id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: 'Bearer ' + token
-      },
-      body: JSON.stringify({
+    await fetchWithAuth(
+      `${rootCategories}/delete/${id}`,
+      'POST',
+      token,
+      'delete category',
+      JSON.stringify({
         category_is_delete: 1
-      })
-    }),
+      }),
+      'application/json'
+    ),
   restoreCategories: async (id, token) =>
-    await fetch(`${rootCategories}/delete/${id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: 'Bearer ' + token
-      },
-      body: JSON.stringify({
+    await fetchWithAuth(
+      `${rootCategories}/delete/${id}`,
+      'POST',
+      token,
+      'restore category',
+      JSON.stringify({
         category_is_delete: 0
-      })
-    }),
+      }),
+      'application/json'
+    ),
   searchCategories: async (token, data) =>
-    await fetch(`${rootCategories}/all?${data}`, {
-      method: 'GET',
-      headers: {
-        authorization: 'Bearer ' + token
-      }
-    })
+    await fetchWithAuth(`${rootCategories}/all?${data}`, 'GET', token, 'search category')
 }
 
 export default CategoriesAPI

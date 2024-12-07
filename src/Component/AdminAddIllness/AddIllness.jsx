@@ -10,19 +10,11 @@ import { AdminDiseaseApi } from '../../Api/admin'
 import 'react-quill/dist/quill.snow.css'
 import { CloseCircleOutlined, CloseOutlined } from '@ant-design/icons'
 import { Hospital } from 'iconsax-react'
-import { useScrollToTop } from '../../Layouts/Admin/MainLayout/MainLayout'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const AddIllness = () => {
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const navigate = useNavigate()
   const token = localStorage.getItem('accesstoken')
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
-
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
     messageApi.open({
@@ -226,22 +218,7 @@ const AddIllness = () => {
       }
       try {
         const response = await AdminDiseaseApi.addDisease(formData, token)
-        if (!response.ok) {
-          const contentType = response.headers.get('content-type')
-          if (contentType && contentType.includes('application/json')) {
-            const res = await response.json()
-
-            const message = res.messages
-            if (response.status === 401) {
-              handleUnauthorized()
-            } else {
-              setStatus(400)
-              setMessageResult(message)
-            }
-          } else {
-            setStatus(response.status)
-            setMessageResult(response.statusText || 'Something went wrong with add disease')
-          }
+        if (!response) {
           return
         }
         toast.success('Add disease successfully', {
@@ -249,6 +226,12 @@ const AddIllness = () => {
         })
         window.history.back()
       } catch (error) {
+        if (error.message.includes('401')) {
+          setIsLogin(false)
+          return
+        }
+        setStatus(400)
+        setMessageResult(error.message)
       } finally {
         setSubmitLoading(false)
       }
@@ -299,7 +282,7 @@ const AddIllness = () => {
     }
   }, [status, messageResult])
   //#endregion
-  const scrollToTop = useScrollToTop()
+  const { scrollToTop } = useAdminMainLayoutFunction()
   useEffect(() => {
     scrollToTop()
   }, [])

@@ -7,10 +7,8 @@ import { useState, useEffect, useRef } from 'react'
 import { ProductsAPI, CategoriesAPI, BrandsAPI } from '../../Api/admin'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/app.context'
 import { AdminEditor, BreadCrumbs } from '../'
-
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const filterTheme = {
   token: {
     colorTextQuaternary: '#1D242E',
@@ -38,15 +36,7 @@ const filterTheme = {
 
 let currentSlide = 0
 const EditProduct = () => {
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
     messageApi.open({
@@ -97,32 +87,32 @@ const EditProduct = () => {
   const [submitLoading, setSubmitLoading] = useState(false)
 
   const fetchProducts = async () => {
-    const response = await ProductsAPI.getProductByID(productID)
-    if (!response.ok) {
-      const { messages } = await response.json()
-      setStatus(response.status)
-      setMessageResult('Error fetching product:', messages)
-      return
+    try {
+      const res = await ProductsAPI.getProductByID(productID)
+      const product = res?.data
+      if (!product) {
+        throw new Error(`results in fetchProduct not have key data`)
+      }
+      setProductName(product.product_name !== null ? product.product_name : '')
+      setProductSlug(product.product_slug !== null ? product.product_slug : '')
+      setCategory(product.category_id !== null ? product.category_id : '')
+      setBrand(product.brand_id !== null ? product.brand_id : '')
+      setProductPrice(product.product_price !== null ? parseFloat(product.product_price).toString() : '')
+      setProductDiscount(product.product_discount !== null ? parseFloat(product.product_discount).toString() : '')
+      setProductPackage(product.package !== null ? product.package : '')
+      setProductIngredient(product.ingredient !== null ? product.ingredient : '')
+      setProductDosageForm(product.dosage_form !== null ? product.dosage_form : '')
+      setProductSpecification(product.specification !== null ? product.specification : '')
+      setProductManufacturer(product.manufacturer !== null ? product.manufacturer : '')
+      setProductPlaceOfManufacture(product.place_of_manufacture !== null ? product.place_of_manufacture : '')
+      const imageUrls = product.product_images !== null ? product.product_images.map((image) => `${image}`) : []
+      setUploadImages(imageUrls)
+      setProductUses(product.product_uses !== null ? product.product_uses : '')
+      setProductDescription(product.product_description !== null ? product.product_description : '')
+    } catch (error) {
+      setStatus(400)
+      setMessageResult(error.message)
     }
-    const data = await response.json()
-    const product = data['data']
-
-    setProductName(product.product_name !== null ? product.product_name : '')
-    setProductSlug(product.product_slug !== null ? product.product_slug : '')
-    setCategory(product.category_id !== null ? product.category_id : '')
-    setBrand(product.brand_id !== null ? product.brand_id : '')
-    setProductPrice(product.product_price !== null ? parseFloat(product.product_price).toString() : '')
-    setProductDiscount(product.product_discount !== null ? parseFloat(product.product_discount).toString() : '')
-    setProductPackage(product.package !== null ? product.package : '')
-    setProductIngredient(product.ingredient !== null ? product.ingredient : '')
-    setProductDosageForm(product.dosage_form !== null ? product.dosage_form : '')
-    setProductSpecification(product.specification !== null ? product.specification : '')
-    setProductManufacturer(product.manufacturer !== null ? product.manufacturer : '')
-    setProductPlaceOfManufacture(product.place_of_manufacture !== null ? product.place_of_manufacture : '')
-    const imageUrls = product.product_images !== null ? product.product_images.map((image) => `${image}`) : []
-    setUploadImages(imageUrls)
-    setProductUses(product.product_uses !== null ? product.product_uses : '')
-    setProductDescription(product.product_description !== null ? product.product_description : '')
   }
 
   const handleErrorProductName = async (value) => {
@@ -341,34 +331,6 @@ const EditProduct = () => {
     return true
   }
 
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          if (res.message) {
-            setMessageResult(res.message)
-            setStatus(response.status)
-          } else if (res.messages) {
-            setMessageResult(res.messages.join('. '))
-            setStatus(response.status)
-          } else {
-            setStatus(400)
-            setMessageResult(defaultErrorText)
-          }
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
-      }
-      return false
-    }
-    return true
-  }
-
   const handleSubmit = async (e) => {
     setSubmitLoading(true)
     e.preventDefault()
@@ -401,14 +363,15 @@ const EditProduct = () => {
 
     try {
       const response = await ProductsAPI.updateProducts(productID, formData, token)
-      const isResponseOK = await handleResponse(response, 'Error update product')
-      if (!isResponseOK) {
-        setSubmitLoading(false)
-        return
-      }
-      setStatus(response.status)
+      setStatus(200)
       setMessageResult('Update product success')
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setSubmitLoading(false)
     }
@@ -452,12 +415,6 @@ const EditProduct = () => {
     try {
       fetchProducts()
       CategoriesAPI.getAllCategories(token)
-        .then((response) => {
-          if (response.status === 401) {
-            handleUnauthorized()
-          }
-          return response.json()
-        })
         .then(({ data }) => {
           try {
             if (data) {
@@ -475,11 +432,14 @@ const EditProduct = () => {
             }
           } catch (err) {
             setStatus(400)
-            setMessageResult('Error fetching category:', err.message)
+            setMessageResult('Error convert category:', err.message)
           }
         })
+        .catch((err) => {
+          setStatus(400)
+          setMessageResult(err.message)
+        })
       BrandsAPI.getBrands()
-        .then((response) => response.json())
         .then(({ data }) => {
           let brands = data.map((brand) => ({
             label: brand.brand_name,
@@ -487,8 +447,13 @@ const EditProduct = () => {
           }))
           setBrands(brands)
         })
+        .catch((err) => {
+          setStatus(400)
+          setMessageResult(err.message)
+        })
     } catch (err) {
-      console.log(err)
+      setStatus(400)
+      setMessageResult(err.message)
     }
   }, [])
 
@@ -709,7 +674,7 @@ const EditProduct = () => {
                         name='product_discount'
                         placeholder='20'
                         className='AddForm__input'
-                        value={productDiscount}
+                        value={productDiscount || ''}
                         onChange={(e) => setProductDiscount(e.target.value)}
                         onFocus={() => setErrorProductDiscount('')}
                       />
@@ -855,7 +820,7 @@ const EditProduct = () => {
                     name='package'
                     placeholder='Package 1'
                     className='AddForm__input'
-                    value={productPackage}
+                    value={productPackage || ''}
                     onChange={(e) => setProductPackage(e.target.value)}
                   />
                 </div>
@@ -870,7 +835,7 @@ const EditProduct = () => {
                     placeholder='Azithromycin 200mg'
                     className='AddForm__input'
                     onChange={(e) => setProductIngredient(e.target.value)}
-                    value={productIngredient}
+                    value={productIngredient || ''}
                   />
                 </div>
               </div>
@@ -884,7 +849,7 @@ const EditProduct = () => {
                     placeholder='Bột pha hỗn dịch uống'
                     className='AddForm__input'
                     onChange={(e) => setProductDosageForm(e.target.value)}
-                    value={productDosageForm}
+                    value={productDosageForm || ''}
                   />
                 </div>
               </div>
@@ -898,7 +863,7 @@ const EditProduct = () => {
                     placeholder='Điều trị nhiễm khuẩn'
                     className='AddForm__input'
                     onChange={(e) => setProductSpecification(e.target.value)}
-                    value={productSpecification}
+                    value={productSpecification || ''}
                   />
                 </div>
               </div>
@@ -912,7 +877,7 @@ const EditProduct = () => {
                     placeholder='Công ty cổ phần dược phẩm Việt Nam'
                     className='AddForm__input'
                     onChange={(e) => setProductManufacturer(e.target.value)}
-                    value={productManufacturer}
+                    value={productManufacturer || ''}
                   />
                 </div>
               </div>
@@ -926,7 +891,7 @@ const EditProduct = () => {
                     placeholder='Việt Nam'
                     className='AddForm__input'
                     onChange={(e) => setProductPlaceOfManufacture(e.target.value)}
-                    value={productPlaceOfManufacture}
+                    value={productPlaceOfManufacture || ''}
                   />
                 </div>
               </div>
@@ -940,7 +905,7 @@ const EditProduct = () => {
                     placeholder='Mọi thông tin trên đây chỉ mang tính chất tham khảo. Vui lòng đọc kĩ thông tin chi tiết ở tờ hướng dẫn sử dụng của sản phẩm.'
                     className='AddForm__textarea'
                     onChange={(e) => setProductUses(e.target.value)}
-                    value={productUses}
+                    value={productUses || ''}
                   />
                 </div>
               </div>
