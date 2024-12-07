@@ -23,14 +23,12 @@ const ModalComponent = ({ svgElement, receiver_address_id, queryClient }) => {
         queryClient.invalidateQueries({ queryKey: ['getAddress'] })
       },
       onError: (data) => {
-        console.log(data?.response?.data?.messages[0])
-        toast.error( data?.response?.data?.messages[0])
+        toast.error(data?.response?.data?.messages[0])
       }
     })
     setIsModalOpen(false)
   }
   const handleCancel = () => {
-    console.log('huy oki')
     setIsModalOpen(false)
   }
   return (

@@ -9,6 +9,7 @@ import { useAuth } from '../../context/app.context'
 import { message, Popconfirm, Dropdown, Select, ConfigProvider, Modal, Spin, Tooltip } from 'antd'
 import { DeleteOutlined, DashOutlined } from '@ant-design/icons'
 import { SuppliersAPI } from '../../Api/admin'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const filterTheme = {
   token: {
     colorTextQuaternary: '#1D242E',
@@ -38,19 +39,10 @@ const filterTheme = {
   }
 }
 const Suppliers = () => {
-  const navigate = useNavigate()
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   //Message API
   const [messageApi, contextHolder] = message.useMessage()
@@ -176,11 +168,6 @@ const Suppliers = () => {
                       title={`Delete record ${record.supplier_id}`}
                       description='Are you sure to delete this record?'
                       onConfirm={() => {
-                        if (record.supplier_is_delete === 1) {
-                          setStatus(400)
-                          setMessageResult('Supplier is already deleted')
-                          return
-                        }
                         handleDeleteSupplier(record.supplier_id)
                       }}
                       okText='Delete'
@@ -202,11 +189,6 @@ const Suppliers = () => {
                       title={`Restore record ${record.supplier_id}`}
                       description='Are you sure to store this record?'
                       onConfirm={() => {
-                        if (record.supplier_is_delete === 0) {
-                          setStatus(400)
-                          setMessageResult('Supplier is already active')
-                          return
-                        }
                         handleRestoreSupplier(record.supplier_id)
                       }}
                       okText='Restore'
@@ -258,31 +240,16 @@ const Suppliers = () => {
   const fetchSuppliers = async () => {
     setLoading(true)
     try {
-      const response = await SuppliersAPI.getAllSuppliers(token)
-      if (!response.ok) {
-        const { messages } = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Error fetching supplier: ${messages}`)
-        }
-        return
-      }
-      const result = await response.json()
+      const result = await SuppliersAPI.getAllSuppliers(token)
+      if (!result) return
       const data = result.data
       const tableData = data
         .map((item) => ({
+          ...item,
           key: item.supplier_id,
-          supplier_id: item.supplier_id,
-          supplier_name: item.supplier_name,
           contact_person: item.contact_person ? item.contact_person : 'N/A',
           supplier_address: item.supplier_address ? item.supplier_address : 'N/A',
-          supplier_phone: item.supplier_phone ? item.supplier_phone : 'N/A',
-          supplier_email: item.supplier_email,
-          supplier_is_delete: item.supplier_is_delete,
-          supplier_created_at: item.supplier_created_at,
-          supplier_updated_at: item.supplier_updated_at
+          supplier_phone: item.supplier_phone ? item.supplier_phone : 'N/A'
         }))
         .sort((a, b) => new Date(b.supplier_created_at) - new Date(a.supplier_created_at))
       const supplierNames = data.map((item) => item.supplier_name)
@@ -297,6 +264,12 @@ const Suppliers = () => {
         }
       })
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setLoading(false)
     }
@@ -304,7 +277,9 @@ const Suppliers = () => {
 
   const searchSuppliers = () => {
     const result = tableData.filter((item) => {
-      const matchesName = item.supplier_name.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesName =
+        item.supplier_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.supplier_id.toString() === searchValue
       const matchesAddress = item.supplier_address.toLowerCase().includes(searchValue.toLowerCase())
       const matchesPhone = item.supplier_phone.toLowerCase().includes(searchValue.toLowerCase())
       const matchesEmail = item.supplier_email.toLowerCase().includes(searchValue.toLowerCase())
@@ -462,23 +437,7 @@ const Suppliers = () => {
         } else if (typeModalItem === 'Update') {
           response = await SuppliersAPI.updateSupplier(selectedSupplier, formData, token)
         }
-        if (!response.ok) {
-          const contentType = response.headers.get('content-type')
-          if (contentType && contentType.includes('application/json')) {
-            const { messages } = await response.json()
-            if (response.status === 401) {
-              handleUnauthorized()
-            } else {
-              setStatus(response.status)
-              setMessageResult(`Error ${typeModalItem} supplier: ${messages}`)
-            }
-          } else {
-            const status = response.status
-            if (status === 405) {
-              setStatus(405)
-              setMessageResult(`Error ${typeModalItem} supplier: Method not allowed`)
-            }
-          }
+        if (!response) {
           setSubmitLoadingModalItem(false)
           return
         }
@@ -488,6 +447,12 @@ const Suppliers = () => {
         handleCancelItem()
         setSubmitLoadingModalItem(false)
       } catch (e) {
+        if (e.message.includes('401')) {
+          setIsLogin(false)
+          return
+        }
+        setStatus(400)
+        setMessageResult(`${e.message}`)
       } finally {
         setSubmitLoadingModalItem(false)
       }
@@ -503,23 +468,18 @@ const Suppliers = () => {
       const response = await SuppliersAPI.deleteSupplier(id, token, {
         supplier_is_delete: 1
       })
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          const { messages } = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setStatus(response.status)
-            setMessageResult(`Error deleting supplier: ${messages}`)
-          }
-        }
-        return
-      }
+      if (!response) return
       setStatus(200)
       setMessageResult('Successfully deleted supplier')
       fetchSuppliers()
-    } catch (e) {}
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   const handleRestoreSupplier = async (id) => {
@@ -527,23 +487,18 @@ const Suppliers = () => {
       const response = await SuppliersAPI.deleteSupplier(id, token, {
         supplier_is_delete: 0
       })
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          const { messages } = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setStatus(response.status)
-            setMessageResult(`Error restoring supplier: ${messages}`)
-          }
-        }
-        return
-      }
+      if (!response) return
       setStatus(200)
       setMessageResult('Successfully restored supplier')
       fetchSuppliers()
-    } catch (e) {}
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
   //#endregion
   //#region status and message result of fetch api call
@@ -568,7 +523,7 @@ const Suppliers = () => {
           <BreadCrumbs items={[{ title: `Suppliers(${filterData?.length})` }]} />
           <p>List of suppliers available</p>
         </div>
-        <button tabIndex={-1} type='button'>
+        <div tabIndex={-1} type='button'>
           <button
             className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
             onClick={() => {
@@ -579,7 +534,7 @@ const Suppliers = () => {
             Add new
             <Add size='20' />
           </button>
-        </button>
+        </div>
       </header>
       <Modal
         destroyOnClose
@@ -726,11 +681,7 @@ const Suppliers = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchSuppliers()
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
@@ -739,7 +690,7 @@ const Suppliers = () => {
               <Select
                 suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                 allowClear
-                placeholder='- Choose status -'
+                placeholder='Select status'
                 placement='bottomLeft'
                 options={[
                   { label: 'Active', value: 0 },

@@ -1,12 +1,11 @@
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { ImportsAPI } from '../../Api/admin'
 import { useEffect, useState } from 'react'
-import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
 import { message, DatePicker, ConfigProvider } from 'antd'
 import { SearchNormal } from 'iconsax-react'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 import AdminTable from '../AdminTable'
 
 const DetailImport = () => {
@@ -14,15 +13,7 @@ const DetailImport = () => {
   const { id } = useParams()
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
+  const { setIsLogin } = useAdminMainLayoutFunction()
 
   //#region filter data
   const [searchValue, setSearchValue] = useState('')
@@ -111,47 +102,42 @@ const DetailImport = () => {
   }
 
   const searchImportItems = () => {
-    const compareDate = (date1, date2) => {
-      const [day1, month1, year1] = date1.split('/').map(Number)
-      const [day2, month2, year2] = date2.split('/').map(Number)
-      const d1 = new Date(year1, month1 - 1, day1)
-      const d2 = new Date(year2, month2 - 1, day2)
-      return d1.getTime() === d2.getTime()
-    }
-    const result = importItems.filter((item) => {
-      const matchesBrandName = item.product_name.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesDate = selectDate ? compareDate(selectDate, DateFormat(item.product_expiry_date)) : true
-      return matchesBrandName && matchesDate
-    })
-    const tableData = result
-    setFilterData(tableData)
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        total: result.length
+    try {
+      const compareDate = (date1, date2) => {
+        const [day1, month1, year1] = date1.split('/').map(Number)
+        const [day2, month2, year2] = date2.split('/').map(Number)
+        const d1 = new Date(year1, month1 - 1, day1)
+        const d2 = new Date(year2, month2 - 1, day2)
+        return d1.getTime() === d2.getTime()
       }
-    })
+      const result = importItems.filter((item) => {
+        const matchesBrandName = item.product_name.toLowerCase().includes(searchValue.toLowerCase())
+        const matchesDate = selectDate ? compareDate(selectDate, DateFormat(item.product_expiry_date)) : true
+        return matchesBrandName && matchesDate
+      })
+      const tableData = result
+      setFilterData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: result.length
+        }
+      })
+    } catch (error) {
+      setStatus(400)
+      setMessageResult('Error in search import items: ' + error.message)
+    }
   }
 
   // fetch data from api
   const fetchImports = async () => {
     setLoading(true)
     try {
-      const response = await ImportsAPI.getImportById(token, id)
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleUnauthorized()
-        }
-        const result = await response.json()
-        const errorMessage = result.error
-        const status = response.status
-        setStatus(status)
-        setMessageResult(`Error fetching categories: with status ${status} and message ${errorMessage}`)
-        setLoading(false)
-        return
+      const result = await ImportsAPI.getImportById(token, id)
+      if (!result) {
+        throw new Error('No import found')
       }
-      const result = await response.json()
       const data = result.data
       const importsDetail = {
         supplier_name: data.supplier_name,
@@ -170,30 +156,54 @@ const DetailImport = () => {
         }
       })
     } catch (error) {
+      if (error.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(error.message)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchImports().then(() => {
-      // Delay the width calculation to ensure the DOM is updated
-      setTimeout(() => {
-        //set the width of the value spans to the maximum width
-        const valueSpans = document.querySelectorAll('.value-detail')
-        let maxWidth = 0
-        valueSpans.forEach((span) => {
-          const spanWidth = span.offsetWidth
-          if (spanWidth > maxWidth) {
-            maxWidth = spanWidth
-          }
-        })
-        valueSpans.forEach((span) => {
-          span.style.width = `${maxWidth}px`
-        })
-      }, 0)
-    })
-  }, [])
+    fetchImports()
+    // .then(() => {
+    //   // Delay the width calculation to ensure the DOM is updated
+    //   setTimeout(() => {
+    //     //set the width of the value spans to the maximum width
+    //     const valueSpans = document.querySelectorAll('.value-detail')
+    //     let maxWidth = 0
+    //     valueSpans.forEach((span) => {
+    //       const spanWidth = span.offsetWidth
+    //       if (spanWidth > maxWidth) {
+    //         maxWidth = spanWidth
+    //       }
+    //     })
+    //     valueSpans.forEach((span) => {
+    //       span.style.width = `${maxWidth}px`
+    //     })
+    //   }, 0)
+    // })
+  }, [id])
+
+  useEffect(() => {
+    setTimeout(() => {
+      //set the width of the value spans to the maximum width
+      const valueSpans = document.querySelectorAll('.value-detail')
+      let maxWidth = 0
+      valueSpans.forEach((span) => {
+        const spanWidth = span.offsetWidth
+        if (spanWidth > maxWidth) {
+          maxWidth = spanWidth
+        }
+      })
+      valueSpans.forEach((span) => {
+        span.style.width = `${maxWidth}px`
+      })
+    }, 0)
+  }, [importDetail])
 
   useEffect(() => {
     if (importItems) {
@@ -222,7 +232,7 @@ const DetailImport = () => {
   //#endregion
 
   return (
-    <section className='w-full h-max'>
+    <section className='w-full h-max' key={id}>
       <header className='animate-slideDown'>
         <BreadCrumbs
           items={[
@@ -274,11 +284,7 @@ const DetailImport = () => {
                   setSearchValue(e.target.value)
                 }}
               />
-              <button
-                onClick={() => {
-                  fetchImports()
-                }}
-              >
+              <button onClick={() => {}}>
                 <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
               </button>
             </div>

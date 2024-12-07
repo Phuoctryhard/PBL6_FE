@@ -2,7 +2,6 @@ import { AdminEditor, BreadCrumbs } from '../'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
 import { useNavigate } from 'react-router-dom'
 import { message, Modal, Tooltip, Spin } from 'antd'
 import { Link, useParams } from 'react-router-dom'
@@ -10,21 +9,13 @@ import { AdminDiseaseApi } from '../../Api/admin'
 import 'react-quill/dist/quill.snow.css'
 import { CloseCircleOutlined, CloseOutlined } from '@ant-design/icons'
 import { Hospital } from 'iconsax-react'
-import { useScrollToTop } from '../../Layouts/Admin/MainLayout/MainLayout'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const UpdateIllness = () => {
   const { id } = useParams()
 
   const [diseaseID, setDiseaseID] = useState(id)
   const navigate = useNavigate()
   const token = localStorage.getItem('accesstoken')
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -72,30 +63,16 @@ const UpdateIllness = () => {
 
   const fetchDiseaseByID = async (id) => {
     try {
-      const response = await AdminDiseaseApi.getDiseaseById(id)
-      if (!response.ok) {
-        const content_type = response.headers.get('content-type')
-        if (content_type && content_type.includes('application/json')) {
-          const res = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setMessageResult(res.messages)
-            setStatus(400)
-          }
-        } else {
-          setStatus(response.status)
-          setMessageResult(response.statusText ? response.statusText : 'Error fetch disease by ID')
-        }
+      const res = await AdminDiseaseApi.getDiseaseById(id)
+      if (!res) {
         return
       } else {
-        const res = await response.json()
         const resData = res.data
         return resData
       }
     } catch (e) {
       setStatus(400)
-      setMessageResult(`Error fetch disease by ID: ${e.message}`)
+      setMessageResult(`${e.message}`)
     }
   }
 
@@ -238,22 +215,8 @@ const UpdateIllness = () => {
         formData.append('disease_thumbnail', selectedFile)
       }
       try {
-        const response = await AdminDiseaseApi.updateDisease(diseaseID, formData, token)
-        if (!response.ok) {
-          const contentType = response.headers.get('content-type')
-          if (contentType && contentType.includes('application/json')) {
-            const res = await response.json()
-            const message = res.messages
-            if (response.status === 401) {
-              handleUnauthorized()
-            } else {
-              setStatus(400)
-              setMessageResult(message)
-            }
-          } else {
-            setStatus(response.status)
-            setMessageResult(response.statusText || 'Something went wrong with update disease')
-          }
+        const res = await AdminDiseaseApi.updateDisease(diseaseID, formData, token)
+        if (!res) {
           return
         }
         toast.success('Update disease successfully', {
@@ -261,6 +224,12 @@ const UpdateIllness = () => {
         })
         window.history.back()
       } catch (error) {
+        if (error.message.includes('401')) {
+          setIsLogin(false)
+          return
+        }
+        setStatus(400)
+        setMessageResult(`${error.message}`)
       } finally {
         setSubmitLoading(false)
       }
@@ -295,25 +264,30 @@ const UpdateIllness = () => {
     setEditorHTML(combinedHtml)
   }, [generalOverview, symptoms, cause, riskSubjects, diagnosis, prevention, treatmentMethod])
 
-  const scrollToTop = useScrollToTop()
+  const { scrollToTop, setIsLogin } = useAdminMainLayoutFunction()
 
   useEffect(() => {
-    const fetchDisease = async (id) => {
-      scrollToTop()
-      const disease = await fetchDiseaseByID(id)
-      if (disease) {
-        setDiseaseName(disease.disease_name)
-        setGeneralOverview(disease.general_overview)
-        setSymptoms(disease.symptoms)
-        setCause(disease.cause)
-        setRiskSubjects(disease.risk_subjects)
-        setDiagnosis(disease.diagnosis)
-        setPrevention(disease.prevention)
-        setTreatmentMethod(disease.treatment_method)
-        setThumbnail(disease.thumbnail)
+    try {
+      const fetchDisease = async (id) => {
+        scrollToTop()
+        const disease = await fetchDiseaseByID(id)
+        if (disease) {
+          setDiseaseName(disease.disease_name)
+          setGeneralOverview(disease.general_overview)
+          setSymptoms(disease.symptoms)
+          setCause(disease.cause)
+          setRiskSubjects(disease.risk_subjects)
+          setDiagnosis(disease.diagnosis)
+          setPrevention(disease.prevention)
+          setTreatmentMethod(disease.treatment_method)
+          setThumbnail(disease.thumbnail)
+        }
       }
+      fetchDisease(diseaseID)
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(`${e.message}`)
     }
-    fetchDisease(diseaseID)
   }, [])
 
   //#endregion

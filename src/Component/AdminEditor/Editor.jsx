@@ -2,6 +2,12 @@ import ReactQuill, { Quill } from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import QuillResizeImage from 'quill-resize-image'
 import { useMemo, useState, useRef, useEffect } from 'react'
+import { AdminDiseaseApi } from '../../Api/admin'
+import { message, Spin } from 'antd'
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { useAuth } from '../../context/app.context'
+import { useNavigate } from 'react-router-dom'
 Quill.register('modules/resize', QuillResizeImage)
 
 const Font = Quill.import('formats/font')
@@ -74,16 +80,39 @@ const Editor = ({
   placeHolder = 'Write something interesting...',
   defaultValue = ''
 }) => {
+  const navigate = useNavigate()
+  const token = localStorage.getItem('accesstoken')
+  const { logout } = useAuth()
+  const handleUnauthorized = () => {
+    toast.error('Unauthorized access or token expires, please login again!', {
+      autoClose: { time: 3000 }
+    })
+    logout()
+    navigate('/admin/login')
+  }
+
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
+    })
+  }
+  const [status, setStatus] = useState(null)
+  const [messageResult, setMessageResult] = useState('')
+
   const quillRef = useRef(null)
   const [fontStyle, setFontStyle] = useState('Arial')
   const [fontStyleSize, setFontStyleSize] = useState(false)
-  const [headerStyle, setHeaderStyle] = useState(false)
-  const [colorStyle, setColorStyle] = useState(false)
-  const [backgroundStyle, setBackgroundStyle] = useState(false)
-  const [boldStyle, setBoldStyle] = useState(false)
-  const [italicStyle, setItalicStyle] = useState(false)
-  const [underlineStyle, setUnderlineStyle] = useState(false)
-  const [listItemStyle, setListItemStyle] = useState(false)
+  const [submitLoading, setSubmitLoading] = useState(false)
+  // const [headerStyle, setHeaderStyle] = useState(false)
+  // const [colorStyle, setColorStyle] = useState(false)
+  // const [backgroundStyle, setBackgroundStyle] = useState(false)
+  // const [boldStyle, setBoldStyle] = useState(false)
+  // const [italicStyle, setItalicStyle] = useState(false)
+  // const [underlineStyle, setUnderlineStyle] = useState(false)
+  // const [listItemStyle, setListItemStyle] = useState(false)
 
   const [editorHtml, setEditorHtml] = useState(defaultValue)
 
@@ -103,13 +132,6 @@ const Editor = ({
     editor.format('blockquote', false)
     setFontStyle('Arial')
     setFontStyleSize(false)
-    setHeaderStyle(false)
-    setColorStyle(false)
-    setBackgroundStyle(false)
-    setBoldStyle(false)
-    setItalicStyle(false)
-    setUnderlineStyle(false)
-    setListItemStyle(false)
   }
 
   const handleFontChange = (value) => {
@@ -135,7 +157,6 @@ const Editor = ({
       if (quillRef.current === null) return
       const editor = quillRef.current.getEditor()
       editor.format('header', value)
-      setHeaderStyle(value)
     } catch (e) {}
   }
 
@@ -144,7 +165,6 @@ const Editor = ({
       if (quillRef.current === null) return
       const editor = quillRef.current.getEditor()
       editor.format('color', value)
-      setColorStyle(value)
     } catch (e) {}
   }
 
@@ -153,7 +173,6 @@ const Editor = ({
       if (quillRef.current === null) return
       const editor = quillRef.current.getEditor()
       editor.format('background', value)
-      setBackgroundStyle(value)
     } catch (e) {}
   }
 
@@ -162,7 +181,6 @@ const Editor = ({
       if (quillRef.current === null) return
       const editor = quillRef.current.getEditor()
       editor.format('bold', value)
-      setBoldStyle(value)
     } catch (e) {}
   }
 
@@ -171,7 +189,6 @@ const Editor = ({
       if (quillRef.current === null) return
       const editor = quillRef.current.getEditor()
       editor.format('italic', value)
-      setItalicStyle(value)
     } catch (e) {}
   }
 
@@ -180,7 +197,6 @@ const Editor = ({
       if (quillRef.current === null) return
       const editor = quillRef.current.getEditor()
       editor.format('underline', value)
-      setUnderlineStyle(value)
     } catch (e) {}
   }
 
@@ -189,8 +205,90 @@ const Editor = ({
       if (quillRef.current === null) return
       const editor = quillRef.current.getEditor()
       editor.format('list', value)
-      setListItemStyle(value)
     } catch (e) {}
+  }
+  const handleResponse = async (response, defaultErrorText = 'Error fetch', isHandle401 = true) => {
+    if (!response.ok) {
+      const content_type = response.headers.get('content-type')
+      if (content_type && content_type.includes('application/json')) {
+        const res = await response.json()
+        if (response.status === 401) {
+          if (isHandle401) handleUnauthorized()
+        } else {
+          let messages
+          const status = res.status
+          if (!res.messages) {
+            if (!response.message) {
+              if (!res.data) {
+                if (status) messages = status
+                else messages = defaultErrorText
+              } else messages = res.data.join('. ')
+            } else {
+              messages = response.message
+            }
+          } else messages = res.messages.join('. ')
+          setStatus(status)
+          setMessageResult(messages)
+        }
+      } else {
+        setStatus(response.status)
+        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
+      }
+      return false
+    }
+    return true
+  }
+
+  const handleInsertImage = async () => {
+    const fileInput = document.createElement('input')
+    fileInput.style.display = 'none'
+    fileInput.setAttribute('type', 'file')
+    fileInput.setAttribute('accept', '.jpg,.jpeg,.png,.gif,.svg')
+
+    // Thêm sự kiện onchange
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files?.[0]
+      const validExtensions = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg']
+
+      if (!file || !validExtensions.includes(file.type)) {
+        setStatus(400)
+        setMessageResult('No file chosen or invalid file type')
+        // Xóa input sau khi xử lý
+        fileInput.remove()
+        return
+      }
+
+      const formData = new FormData()
+      formData.append('image', file)
+
+      try {
+        setSubmitLoading(true)
+        const response = await AdminDiseaseApi.uploadDiseaseImage(formData, token)
+        const isResponseOK = await handleResponse(response, 'Error uploading image')
+        if (isResponseOK) {
+          const res = await response.json()
+          const dataURL = res.data.url
+          const editor = quillRef.current.getEditor()
+          const range = editor.getSelection()
+
+          if (range) {
+            editor.insertEmbed(range.index, 'image', dataURL)
+            editor.setSelection(range.index + 1)
+          } else {
+            editor.insertEmbed(0, 'image', dataURL)
+            editor.setSelection(range.index + 1)
+          }
+        }
+      } catch (error) {
+      } finally {
+        // Xóa input sau khi hoàn thành
+        fileInput.remove()
+        setSubmitLoading(false)
+      }
+    })
+
+    // Kích hoạt hộp thoại chọn file
+    fileInput.click()
   }
 
   const modules = useMemo(
@@ -207,7 +305,8 @@ const Editor = ({
           italic: handleItalicChange,
           underline: handleUnderlineChange,
           clean: clearFormat,
-          list: handleListItemChange
+          list: handleListItemChange,
+          image: handleInsertImage
         }
       },
       resize: {
@@ -222,15 +321,12 @@ const Editor = ({
     try {
       setEditorHtml(content)
       if (onChange) onChange(content)
-    } catch (e) {
-      console.log('Error handleQuillChange: ', e.message)
-    }
+    } catch (e) {}
   }
 
   useEffect(() => {
     try {
       if (quillRef.current === null) return
-      const editor = quillRef.current.getEditor()
       const liItems = document.querySelectorAll(`.text-editor__${idEditor} .ql-editor li`)
       const newestLiItem = liItems.length > 0 ? liItems[liItems.length - 1] : null
       const customLiItemSelector = `.text-editor__${idEditor} .ql-editor .custom-list-item`
@@ -275,7 +371,7 @@ const Editor = ({
         })
       }
 
-      const editorPlaceHolder = document.querySelector(`#${editorSelect} .ql-container.ql-snow .ql-editor.ql-blank`)
+      const editorPlaceHolder = document.querySelector(`#${idEditor} .ql-container.ql-snow .ql-editor.ql-blank`)
       if (editorPlaceHolder) {
         editorPlaceHolder.style.setProperty('font-size', fontSize || 'initial')
         editorPlaceHolder.style.setProperty('font-family', fontFamily || 'initial')
@@ -353,8 +449,31 @@ const Editor = ({
   useEffect(() => {
     setEditorHtml(defaultValue)
   }, [defaultValue])
+
+  //#region status and message result of fetch api call
+  useEffect(() => {
+    if ([200, 201, 202, 204].includes(status)) {
+      openMessage('success', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    } else if (status >= 400) {
+      openMessage('error', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    }
+  }, [status, messageResult])
+  //#endregion
+
   return (
-    <div className='w-full h-full' onKeyDownCapture={handleBackSpace}>
+    <div className='w-full h-full relative' onKeyDownCapture={handleBackSpace}>
+      {contextHolder}
+      <Spin
+        spinning={submitLoading}
+        tip='Loading...'
+        size='large'
+        percent={'auto'}
+        style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+      />
       <ReactQuill
         ref={quillRef}
         theme='snow'

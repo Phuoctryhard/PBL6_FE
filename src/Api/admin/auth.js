@@ -1,23 +1,14 @@
 import { BASE_URL } from '../../until'
+import { fetchWithAuth } from './handleErrorAPI'
 const rootAdminURL = BASE_URL + '/admin'
 
 const AdminAuthAPI = {
   loginAccountAdmin: async (formData) =>
-    await fetch(`${rootAdminURL}/login`, {
-      method: 'POST',
-      body: formData
-    }).then((res) => res.json()),
-
+    await fetchWithAuth(`${rootAdminURL}/login`, 'POST', undefined, 'login admin account', formData),
   forgotPassword: async (email) =>
-    await fetch(`${rootAdminURL}/forgot-password`, {
-      method: 'POST',
-      body: email
-    }).then((res) => res.json()),
+    await fetchWithAuth(`${rootAdminURL}/forgot-password`, 'POST', undefined, 'forgot password admin account', email),
   resetPassword: async (data) =>
-    await fetch(`${rootAdminURL}/reset-password`, {
-      method: 'POST',
-      body: data
-    }).then((res) => res.json())
+    await fetchWithAuth(`${rootAdminURL}/reset-password`, 'POST', undefined, 'reset password admin account', data)
 }
 
 export default AdminAuthAPI

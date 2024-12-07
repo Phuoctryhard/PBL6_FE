@@ -9,6 +9,7 @@ import { useAuth } from '../../context/app.context'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { CustomerAPI } from '../../Api/admin'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const { RangePicker } = DatePicker
 const filterTheme = {
   token: {
@@ -39,19 +40,10 @@ const filterTheme = {
   }
 }
 const Customer = () => {
-  const navigate = useNavigate()
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   //#region filter data
   const [searchValue, setSearchValue] = useState('')
@@ -82,9 +74,13 @@ const Customer = () => {
       render: (text, record) => (
         <div className='flex items-center gap-x-2 justify-start'>
           <img
-            src={record.user_avatar !== null ? record.user_avatar : ''}
+            src={record.user_avatar ? record.user_avatar : '/assets/images/default-avatar.png'}
             alt={text}
             className='w-[48px] h-[48px] object-cover rounded-full'
+            onError={(e) => {
+              e.target.onerror = null
+              e.target.src = '/assets/images/default-avatar.png'
+            }}
           />
           <span>{text}</span>
         </div>
@@ -166,11 +162,11 @@ const Customer = () => {
             <span
               className='text-xs px-4 py-1 rounded-xl'
               style={{
-                color: text === 1 ? '#f5222d' : '#008efa',
-                backgroundColor: text === 1 ? '#fdebeb' : 'rgb(0, 142, 250, 0.1)'
+                color: record.user_is_delete === 1 ? '#f5222d' : '#008efa',
+                backgroundColor: record.user_is_delete === 1 ? '#fdebeb' : 'rgb(0, 142, 250, 0.1)'
               }}
             >
-              {text === 1 ? 'Deleted' : 'Active'}
+              {record.user_is_delete === 1 ? 'Deleted' : 'Active'}
             </span>
           </div>
         )
@@ -301,24 +297,9 @@ const Customer = () => {
   const fetchCustomer = async () => {
     setLoading(true)
     try {
-      const response = await CustomerAPI.getAllCustomer(token)
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          const { messages } = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setStatus(response.status)
-            setMessageResult(`Error fetching customer: ${messages}`)
-          }
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Error fetching customer with status: ${response.status} and error: ${response.statusText}`)
-        }
-        return
-      }
-      const res = await response.json()
+      const res = await CustomerAPI.getAllCustomer(token)
+
+      if (!res) return
       const resData = res.data
       const tableData = resData
         .map((item) => ({
@@ -337,60 +318,80 @@ const Customer = () => {
         }
       })
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setLoading(false)
     }
   }
 
   const searchCustomer = () => {
-    const formatDate = (date) => {
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-        const [day, month, year] = date.split('/')
-        return `${year}-${month}-${day}`
-      }
+    try {
+      const formatDate = (date) => {
+        let format = date
 
-      // Check if the date is in ISO 8601 format
-      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
-      }
+        // Check if the date is in DD/MM/YYYY format
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+          const [day, month, year] = date.split('/')
+          format = `${year}-${month}-${day}`
+        }
 
-      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
-      if (Date.parse(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
+        // Check if the date is in ISO 8601 format
+        else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          format = `${year}-${month}-${day}`
+        }
+
+        // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+        else if (Date.parse(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          format = `${year}-${month}-${day}`
+        }
+
+        return format ? new Date(format) : null
       }
-      return ''
-    }
-    const result = data.filter((item) => {
-      const matchInfo =
-        item.user_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
+      const result = data.filter((item) => {
+        const matchInfo =
+          item.user_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.user_id.toString() === searchValue
         item?.email.toLowerCase().includes(searchValue.toLowerCase()) ||
-        item?.user_phone.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesGender = (selectedGender === null) | (item.user_gender === selectedGender)
-      const matchesBlock = (selectedBlock === null) | (item.user_is_block === selectedBlock)
-      const matchesStatus = (selectedStatus === null) | (item.user_is_delete === selectedStatus)
-      const matchesDateRange = selectedTo
-        ? formatDate(item.user_created_at) >= formatDate(selectedFrom) &&
-          formatDate(item.user_created_at) <= formatDate(selectedTo)
-        : true
-      return matchInfo && matchesGender && matchesDateRange && matchesBlock && matchesStatus
-    })
-    const tableData = result
-    setFilterData(tableData)
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        total: result.length
-      }
-    })
+          item?.user_phone.toLowerCase().includes(searchValue.toLowerCase())
+        const matchesGender = (selectedGender === null) | (item.user_gender === selectedGender)
+        const matchesBlock = (selectedBlock === null) | (item.user_is_block === selectedBlock)
+        const matchesStatus = (selectedStatus === null) | (item.user_is_delete === selectedStatus)
+        const matchesDateRange =
+          selectedFrom && selectedTo
+            ? formatDate(item.user_created_at) &&
+              formatDate(selectedFrom) &&
+              formatDate(selectedTo) &&
+              formatDate(item.user_created_at) >= formatDate(selectedFrom) &&
+              formatDate(item.user_created_at) <= formatDate(selectedTo)
+            : true
+        return matchInfo && matchesGender && matchesDateRange && matchesBlock && matchesStatus
+      })
+      const tableData = result
+      setFilterData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: result.length
+        }
+      })
+    } catch (err) {
+      setStatus(400)
+      setMessageResult(err.message)
+    }
   }
 
   useEffect(() => {
@@ -400,7 +401,6 @@ const Customer = () => {
   useEffect(() => {
     if (data) {
       searchCustomer()
-      console.log(tableParams)
     }
   }, [
     searchValue,
@@ -420,58 +420,36 @@ const Customer = () => {
   const handleDeleteCustomer = async (id, type = 'delete') => {
     try {
       const response = await CustomerAPI.deleteCustomer(id, token)
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          const { messages } = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setStatus(response.status)
-            setMessageResult(`Error ${type} customer: ${messages}`)
-          }
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Error ${type} customer with status: ${response.status} and error: ${response.statusText}`)
-        }
-        return
-      }
+      if (!response) return
       fetchCustomer()
-      setStatus(response.status)
+      setStatus(200)
       if (type === 'restore') setMessageResult('Restore customer successfully')
       else setMessageResult('Delete customer successfully')
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
       setStatus(500)
-      setMessageResult('Error deleting customer')
+      setMessageResult(e.message)
     }
   }
 
   const handleBlockCustomer = async (id, type = 'block') => {
     try {
       const response = await CustomerAPI.changeBlock(id, token)
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          const { messages } = await response.json()
-          if (response.status === 401) {
-            handleUnauthorized()
-          } else {
-            setStatus(response.status)
-            setMessageResult(`Error ${type} customer: ${messages}`)
-          }
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Error ${type} customer with status: ${response.status} and error: ${response.statusText}`)
-        }
-        return
-      }
+      if (!response) return
       fetchCustomer()
-      setStatus(response.status)
+      setStatus(200)
       if (type === 'unblock') setMessageResult('Unblock customer successfully')
       else setMessageResult('Block customer successfully')
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
       setStatus(500)
-      setMessageResult('Error blocking customer')
+      setMessageResult(e.message)
     }
   }
 
@@ -510,11 +488,7 @@ const Customer = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchCustomer()
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>

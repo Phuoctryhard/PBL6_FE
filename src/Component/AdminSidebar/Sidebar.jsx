@@ -1,5 +1,5 @@
 import { useAuth } from '../../context/app.context'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SideBarItem } from './Component/SideBarItem'
 import {
@@ -7,11 +7,8 @@ import {
   ArrowDown2,
   More,
   Bill,
-  Blogger,
   Element,
-  FavoriteChart,
   Hospital,
-  Keyboard,
   MedalStar,
   ReceiptEdit,
   Setting2,
@@ -19,25 +16,17 @@ import {
   UserAdd,
   UserSquare,
   Logout,
-  Card,
-  Car
+  Car,
+  Star
 } from 'iconsax-react'
 import './Sidebar.css'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const Sidebar = () => {
-  const token = localStorage.getItem('accesstoken')
+const Sidebar = forwardRef((_, ref) => {
   const navigate = useNavigate()
   const { isProfile, logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
   const location = useLocation()
 
   //#region info admin
@@ -63,34 +52,31 @@ const Sidebar = () => {
     { id: 'manage-admins', name: 'Admin' }
   ]
 
-  // const Orders = [
-  //   { id: 'order-payments', name: 'Payments' },
-  //   { id: 'order-deliveries', name: 'Deliveries' }
-  // ]
-
   //show subNav
   const [showInventory, setShowInventory] = useState(false)
   const [showUser, setShowUser] = useState(false)
-  // const [showOrders, setShowOrders] = useState(false)
-  // const [maxHeightOrders, setMaxHeightOrders] = useState('0px')
   const [maxHeightProduct, setMaxHeightProduct] = useState('0px')
   const [maxHeightUser, setMaxHeightUser] = useState('0px')
   const productRef = useRef(null)
   const userRef = useRef(null)
-  // const orderRef = useRef(null)
 
   //handle nav and subNav click
   const handleNavClick = (navId) => {
     setActiveNav(navId)
     setShowInventory(navId === 'inventory' ? !showInventory : false)
     setShowUser(navId === 'users' ? !showUser : false)
-    // setShowOrders(navId === 'orders' ? !showOrders : false)
   }
 
   const handleSubNavClick = (itemId) => {
     setSelectedId(itemId)
     setActiveNav(null)
   }
+
+  useImperativeHandle(ref, () => ({
+    handleNavClick,
+    handleSubNavClick,
+    setSelectedId
+  }))
 
   useEffect(() => {
     if (showInventory) {
@@ -108,45 +94,27 @@ const Sidebar = () => {
     }
   }, [showUser])
 
-  // useEffect(() => {
-  //   if (showOrders) {
-  //     setMaxHeightOrders(`${orderRef.current.scrollHeight}px`)
-  //   } else {
-  //     setMaxHeightOrders('0px')
-  //   }
-  // }, [showOrders])
-
   //handle subNav active when refresh page
   useEffect(() => {
-    const path = location.pathname
-    const navID = path.split('/')[2]
-    const subNavID = [
-      'products',
-      'categories',
-      'Users',
-      'manage-admins',
-      'manage-users'
-      // 'order-payments',
-      // 'order-deliveries'
-    ]
-    if (subNavID.includes(navID)) {
-      if (navID === 'products' || navID === 'categories' || navID === 'orders') {
-        setActiveNav(null)
-        setShowInventory(true)
-        setSelectedId(navID)
-      } else if (navID === 'manage-admins' || navID === 'manage-users') {
-        setActiveNav(null)
-        setShowUser(true)
-        setSelectedId(navID)
+    try {
+      const path = location.pathname
+      const navID = path.split('/')[2]
+      const subNavID = ['products', 'categories', 'Users', 'manage-admins', 'manage-users']
+      if (subNavID.includes(navID)) {
+        if (navID === 'products' || navID === 'categories' || navID === 'orders') {
+          setActiveNav(null)
+          setShowInventory(true)
+          setSelectedId(navID)
+        } else if (navID === 'manage-admins' || navID === 'manage-users') {
+          setActiveNav(null)
+          setShowUser(true)
+          setSelectedId(navID)
+        }
+      } else {
+        if (navID !== 'comment_review') handleNavClick(navID)
+        else handleNavClick('review')
       }
-      // else if (navID === 'order-payments' || navID === 'order-deliveries') {
-      //   setActiveNav(null)
-      //   setShowOrders(true)
-      //   setSelectedId(navID)
-      // }
-    } else {
-      handleNavClick(navID)
-    }
+    } catch (err) {}
   }, [])
   //#endregion
 
@@ -155,21 +123,22 @@ const Sidebar = () => {
   const fetchAdminProfile = async () => {
     try {
       const data = isProfile
-      if (data === null) {
-        handleUnauthorized()
+      if (!data) {
+        toast.error('Unauthorized or token expired or invalid. Please login again!')
+        logout()
+        navigate('/admin/login')
         return
       }
       setAdminFullName(data.admin_fullname)
       setEmail(data.email)
       setAvatar(data.admin_avatar)
       setAdminRole(data.admin_is_admin)
-    } catch (err) {
-      toast.error('Error Fetch Admin Profile')
-    }
+    } catch (err) {}
   }
+
   useEffect(() => {
     fetchAdminProfile()
-  }, [isProfile])
+  }, [])
 
   //#endregion
 
@@ -225,6 +194,10 @@ const Sidebar = () => {
               src={Avatar || '/assets/images/default-avatar.png'}
               alt='no image'
               className='w-[2.813rem] h-[2.813rem] rounded object-cover'
+              onError={(e) => {
+                e.target.onerror = null
+                e.target.src = '/assets/images/default-avatar.png'
+              }}
             />
             <span className='inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 animate-ping'></span>
             <span className='inline-block absolute w-4 h-4 rounded-[50%] bg-[#2ed47a] bottom-1 left-9 border border-solid border-[#2e3744]'></span>
@@ -297,7 +270,7 @@ const Sidebar = () => {
                 size={16}
                 color='#ffffff'
                 onClick={() => {
-                  handleNavClick('products')
+                  handleNavClick('inventory')
                   setSelectedId(null)
                 }}
               />
@@ -341,50 +314,9 @@ const Sidebar = () => {
             setSelectedId(null)
           }}
         >
-          <SideBarItem
-            name='Orders'
-            iconName={<Bill className='w-6' />}
-            // arrowIcon={
-            //   <ArrowDown2
-            //     size={16}
-            //     color='#ffffff'
-            //     onClick={() => {
-            //       handleNavClick('orders')
-            //       setSelectedId(null)
-            //     }}
-            //   />
-            // }
-          />
+          <SideBarItem name='Orders' iconName={<Bill className='w-6' />} />
         </NavLink>
-        {
-          // <div
-          //   ref={orderRef}
-          //   className={`bg-[#283342] overflow-hidden transition-[max-height] duration-[0.5s] ease-in-out`}
-          //   style={{
-          //     maxHeight: maxHeightOrders
-          //   }}
-          // >
-          //   <ul>
-          //     {Orders.map((item) => (
-          //       <li
-          //         key={item.id}
-          //         className=''
-          //         onClick={() => {
-          //           handleSubNavClick(item.id)
-          //         }}
-          //         style={{ backgroundColor: item.id === selectedId ? '#008f99' : '' }}
-          //       >
-          //         <NavLink
-          //           to={`/admin/${item.id}`}
-          //           className='pl-[62px] px-[24px] h-[46px] flex items-center justify-start cursor-pointer'
-          //         >
-          //           {item.name}
-          //         </NavLink>
-          //       </li>
-          //     ))}
-          //   </ul>
-          // </div>
-        }
+
         <NavLink
           to='/admin/deliveries'
           className={activeNav === 'delivery' ? 'bg-[#008f99]' : ''}
@@ -482,6 +414,13 @@ const Sidebar = () => {
           <SideBarItem name='Diseases' iconName={<Hospital className='w-6' />} />
         </NavLink>
         <NavLink
+          to='/admin/comment_review'
+          className={activeNav === 'review' ? 'bg-[#008f99]' : ''}
+          onClick={() => handleNavClick('review')}
+        >
+          <SideBarItem name='Reviews' iconName={<Star className='w-6' />} />
+        </NavLink>
+        <NavLink
           to='/admin/setting'
           className={activeNav === 'setting' ? 'bg-[#008f99]' : ''}
           onClick={() => handleNavClick('setting')}
@@ -491,6 +430,6 @@ const Sidebar = () => {
       </div>
     </nav>
   )
-}
+})
 
 export default Sidebar
