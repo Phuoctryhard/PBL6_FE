@@ -12,16 +12,24 @@ import { toast } from 'react-toastify'
 import { queryClient } from '../../../..'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../../../context/app.context'
+import ModalReviewProduct from './ModalReviewProduct'
 export default function OrderHistory() {
   const { isAuthenticated, logout, checkedProducts, setCheckedProducts } = useContext(AuthContext)
   const navigate = useNavigate() // Hook để điều hướng
+  const [IdOrder, setIdOrder] = useState('')
+  const [IdProduct, setIdProduct] = useState('')
   const [isActive, setActive] = useState('All')
   const ORDER_STATUS = [
     { name: 'Tất cả', status: 'All' },
-    { name: 'Đang chờ', status: 'pending' },
-    { name: 'Đã xác nhận', status: 'Confirmed' },
-    { name: 'Đã gửi', status: 'Shipped' },
-    { name: 'Đã giao', status: 'Delivered' },
+    // đang chờ khách hàng  thanh toán , chuyển khoản  : 
+    { name: 'Đang xử lí ', status: 'pending' },
+    // admin xác nhận đơn đã gói hàng cb vận chuyển 
+    { name: 'Đã xác nhận', status: 'confirmed' },
+    // shiper lấy hàng và đang giao đơn hàng  : vận chuyển 
+    { name: 'Đang giao', status: 'shipped' },
+    // đã giao cho khách hàng , kh nhận thành công
+    { name: 'Đã giao', status: 'delivered' },
+    // hủy ở giai đoạn 
     { name: 'Đã hủy', status: 'cancelled' }
   ]
   const { data } = useQuery({
@@ -30,15 +38,15 @@ export default function OrderHistory() {
       return OrderApi.getHistoryOrder()
     }
   })
-  console.log(data)
+  // console.log(data)
   const [dataAll, setDataAll] = useState([])
   useEffect(() => {
     if (data) {
       setDataAll(data?.data?.data)
     }
     if (isActive && isActive !== 'All') {
-      const filter = data.data.data.filter((element) => {
-        return element.order_status === isActive
+      const filter = data?.data?.data.filter((element) => {
+        return element?.order_status === isActive
       })
 
       setDataAll(filter)
@@ -107,13 +115,20 @@ export default function OrderHistory() {
       }
     })
   }
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const showModal = (order_id, product_id) => {
+    console.log(order_id, product_id)
+    setIdOrder(order_id)
+    setIdProduct(product_id)
+    setIsModalOpen(true)
+  }
   return (
     <div className=''>
       <div className='flex justify-between  '>
         {ORDER_STATUS.map((element) => {
           return (
             <div
-              className={`flex flex-1 items-center justify-center border-b-2  ${isActive === element.status ? 'text-red-600  border-red-600' : 'border-white'}`}
+              className={`flex flex-1 items-center justify-center border-b-2 cursor-pointer ${isActive === element.status ? 'text-red-600  border-red-600' : 'border-white'}`}
               onClick={() => {
                 setActive(element.status)
               }}
@@ -125,11 +140,11 @@ export default function OrderHistory() {
       </div>
       <div className=''>
         {dataAll?.map((element) => {
-          console.log(element)
+          //  console.log(element)
           return (
-            <div key={element.order_id}>
-              {element.order_detail?.map((detail) => (
-                <div className='flex mt-7 p-2' key={detail.order_detail_id}>
+            <div key={element?.order_id}>
+              {element?.order_detail?.map((detail) => (
+                <div className='flex mt-7 p-2' key={detail?.order_detail_id}>
                   <div className='flex-shrink-0 w-20 h-20'>
                     <img
                       src={JSON.parse(detail.product_images)[0]} // Lấy ảnh đầu tiên từ mảng `product_images`
@@ -149,6 +164,14 @@ export default function OrderHistory() {
                     <span className='text-red-500 font-semibold'>
                       ₫{parseInt(detail.order_total_price).toLocaleString()}
                     </span>
+                    {element.delivery_status === 'delivered' && (
+                      <button
+                        className='p-3 border border-blue text-blue   rounded-md'
+                        onClick={() => showModal(detail.order_id, detail.product_id)}
+                      >
+                        Đánh giá
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -182,51 +205,16 @@ export default function OrderHistory() {
             </div>
           )
         })}
-
+        <ModalReviewProduct
+          isModalOpen={isModalOpen}
+          setIsModalOpen={setIsModalOpen}
+          setIdOrder={setIdOrder}
+          setIdProduct={setIdProduct}
+          IdOrder={IdOrder}
+          IdProduct={IdProduct}
+        />
         {dataAll?.length == 0 ? <Empty /> : <></>}
       </div>
     </div>
   )
 }
-// <div className=''>
-//         {dataAll?.map((element) => {
-//           console.log(element)
-//           return (
-//             <>
-//               <div className='flex mt-7  p-2'>
-//                 <div className='flex-shrink-0 w-20 h-20'>
-//                   <img
-//                     src={element?.order_detail?.product_images}
-//                     alt=''
-//                     className='w-full h-full rounded-lg object-contain '
-//                   />
-//                 </div>
-//                 <div className='flex flex-grow ml-3'>
-//                   <div className='flex flex-col justify-between '>
-//                     <p className=' font-semibold line-clamp-2 '>{element.order_detail.product_name}</p>
-//                     <span className='text-sm'>Phân loại hàng 200</span>
-//                     <span className='text-sm'>*1</span>
-//                   </div>
-//                 </div>
-//                 <div className='flex shrink-0  ml-3  items-center gap-x-4'>
-//                   <span className=''>₫102.100</span>
-//                   <span className=' mr-1'>₫102.100</span>
-//                 </div>
-//               </div>
-//               <div className='flex justify-end font-semibold text-lg mr-3'>Tổng tiền : ₫102.100</div>
-//               <div className='flex gap-x-5'>
-//                 <button className='text-white bg-blue  rounded-lg py-3 px-6  '>Mua lại </button>
-//                 <Link to={`/account/order-history/${element.order_id}`}>
-//                   <button className='text-white bg-blue rounded-lg py-3 px-6'>Xem chi tiết đơn hàng</button>
-//                 </Link>
-//               </div>
-
-//               <Divider
-//                 style={{
-//                   borderColor: '#7cb305'
-//                 }}
-//               ></Divider>
-//             </>
-//           )
-//         })}
-//       </div>

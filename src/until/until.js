@@ -1,7 +1,6 @@
 import axios from 'axios'
-import { getAccessToken, saveAccessToken, saveProfile, tokenBear , clearAll } from '.'
+import { getAccessToken, saveAccessToken, saveProfile, tokenBear, clearAll } from '.'
 import { Navigate, useNavigate } from 'react-router-dom'
-
 
 class Http {
   instance
@@ -23,6 +22,7 @@ class Http {
     })
     this.instance.interceptors.request.use(
       (config) => {
+        console.log(config)
         if (this.accessToken && config.headers) {
           // header có thể undified -> kick chuột vô nó
           //authorization : viết đúng định dạng để server chấp nhận
@@ -31,6 +31,7 @@ class Http {
           return config
         }
         if (config.data instanceof FormData) {
+          console.log(config.data)
           config.headers['Content-Type'] = 'multipart/form-data' // Nếu là form-data thì đổi header
         }
         return config
@@ -66,6 +67,9 @@ class Http {
           // localStorage.removeItem('accesstoken')
           // localStorage.removeItem('profile')
           // window.location.reload() // Sử dụng window.location thay vì useNavigate
+
+          // window.location.reload()
+
           clearAll()
         }
         return Promise.reject(error)

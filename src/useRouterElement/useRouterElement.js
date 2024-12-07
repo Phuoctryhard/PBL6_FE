@@ -47,6 +47,7 @@ import Disease from '../Pages/User/Disease/Disease.jsx'
 import DetailDisease from '../Pages/User/Disease/DetailDisease/DetailDisease.jsx'
 import DetailOrderHistory from '../Pages/User/Account/order_history/DetailOrderHistory.jsx'
 import StatusPayos from '../Pages/User/StatusPayos/StatusPayos.jsx'
+import CategoryDisease from '../Pages/User/Disease/CategoryDisease/CategoryDisease.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
 
@@ -411,6 +412,14 @@ export default function useRouterElement() {
     {
       path: '/auth/verify-email/admin',
       element: <AdminVerifyEmail />
+    },
+    {
+      path: '/categorybenh/:slug',
+      element: (
+        <MainLayoutUser>
+          <CategoryDisease />
+        </MainLayoutUser>
+      )
     },
     {
       path: '/benh/:slug',

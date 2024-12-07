@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import diseaseAPI from '../../../Api/user/disease'
 import PartBody from './Component/TypeDisease/PartBody'
 import Speciality from './Component/TypeDisease/Speciality'
-import { Spin } from 'antd';
+import { Spin } from 'antd'
 export default function Disease() {
   const { data, isLoading } = useQuery({
     queryKey: ['getdisease'],
@@ -18,13 +18,12 @@ export default function Disease() {
   console.log(data?.data?.data?.disease_common)
   return (
     <>
-    
       <Spin spinning={isLoading}>
         <DiseaseSesson disease_common={data?.data?.data?.disease_common} />
         <DiseaseObject disease_by_target_group={data?.data?.data?.disease_by_target_group} />
         <PartBody disease_Body={data?.data?.data?.disease_body_part} />
-        <Speciality speciality={data?.data?.data?.disease_specialty} />
       </Spin>
     </>
   )
 }
+// <Speciality speciality={data?.data?.data?.disease_specialty} />

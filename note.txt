@@ -26,3 +26,29 @@ Destructuring cho phép bạn lấy ra các phần tử từ một mảng hoặc
 và bạn sử dụng destructuring để gán phần tử đầu tiên của mảng cho price_min và phần tử thứ hai cho price_max.
 
 Spread (toán tử ...) được sử dụng để sao chép hoặc trải rộng các phần tử của một mảng hoặc đối tượng. Ví dụ:
+
+Để clear input file sau khi người dùng nhấn "OK", bạn có thể sử dụng một phương pháp đặt lại giá trị của input file về null sau khi xử lý. Dưới đây là ví dụ code:
+
+Cách làm:
+Thêm một tham chiếu (ref) đến input file.
+Sau khi xử lý, đặt giá trị của tham chiếu đó về rỗng.
+
+{errors: {review_images: ["The review images must be a valid image or an array of valid images."],…},…}
+errors
+: 
+{review_images: ["The review images must be a valid image or an array of valid images."],…}
+review_images
+: 
+["The review images must be a valid image or an array of valid images."]
+0
+: 
+"The review images must be a valid image or an array of valid images."
+review_images.0
+: 
+["Trường review_images.0 phải là định dạng hình ảnh.",…]
+messages
+: 
+["The review images must be a valid image or an array of valid images.",…]
+status
+: 
+422

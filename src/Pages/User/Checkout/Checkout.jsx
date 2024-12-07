@@ -99,57 +99,64 @@ export default function Checkout() {
   })
   console.log(getDelivery)
   const handleBuyNow = async () => {
-    console.log(value, valueDelivery, valueAddress, checkedProducts)
-    if (checkedProducts.length > 0 && product_id == null) {
+    try {
       console.log(value, valueDelivery, valueAddress, checkedProducts)
-      // from cart
-      const buyNow = {
-        receiver_address_id: valueAddress, //required
-        payment_id: value, //required
-        delivery_id: valueDelivery, //required
-        ids_cart: checkedProducts //required
-      }
-      const res = await OrderApi.Checkout_CartOrder(buyNow)
-      if (res) {
-        setCheckedProducts([])
-        console.log(res)
-        if (res.data.messages[0] === 'Đặt hàng thành công!') {
-          console.log(res.data.messages[0])
-          queryClient.invalidateQueries({ queryKey: ['getCart'] })
-          navigate('/account/order-history')
-          //setIsModalOpenBuy(true)
+      if (checkedProducts.length > 0 && product_id == null) {
+        console.log(value, valueDelivery, valueAddress, checkedProducts)
+        // from cart
+        const buyNow = {
+          receiver_address_id: valueAddress, //required
+          payment_id: value, //required
+          delivery_id: valueDelivery, //required
+          ids_cart: checkedProducts //required
+        }
+        console.log('error in checkout')
+        const res = await OrderApi.Checkout_CartOrder(buyNow)
+        if (res) {
           setCheckedProducts([])
+          console.log(res)
+          if (res.data.messages[0] === 'Đặt hàng thành công!') {
+            console.log(res.data.messages[0])
+            queryClient.invalidateQueries({ queryKey: ['getCart'] })
+            navigate('/account/order-history')
+            //setIsModalOpenBuy(true)
+            setCheckedProducts([])
+          } else {
+            // window.location.href = res.data.data
+          }
+          toast.success(res.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
         } else {
-          // window.location.href = res.data.data
+          toast.error('Thaats bại')
+        }
+        console.log(buyNow)
+      } else if (product_id) {
+        console.log('chitiet' + product_id)
+        // from
+        const buyNow = {
+          receiver_address_id: valueAddress, //required
+          payment_id: value, //required
+          delivery_id: valueDelivery, //required
+          product_id: +product_id, //required
+          quantity: cart_quantity //required
+        }
+        console.log(buyNow)
+
+        console.log('error in buy product')
+        const res = await OrderApi.BuyProduct_DetailProduct(buyNow)
+        if (res) {
+          if (res.data.messages[0] === 'Đặt hàng thành công!') {
+            queryClient.invalidateQueries({ queryKey: ['getCart'] })
+            setIsModalOpenBuy(true)
+          } else {
+            window.location.href = res.data.data
+          }
         }
         toast.success(res.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
       } else {
         toast.error('Thaats bij')
       }
-      console.log(buyNow)
-    } else if (product_id) {
-      console.log('chitiet' + product_id)
-      // from
-      const buyNow = {
-        receiver_address_id: valueAddress, //required
-        payment_id: value, //required
-        delivery_id: valueDelivery, //required
-        product_id: +product_id, //required
-        quantity: cart_quantity //required
-      }
-      console.log(buyNow)
-      const res = await OrderApi.BuyProduct_DetailProduct(buyNow)
-      if (res) {
-        if (res.data.messages[0] === 'Đặt hàng thành công!') {
-          queryClient.invalidateQueries({ queryKey: ['getCart'] })
-          setIsModalOpenBuy(true)
-        } else {
-         window.location.href = res.data.data
-        }
-      }
-      toast.success(res.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
-    } else {
-      toast.error('Thaats bij')
+    } catch (e) {
+      toast.error(e.message)
     }
   }
 

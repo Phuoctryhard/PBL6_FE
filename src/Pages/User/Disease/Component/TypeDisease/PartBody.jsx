@@ -20,7 +20,7 @@ export default function PartBody({ disease_Body }) {
             {disease_Body?.map((element) => {
               return (
                 <div class='flex items-center gap-2 rounded-md shadow-lg'>
-                  <Link to={`/benh/${element.category_id}`}>
+                  <Link to={`/categorybenh/${element.category_id}`}>
                     <img
                       class='rounded-md object-cover md:h-[80px] md:w-[80px] w-[80px] h-[80px]'
                       src={element.category_thumbnail}

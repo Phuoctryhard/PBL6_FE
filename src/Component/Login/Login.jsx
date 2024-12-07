@@ -30,22 +30,26 @@ export default function Login() {
       onSuccess: (data) => {
         login(data.data.data, data.data.data.access_token)
         const role = data.data.data.role
-        if (role == 'user') {
-          toast.success('Đăng nhập thành công')
+        if (role === 'user') {
+          console.log(data?.data?.messages[0])
+          toast.success(data?.data?.messages[0])
           navigate('/')
         } else {
           navigate('/admin')
         }
       },
-      onError: () => {
-        toast.error('Đăng nhập thất bại!')
+      onError: (error) => {
+        if (error.response.data.messages[0] == 'Lỗi token ') {
+        }
+        console.log(error.response.data.messages[0])
+        toast.error(error.response.data.messages[0])
       }
     })
   })
   return (
     <div className='h-full'>
-      <div className='bg-[rgb(39,107,68,0.4)] grid min-h-[calc(100vh-84px)] lg:grid-cols-6 lg:gap-[7.5rem] gap-0'>
-        <div className='hidden lg:flex lg:flex-col lg:justify-center lg:items-end lg:col-start-1 lg:col-span-3'>
+      <div className='lg:grid-cols-6 bg-[rgb(39,107,68,0.4)] grid h-full'>
+        <div className='hidden lg:flex lg:flex-col lg:justify-center lg:items-center lg:col-start-1 lg:col-span-3'>
           <div className='flex flex-col justify-center items-center'>
             <div className='w-[350px] mb-7 rounded-sm '>
               <img src='/assets/images/Logo_Pbl6.png' alt='Logo' className='rounded-sm w-full object-cover' />
@@ -56,8 +60,8 @@ export default function Login() {
             </div>
           </div>
         </div>
-        <div className='col-start-1 col-span-6 p-7 flex justify-center items-center lg:justify-start lg:col-start-4 lg:col-span-3'>
-          <div className='bg-white rounded shadow-sm w-full max-w-[35rem] lg:max-w-[26rem]'>
+        <div className='col-start-4 col-span-2 p-7 justify-center flex items-center'>
+          <div className='bg-white  rounded shadow-sm   w-full'>
             <form action='' className=' bg-white rounded-xl shadow-sm p-7' onSubmit={onSubmit} noValidate>
               <div className='text-3xl text-center'>Đăng Nhập</div>
               <div className='mt-8'>

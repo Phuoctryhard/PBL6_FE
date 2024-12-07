@@ -13,7 +13,7 @@ import * as yup from 'yup'
 import categoryAPI from '../../../Api/user/category'
 import { IdcardOutlined } from '@ant-design/icons'
 import brandAPI from '../../../Api/user/brand'
-import { Previous } from 'iconsax-react'
+import { Previous, Refresh } from 'iconsax-react'
 import { useLocation } from 'react-router-dom'
 import { schemaPrice } from '../../../Component/ValidateScheme/Validate'
 import Loading from '../../../Component/Loading/Loading'
@@ -83,14 +83,34 @@ export default function CategoryListProduct() {
   })
   console.log(productsData)
   console.log(productsData?.data?.data)
-  // category
-  if (useQueryParameter.category_parent_name == 'Thuốc kê đơn') {
-    var idcategory
-    idcategory = 4
-    // ko kê đơn
-  } else if (useQueryParameter.category_parent_name == 'Thuốc không kê đơn') {
-    idcategory = 3
-  }
+  // get name category
+  const { data: getName_Category } = useQuery({
+    queryKey: ['getName_Category'],
+    queryFn: () => {
+      return categoryAPI.getName_Category()
+    },
+    staleTime: 300000, // Cache dữ liệu trong 5 phút
+    refetchOnWindowFocus: false // Không refetch khi chuyển tab
+  })
+  // Lấy danh sách danh mục từ API
+  const categoryList = getName_Category?.data?.data
+
+  const idcategory = useMemo(() => {
+    if (categoryList && Array.isArray(categoryList)) {
+      const category = categoryList.find((item) => item.category_name === useQueryParameter.category_parent_name)
+
+      if (category) {
+        return category.category_id // Trả về `category_id` nếu tìm thấy
+      } else {
+        console.warn('Không tìm thấy danh mục phù hợp')
+        return null // Giá trị mặc định nếu không tìm thấy
+      }
+    } else {
+      console.error('Danh sách danh mục không hợp lệ')
+      return null // Giá trị mặc định nếu danh sách không hợp lệ
+    }
+  }, [categoryList, useQueryParameter.category_parent_name])
+
   const { data: getCategorybyid } = useQuery({
     queryKey: ['products', idcategory],
     // khi queryParams thay đổi thì useQuery tính năn như useEffect
@@ -105,29 +125,61 @@ export default function CategoryListProduct() {
   console.log(getCategorybyid)
 
   const handlePriceDes = () => {
-    const searchParams = createSearchParams({
-      ...useQueryParameter,
-      typesort: 'product_price',
-      sortlatest: true
-    }).toString()
-
-    navigate({
-      pathname: `/category`,
-      search: `?${searchParams}`
-    })
+    if (
+      (useQueryParameter.typesort || typeof useQueryParameter.sortlatest === 'undefined') &&
+      (useQueryParameter.sortlatest === 'false' || typeof useQueryParameter.sortlatest === 'undefined')
+    ) {
+      const searchParams = createSearchParams({
+        ...useQueryParameter,
+        typesort: 'product_price',
+        sortlatest: true
+      }).toString()
+      console.log(searchParams) // Kiểm tra chuỗi query được tạo
+      navigate({
+        pathname: `/category`,
+        search: `?${searchParams}`
+      })
+    } else {
+      delete useQueryParameter.typesort
+      delete useQueryParameter.sortlatest
+      const searchParams = createSearchParams({
+        ...useQueryParameter
+      }).toString()
+      //console.log(searchParams) // Kiểm tra chuỗi query được tạo
+      navigate({
+        pathname: `/category`,
+        search: `?${searchParams}`
+      })
+    }
   }
   const handlePriceAsc = () => {
-    const searchParams = createSearchParams({
-      ...useQueryParameter,
-      typesort: 'product_price',
-      sortlatest: false
-    }).toString()
-
-    console.log(searchParams) // Kiểm tra chuỗi query được tạo
-    navigate({
-      pathname: `/category`,
-      search: `?${searchParams}`
-    })
+    console.log(useQueryParameter)
+    if (
+      (useQueryParameter.typesort || typeof useQueryParameter.sortlatest === 'undefined') &&
+      (useQueryParameter.sortlatest === 'true' || typeof useQueryParameter.sortlatest === 'undefined')
+    ) {
+      const searchParams = createSearchParams({
+        ...useQueryParameter,
+        typesort: 'product_price',
+        sortlatest: false
+      }).toString()
+      console.log(searchParams) // Kiểm tra chuỗi query được tạo
+      navigate({
+        pathname: `/category`,
+        search: `?${searchParams}`
+      })
+    } else {
+      delete useQueryParameter.typesort
+      delete useQueryParameter.sortlatest
+      const searchParams = createSearchParams({
+        ...useQueryParameter
+      }).toString()
+      //console.log(searchParams) // Kiểm tra chuỗi query được tạo
+      navigate({
+        pathname: `/category`,
+        search: `?${searchParams}`
+      })
+    }
   }
   const handleClickCategory = (categoryName) => {
     // Điều hướng về trang gốc rồi thêm categoryName
@@ -249,8 +301,43 @@ export default function CategoryListProduct() {
       })
     }
   }
-  console.log(useQueryParameter)
+  // console.log(productsData?.data?.data?.data[0].parent_category_name)
+  //console.log(useQueryParameter)
   // if (isLoading) return <Loading />
+
+  const handleNavigation = (name) => {
+    if (name == productsData?.data?.data?.data[0]?.category_name) {
+      const category_name = name
+      const parentCategoryName = productsData?.data?.data?.data[0]?.parent_category_name
+      if (category_name) {
+        navigate(`/category?category_parent_name=${parentCategoryName}`)
+      }
+    } else {
+    }
+  }
+
+  const [isRotating, setIsRotating] = useState(false)
+
+  const handleRefresh = () => {
+    setIsRotating(true)
+    setTimeout(() => {
+      setIsRotating(false) // Dừng xoay sau hiệu ứng
+    }, 2000) // Thời gian xoay (1 giây)
+    // Thêm logic làm mới dữ liệu ở đây nếu cần
+    console.log()
+    delete useQueryParameter.price_from
+    delete useQueryParameter.price_to
+    delete useQueryParameter['brand_names[]']
+    setNameBrands([])
+    const searchParams = createSearchParams({
+      ...useQueryParameter
+    }).toString()
+    //console.log(searchParams) // Kiểm tra chuỗi query được tạo
+    navigate({
+      pathname: `/category`,
+      search: `?${searchParams}`
+    })
+  }
   return (
     <div className=''>
       <div className='px-24 py-6'>
@@ -271,12 +358,45 @@ export default function CategoryListProduct() {
                     </svg>
                   </span>
                 </li>
+                {
+                  <>
+                    <li class='h-5 text-sm'>
+                      <span
+                        class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900 cursor-pointer'
+                        onClick={() => handleNavigation(productsData?.data?.data?.data[0]?.category_name)}
+                      >
+                        {productsData?.data?.data?.data[0]?.parent_category_name}
+                      </span>
+                    </li>
 
-                <li class='h-5 text-sm'>
-                  <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'>
-                    <a href=''></a>
-                  </span>
-                </li>
+                    <li class='h-5 text-sm'>
+                      {!useQueryParameter?.category_parent_name && (
+                        <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
+                          <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                            <path
+                              d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
+                              fill='currentColor'
+                            ></path>
+                          </svg>
+                        </span>
+                      )}
+                      <span
+                        class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'
+                        onClick={() => handleNavigation(productsData?.data?.data?.data[0]?.parent_category_name)}
+                      >
+                        {!useQueryParameter?.category_parent_name
+                          ? productsData?.data?.data?.data[0]?.category_name
+                          : ''}
+                      </span>
+                    </li>
+
+                    <li class='h-5 text-sm'>
+                      <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'>
+                        <a href=''></a>
+                      </span>
+                    </li>
+                  </>
+                }
               </ul>
             </div>
           </div>
@@ -304,8 +424,14 @@ export default function CategoryListProduct() {
       </div>
       <div className='px-24 grid grid-cols-12 gap-2 mt-5'>
         <div className='col-span-2 flex flex-col'>
-          <div className='flex text-lg  py-4'>
+          <div className='flex text-lg  py-4 justify-between items-center'>
             <p className=' font-semibold'>Bộ lọc tìm kiếm</p>
+            <div
+              onClick={handleRefresh}
+              className={`transform transition-transform ${isRotating ? 'rotate-180 hue-rotate-180' : ''}`}
+            >
+              <Refresh size='20' color='#FF8A65' />
+            </div>
           </div>
           <div className='border border-l-1 opacity-65'></div>
 
@@ -470,12 +596,21 @@ export default function CategoryListProduct() {
               <div className='flex  px-3 pt-2  gap-x-2'>
                 <p className='p-3 font-medium'>Sắp xếp theo: </p>
                 <button
-                  className='p-3  border-2 rounded-lg text-[#787878] hover:text-black'
+                  className={`p-3  border-2 rounded-lg text-[#787878] hover:text-black ${useQueryParameter.typesort && useQueryParameter.sortlatest === 'true' ? 'bg-blue' : ''}
+               
+                  
+                    `}
                   onClick={() => handlePriceDes()}
                 >
                   Giảm giá dần{' '}
                 </button>
-                <button className='p-3  border-2 rounded-lg text-[#787878] hover:text-black' onClick={handlePriceAsc}>
+                <button
+                  className={`p-3  border-2 rounded-lg text-[#787878] hover:text-black ${useQueryParameter.typesort && useQueryParameter.sortlatest === 'false' ? 'bg-blue' : ''}
+               
+                  
+                  `}
+                  onClick={handlePriceAsc}
+                >
                   Giá tăng dần{' '}
                 </button>
               </div>

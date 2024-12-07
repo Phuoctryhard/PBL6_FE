@@ -15,6 +15,14 @@ const authAPI = {
 
   logout: () => http.post('user/logout'),
   verifyEmail: (token) => http.post('user/verify-email', token),
-  changePassword: (data) => http.post('user/change-password', data)
+  changePassword: (data) => http.post('user/change-password', data),
+  // update profile
+  updateProfile: (formData) => {
+    return http.post('user/update-profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  }
 }
 export default authAPI

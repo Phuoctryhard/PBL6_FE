@@ -25,20 +25,23 @@ export default function VerifyEmail() {
 
     // Call API hoặc xử lý logic khác ở đây
     mutate.mutate(tokenEmail, {
-      onSuccess: () => {
-        console.log('Thành công ')
-        toast.success('Xác thực thành công !')
+      onSuccess: (data) => {
+        console.log(data)
+        toast.success(data.data.messages[0])
         setTimeout(() => {
           window.close() // Đóng trang sau 3 giây
         }, 3000) // 1000ms = 1 giây
       },
-      onError() {
-        console.log('Thấtbai ')
-        setTimeout(() => {
-          window.close() // Đóng trang sau 3 giây
-        }, 3000) //
-        toast.error('Fail !')
+      onError: (error) => {
+        console.log(error)
+        toast.error(error?.response?.data?.messages[0])
       }
+
+      // setTimeout(() => {
+      //   window.close() // Đóng trang sau 3 giây
+      // }, 3000) //
+      //   toast.error(error)
+      // }
     })
   }, [token])
   return <div>Verify Email Toke: {token}</div>

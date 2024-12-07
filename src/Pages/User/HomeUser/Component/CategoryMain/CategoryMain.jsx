@@ -4,11 +4,12 @@ import categoryAPI from '../../../../../Api/user/category'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, createSearchParams, Link, useLocation } from 'react-router-dom'
 
-const CategoryMain = () => {
+const CategoryMain = ({ setopenCategory }) => {
   const navigate = useNavigate()
   const handleClickCategory = (categoryName) => {
     // Điều hướng về trang gốc rồi thêm categoryName
     // navigate(`/category/${categoryName}`)
+    //setopenCategory(false)
     navigate({
       pathname: '/category',
       search: `?${createSearchParams({
@@ -32,6 +33,7 @@ const CategoryMain = () => {
     label: (
       <div
         onClick={() => {
+         // setopenCategory(false)
           if (category.category_name === 'Tra cứu bệnh') {
             navigate('/benh')
           }
@@ -54,7 +56,7 @@ const CategoryMain = () => {
     children: (
       <div>
         {category?.category_name !== 'Tra cứu bệnh' ? (
-          <div className='flex gap-4  cursor-pointer grid grid-cols-5'>
+          <div className=' gap-4  cursor-pointer flex md:flex-col  lg:flex-row'>
             {category?.children.slice(0, 8)?.map((child) => (
               <div key={child.category_id} className='my-2'>
                 <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2 '>

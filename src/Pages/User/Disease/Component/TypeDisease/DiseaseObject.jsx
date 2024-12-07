@@ -10,7 +10,7 @@ export default function DiseaseObject({ disease_by_target_group }) {
     <>
       <div className='px-24 flex flex-col'>
         <div class=' flex items-center justify-between py-4'>
-          <h4 class='font-semibold md:font-semibold md:text-[20px] text-base'>Tra cứu bệnh</h4>
+          <h4 class='font-semibold md:font-semibold md:text-[20px] text-base'>Bệnh theo đối tượng</h4>
           <a
             class='relative flex justify-center border-0 bg-transparent text-sm font-normal text-hyperLink outline-none md:hover:text-primary-600 md:text-base'
             type='button'

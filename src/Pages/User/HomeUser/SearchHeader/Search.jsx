@@ -1,27 +1,26 @@
 import React, { useContext } from 'react'
 import { Popover } from 'antd'
-import Button1 from '../../../../Component/Button/Button'
+import { Empty } from 'antd'
 import Avatar1 from '../../../../Component/Avatar/Avatar'
 import { useNavigate, createSearchParams, Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import CartAPI from '../../../../Api/user/cart.js'
-import { useQuery, useQueryClient, QueryClient } from '@tanstack/react-query'
+
 import { Badge } from 'antd'
 import { Button } from 'antd'
 import { AuthContext } from '../../../../context/app.context'
 import categoryAPI from '../../../../Api/user/category.js'
-import Anh from './_480f2c92-d896-48ef-978c-6c37301968f7-removebg-preview.png'
+
 import CategoryMain from '../Component/CategoryMain/CategoryMain.jsx'
 import Anhloi from './anhloi.png'
-import { DownOutlined, SmileOutlined } from '@ant-design/icons'
-import { Dropdown, Space } from 'antd'
+
 import { Divider } from 'antd'
 import { useForm } from 'react-hook-form'
-import { getValue } from '@testing-library/user-event/dist/utils/index.js'
+
 import productAPI from '../../../../Api/user/product.js'
-import { generateNameId } from '../../../../until/index.js'
+import { formatCurrency, generateNameId } from '../../../../until/index.js'
+import { useQuery } from '@tanstack/react-query'
 export default function Search() {
-  const [filteredData, setFilteredData] = useState([])
   // current hiện tại
   const [page, setCurrent] = useState(1)
   const [pageSize, setPageSize] = useState(15)
@@ -195,36 +194,37 @@ export default function Search() {
               console.log(element)
 
               return (
-                <div className='flex justify-between w-full py-2 mt-3 hover:bg-gray-300' key={element.cart_id}>
+                <div className='flex justify-between w-full py-2 mt-3 hover:bg-gray-300 pl-1' key={element.cart_id}>
                   <div div className='flex gap-x-1  '>
                     <div className='h-20 w-20  '>
-                      <img
-                        src={element?.product_images[0] ? element?.product_images[0] : Anhloi}
-                        alt=''
-                        className='object-cover h-full w-full'
-                      />
+                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
+                        <img
+                          src={element?.product_images[0] ? element?.product_images[0] : Anhloi}
+                          alt=''
+                          className='object-cover h-full w-full'
+                        />
+                      </Link>
                     </div>
-
-                    <p className='truncate overflow-hidden whitespace-nowrap w-[250px] text-base font-normal'>
-                      {element.product_name}
-                    </p>
+                    <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
+                      <p className='truncate overflow-hidden whitespace-nowrap w-[250px] text-base font-normal'>
+                        {element.product_name}
+                      </p>
+                    </Link>
                   </div>
-                  <div className='text-red-500 pr-2'>9{element.cart_price}</div>
+                  <div className='text-red-500 pr-2'> {formatCurrency(element.cart_price)}</div>
                 </div>
               )
             })
         ) : (
-          <div>No items in cart.</div>
+          <div>
+            <Empty />
+          </div>
         )}
       </div>
       <div className='flex justify-between items-center my-2'>
         <span>
-          {
-            data?.data?.data?.filter((element) => {
-              return element.product_quantity > 0
-            }).length
-          }
-          Thêm hàng vào giỏ{' '}
+          {data?.data?.data?.filter((element) => element.product_quantity > 0).length}
+          <span style={{ marginLeft: '8px' }}>Thêm hàng vào giỏ</span>
         </span>
         <button className='bg-[#1A51A2] px-3 py-2  rounded-lg text-white ' onClick={handleNavigate}>
           Xem giỏ hàng
@@ -233,7 +233,7 @@ export default function Search() {
     </div>
   )
 
-  const content = (
+  const Profile = (
     <>
       {!isAuthenticated ? (
         <div className='w-full'>
@@ -343,7 +343,7 @@ export default function Search() {
   )
 
   // laays dataa vee header
-  const { data: productsDataDropdown, isLoading } = useQuery({
+  const { data: productsDataDropdown } = useQuery({
     // queryKey: ['product', queryParams],
     // queryconfig như category hay order hay sort_by thay đổi thì nó useQuery lại
     queryKey: ['products', search],
@@ -367,16 +367,16 @@ export default function Search() {
 
   return (
     <>
-      <div className='z-20 mx-auto w-full  md:pb-3 md:pt-4 bg-[#2e69c1]'>
+      <div className='z-20 mx-auto w-full  md:pb-3 md:pt-8 bg-[rgb(46,105,193,1)]'>
         <div className='flex items-center md:mb-4 px-24 '>
           <div className='flex w-full flex-col-reverse items-start md:flex-row gap-2'>
             {' '}
-            <div className='hidden md:flex shrink-0  w-[20%]' onClick={() => navigate('/')}>
-              <img
-                class='w-40 h-20 cursor-pointer bg-white object-cover rounded-md'
-                src='/assets/images/Logo_Pbl6.png'
-                alt='Logo'
-              />
+            <div
+              className=' flex md:flex-col shrink-0  w-[20%] items-center cursor-pointer'
+              onClick={() => navigate('/')}
+            >
+              <p className='text-white text-xl font-semibold'>Nhà Thuốc</p>
+              <p className='text-white text-2xl font-semibold'>PBL6</p>
             </div>
             <div className=' grid  grid-cols-1  w-[70%] relative'>
               <div className='w-full'>
@@ -403,7 +403,7 @@ export default function Search() {
                       </button>
 
                       <input
-                        className='w-full border-neutral-500 focus:ring-neutral-500 focus:border-neutral-700 outline-none p-3.5 search-input flex h-10 items-center justify-start rounded-sm border-0 py-2 pl-10 text-start text-sm font-medium text-neutral-800 truncate'
+                        className='w-full border-neutral-500 focus:ring-neutral-500 focus:border-neutral-700 outline-none p-1  flex h-11 items-center justify-start rounded-md border-0 pl-10 text-start text-base font-medium text-neutral-800 truncate'
                         placeholder='Tên thuốc, triệu chứng, vitamin và thực phẩm chức năng'
                         autoComplete='off'
                         {...register('search')} // Đăng ký với React Hook Form
@@ -424,7 +424,7 @@ export default function Search() {
                 </form>
               </div>
               {isDropdownOpen && (
-                <div className='absolute w-full mt-1 bg-white shadow-lg rounded-md border border-neutral-300 top-[100%] z-10 max-h-96 overflow-y-auto'>
+                <div className='absolute w-full mt-1 bg-white shadow-lg rounded-md border border-neutral-300 top-[100%] z-50 max-h-96 overflow-y-auto'>
                   {!search && (
                     <>
                       <div className='p-5'>
@@ -437,24 +437,21 @@ export default function Search() {
                       <div className='p-5'>
                         <div className='font-semibold mb-2'>Tìm kiếm phổ biến</div>
                         <div className='flex flex-wrap gap-2 m-2'>
-                          {['khẩu trang', 'hạ sốt', 'giảm ho đau họng', 'collagen', 'chăm sóc mẹ bầu'].map(
-                            (tag, index) => (
-                              <button
-                                key={index}
-                                className='px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200 text-sm'
-                                onClick={() => console.log(`Tìm kiếm phổ biến: ${tag}`)}
-                              >
-                                {tag}
-                              </button>
-                            )
-                          )}
+                          {['Thuốc kê đơn ', 'Thuốc không kê đơn'].map((tag, index) => (
+                            <button
+                              key={index}
+                              className='px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200 text-sm'
+                              onClick={() => console.log(`Tìm kiếm phổ biến: ${tag}`)}
+                            >
+                              {tag}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     </>
                   )}
                   <div className='p-5'>
                     {search && <div className='font-semibold'>Danh mục</div>}
-
                     {search &&
                       Array.from(
                         new Map(
@@ -505,8 +502,8 @@ export default function Search() {
               )}
             </div>
             <div className='flex relative'>
-              <Popover content={content} placement='bottomRight' overlayStyle={{ width: '300px' }}>
-                <button className='h-10 px-3 text-white h-10'>
+              <Popover content={Profile} placement='bottomRight' overlayStyle={{ width: '300px' }}>
+                <button className='px-3 text-white h-10'>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     fill='none'
@@ -555,24 +552,28 @@ export default function Search() {
             {isAuthenticated ? (
               <div className='flex '>
                 <Popover content={profile} placement='bottomRight' overlayStyle={{ width: '230px' }}>
-                  <div className='flex items-center cursor-pointer'>
+                  <div className='flex items-center cursor-pointer text-gray-300'>
                     <Avatar1 user_avatar={isProfile?.user_avatar} />
                     <div className='w-full h-10 flex items-center  ml-1'>{isProfile?.user_fullname}</div>
                   </div>
                 </Popover>
               </div>
             ) : (
-              <Button type='' className='text-black font-semibold'>
-                <span onClick={() => navigate('/login')}>Đăng nhập</span>
+              <Button type='' className=' font-semibold h-10'>
+                <span className='text-base ' onClick={() => navigate('/login')}>
+                  Đăng nhập
+                </span>
                 <span>/</span>
-                <span onClick={() => navigate('/register')}>Đăng kí</span>
+                <span className='text-base' onClick={() => navigate('/register')}>
+                  Đăng kí
+                </span>
               </Button>
             )}
           </div>
         </div>
 
         <div className='px-24 flex gap-2'>
-          <div className='flex '>
+          <div className='flex w-[20%] '>
             <button
               onClick={handleClick}
               className='flex font-semibold bg-white test-sm py-2 px-2 rounded-sm justify-between w-[200px] hover:text-blue'
@@ -607,27 +608,44 @@ export default function Search() {
                 </svg>
               </span>
             </button>
-
-            <div className=''></div>
+          </div>
+          <div className='flex w-[80%] items-center gap-4 text-white font-medium'>
+            <p onClick={() => navigate('/benh')}>Tra cứu bệnh </p>
+            <p
+              onClick={() =>
+                navigate({
+                  pathname: '/category',
+                  search: `?${createSearchParams({
+                    category_parent_name: 'Thuốc không kê đơn'
+                  })}`
+                })
+              }
+            >
+              Thuốc không kê đơn
+            </p>
+            <p
+              onClick={() =>
+                navigate({
+                  pathname: '/category',
+                  search: `?${createSearchParams({
+                    category_parent_name: 'Thuốc kê đơn'
+                  })}`
+                })
+              }
+            >
+              Thuốc kê đơn
+            </p>
           </div>
         </div>
       </div>
       {openCategory && (
-        <div
-          className='grid grid-cols-8 px-24  gap-x-3 z-10 absolute bg-white '
-          onMouseLeave={() => setopenCategory(false)}
-        >
-          <div className='col-span-6 bg-yellow-500 rounded-lg pt-3   '>
-            <CategoryMain />
-          </div>
-
-          <div className='col-span-2 flex flex-col justify-between rounded-lg overflow-hidden  pt-3  mb-5'>
-            <div className=''>
-              <img
-                src='https://prod-cdn.pharmacity.io/e-com/images/banners/20240920042514-0-Web_AllScreen%20Directory%20menu0310_%28522x976%29px.webp'
-                alt=''
-                className=''
-              />
+        <div className='px-6 md:px-12 lg:px-24'>
+          <div
+            className='grid grid-cols-1 gap-x-4 z-20 absolute bg-white shadow-2xl rounded-lg overflow-hidden'
+            onMouseLeave={() => setopenCategory(false)}
+          >
+            <div className='col-span-1 bg-yellow-500 rounded-lg p-4'>
+              <CategoryMain setopenCategory={setopenCategory} />
             </div>
           </div>
         </div>
@@ -635,3 +653,17 @@ export default function Search() {
     </>
   )
 }
+// <div className='col-span-2 flex flex-col justify-between rounded-lg overflow-hidden  pt-3  mb-5'>
+//             <div className=''>
+//               <img
+//                 src='https://prod-cdn.pharmacity.io/e-com/images/banners/20240920042514-0-Web_AllScreen%20Directory%20menu0310_%28522x976%29px.webp'
+//                 alt=''
+//                 className=''
+//               />
+//             </div>
+//           </div>
+// <img
+//                 class='w-[70px] h-[70px] cursor-pointer object-contain  bg-transparent  rounded-full'
+//                 src='/assets/images/Logo_Pbl6.png'
+//                 alt='Logo'
+//               />

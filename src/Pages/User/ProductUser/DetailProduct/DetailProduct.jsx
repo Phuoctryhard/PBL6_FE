@@ -17,6 +17,7 @@ import ModalGalary from './ModalGalary'
 import { useNavigate } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import ModalChatZalo from '../Component/ModalChatZalo'
+import Review from '../../Review/Review'
 export default function DetailProduct() {
   const [Errorquantity, setErrorquantity] = useState('')
 
@@ -150,7 +151,16 @@ export default function DetailProduct() {
   //console.log(data?.data?.data)
 
   // modal chat zalo
-
+  const handleNavigation = (name) => {
+    if (name == data?.data?.data.category_name) {
+      const category_name = name
+      const parentCategoryName = data?.data?.data.parent_category_name
+      if (category_name) {
+        navigate(`/category?category_parent_name=${parentCategoryName}`)
+      }
+    } else {
+    }
+  }
   const [OpenModalChat, setOpenModalChat] = useState(false)
   return (
     <div className='px-24  '>
@@ -162,7 +172,60 @@ export default function DetailProduct() {
         <>
           <div class='hidden bg-neutral-100 md:block  mb-4'>
             <div class='container '>
-              <div></div>
+              <div>
+                <ul class='flex items-center py-1.5 text-neutral-600 mt-2'>
+                  <li class='h-5 text-sm'>
+                    <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5'>
+                      <a href='/'>Trang chủ</a>
+                    </span>
+                    <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
+                      <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                        <path
+                          d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
+                          fill='currentColor'
+                        ></path>
+                      </svg>
+                    </span>
+                  </li>
+                  {
+                    <>
+                      <li class='h-5 text-sm'>
+                        <span
+                          class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900 cursor-pointer'
+                          onClick={() => handleNavigation(data.data.data?.category_name)}
+                        >
+                          {data.data.data?.parent_category_name}
+                        </span>
+                      </li>
+
+                      <li class='h-5 text-sm'>
+                        {data.data.data?.parent_category_name && (
+                          <span class='p-icon inline-flex align-[-0.125em] justify-center max-h-full max-w-full h-3 w-3 text-neutral-800'>
+                            <svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                              <path
+                                d='M17.2137 11.2862L8.21971 2.29524C7.82506 1.90159 7.18567 1.90159 6.79002 2.29524C6.39537 2.68889 6.39537 3.32829 6.79002 3.72194L15.0706 11.9995L6.79102 20.2771C6.39637 20.6707 6.39637 21.3101 6.79102 21.7048C7.18567 22.0984 7.82606 22.0984 8.22071 21.7048L17.2147 12.7139C17.6032 12.3243 17.6032 11.6749 17.2137 11.2862Z'
+                                fill='currentColor'
+                              ></path>
+                            </svg>
+                          </span>
+                        )}
+                        <span
+                          class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'
+                          onClick={() => handleNavigation(data.data.data?.parent_category_name)}
+                        >
+                          {data?.data?.data.category_name}
+                        </span>
+                      </li>
+
+                      <li class='h-5 text-sm'>
+                        <span class='hover:text-neutral-800 mx-1 font-normal text-[12px] leading-5 text-neutral-900'>
+                          <a href=''></a>
+                        </span>
+                      </li>
+                    </>
+                  }
+                </ul>
+              </div>
             </div>
           </div>
           {/* ffffff:    */}
@@ -242,7 +305,7 @@ export default function DetailProduct() {
                     </>
                   )}
 
-                  <div className='w-full border border-[1px]'></div>
+                  <div className='w-full border '></div>
                   <div class='mb-3 md:mb-4 my-2 '>
                     <div class='space-y-3'>
                       {data?.data?.data?.product_package && (
@@ -392,6 +455,9 @@ export default function DetailProduct() {
                       )}
                     </div>
                   </div>
+
+                  <Divider style={{ borderColor: '#7cb305' }}></Divider>
+                  <Review idproduct1={idproduct1} />
                 </div>
               </div>
 
