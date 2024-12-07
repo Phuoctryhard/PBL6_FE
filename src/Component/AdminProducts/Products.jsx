@@ -5,13 +5,10 @@ import { TreeSelect, Dropdown, Popconfirm, message, Select, DatePicker, ConfigPr
 import qs from 'qs'
 import { ProductsAPI, BrandsAPI, CategoriesAPI } from '../../Api/admin'
 import { DashOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/app.context'
-import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
-import PurePanel from 'antd/es/tooltip/PurePanel'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const { RangePicker } = DatePicker
 
 //#region theme for ant design components
@@ -48,15 +45,18 @@ const filterTheme = {
 const AdminProducts = () => {
   //access token
   const token = localStorage.getItem('accesstoken')
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
+  const { setIsLogin } = useAdminMainLayoutFunction()
+
+  const [messageApi, contextHolder] = message.useMessage()
+  const openMessage = (type, content, duration) => {
+    messageApi.open({
+      type: type,
+      content: content,
+      duration: duration
     })
-    logout()
-    navigate('/admin/login')
   }
+  const [status, setStatus] = useState(null)
+  const [messageResult, setMessageResult] = useState('')
 
   //#region filter data
   //brand data
@@ -86,17 +86,47 @@ const AdminProducts = () => {
 
   //Fetch categories and brands data
   useEffect(() => {
-    CategoriesAPI.getCategories()
-      .then((response) => response.json())
-      .then(({ data }) => {
-        const categories = convertToTreeData(data.filter((category) => category.category_is_delete === 0))
-        setTreeData(categories)
-      })
-    BrandsAPI.getBrands()
-      .then((response) => response.json())
-      .then(({ data }) => {
-        setBrand(data)
-      })
+    try {
+      const fetchAllCategoryData = async () => {
+        try {
+          const res = await CategoriesAPI.getAllCategories(token)
+        } catch (err) {
+          if (err.message.includes('401')) {
+            setIsLogin(false)
+            return
+          }
+          setStatus(400)
+          setMessageResult(err.message)
+        }
+      }
+      const fetchCategory = async () => {
+        try {
+          const res = await CategoriesAPI.getCategories()
+          const data = res.data
+          const categories = convertToTreeData(data.filter((category) => category.category_is_delete === 0))
+          setTreeData(categories)
+        } catch (err) {
+          setStatus(400)
+          setMessageResult(err.message)
+        }
+      }
+      const fetchBrands = async () => {
+        try {
+          const res = await BrandsAPI.getBrands()
+          const data = res.data
+          setBrand(data)
+        } catch (err) {
+          setStatus(400)
+          setMessageResult(err.message)
+        }
+      }
+      fetchAllCategoryData()
+      fetchCategory()
+      fetchBrands()
+    } catch (err) {
+      setStatus(400)
+      setMessageResult(err.message)
+    }
   }, [])
   //#endregion
 
@@ -256,130 +286,113 @@ const AdminProducts = () => {
   //Fetch delete product
   const fetchDeleteProduct = async (ProductID) => {
     try {
-      const response = await ProductsAPI.deleteProducts(ProductID, token)
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          setResponseState({
-            status: response.status,
-            messageResult: `Delete product with status code: ${response.status}`,
-            type: 'Delete'
-          })
-        }
-        return
-      }
-      const result = await response.json()
+      const result = await ProductsAPI.deleteProducts(ProductID, token)
+      fetchProducts({
+        sortlatest: true,
+        search: ''
+      })
       const { messages, status } = result
-      setResponseState({ status, messageResult: messages, type: 'Delete' })
-    } catch (e) {}
+      setStatus(status)
+      setMessageResult(messages)
+    } catch (err) {
+      setStatus(400)
+      setMessageResult(err.message)
+    }
   }
 
   //search and filter products
   const searchProducts = () => {
-    const formatDate = (date) => {
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-        const [day, month, year] = date.split('/')
-        return `${year}-${month}-${day}`
-      }
+    try {
+      const formatDate = (date) => {
+        let format = date
 
-      // Check if the date is in ISO 8601 format
-      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
-      }
+        // Check if the date is in DD/MM/YYYY format
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+          const [day, month, year] = date.split('/')
+          format = `${year}-${month}-${day}`
+        }
 
-      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
-      if (Date.parse(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
+        // Check if the date is in ISO 8601 format
+        else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          format = `${year}-${month}-${day}`
+        }
+
+        // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+        else if (Date.parse(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          format = `${year}-${month}-${day}`
+        }
+
+        return format ? new Date(format) : null
       }
-      return ''
-    }
-    const results = data.filter((item) => {
-      const matchesProductName = item.product_name.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesBrandName = selectedBrand
-        ? item.brand_name.toLowerCase().includes(selectedBrand.toLowerCase())
-        : true
-      const matchesDateRange =
-        selectedFrom && selectedTo
-          ? formatDate(item.product_created_at) >= formatDate(selectedFrom) &&
-            formatDate(item.product_created_at) <= formatDate(selectedTo)
+      const results = data.filter((item) => {
+        const matchProductInfo =
+          item.product_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.product_id.toString() === searchValue
+        const matchesBrandName = selectedBrand
+          ? item.brand_name.toLowerCase().includes(selectedBrand.toLowerCase())
           : true
-      return matchesProductName && matchesBrandName && matchesDateRange
-    })
+        const matchesDateRange =
+          selectedFrom && selectedTo
+            ? formatDate(item.product_created_at) &&
+              formatDate(selectedFrom) &&
+              formatDate(selectedTo) &&
+              formatDate(item.product_created_at) >= formatDate(selectedFrom) &&
+              formatDate(item.product_created_at) <= formatDate(selectedTo)
+            : true
+        return matchProductInfo && matchesBrandName && matchesDateRange
+      })
 
-    const tableData = results
-    setFilterData(tableData)
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        total: results.length
-      }
-    })
+      const tableData = results
+      setFilterData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: results.length
+        }
+      })
+    } catch (err) {
+      setStatus(400)
+      setMessageResult('Error in search product data: ' + err.message)
+    }
   }
 
   //Fetch all products
-  const fetchProducts = (params) => {
-    setLoading(true)
+  const fetchProducts = async (params) => {
     try {
+      setLoading(true)
       const query = qs.stringify({
         ...params
       })
-      ProductsAPI.searchProducts(query)
-        .then((res) => {
-          if (!res.ok) {
-            setResponseState({
-              status: res.status,
-              messageResult: `Fetch products failed with status code: ${res.status}`,
-              type: 'Fetch'
-            })
-            return null
-          }
-          return res.json()
-        })
-        .then(({ data }) => {
-          if (!data) {
-            setLoading(false)
-            return
-          }
-          const tableData = data.map((product) => ({
-            product_id: product.product_id,
-            product_name: product.product_name,
-            product_price: product.product_price,
-            product_quantity: product.product_quantity,
-            product_sold: product.product_sold,
-            category_name: product.category_name,
-            brand_name: product.brand_name,
-            product_is_delete: product.product_is_delete,
-            product_created_at: product.product_created_at,
-            product_updated_at: product.product_updated_at
-          }))
-          setFilterData(tableData)
-          setData(tableData)
-          setTableParams({
-            ...tableParams,
-            pagination: {
-              ...tableParams.pagination,
-              total: data.length
-            }
-          })
-          setLoading(false)
-        })
-        .catch((e) => {
-          setLoading(false)
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    } catch (e) {}
+      const res = await ProductsAPI.searchProducts(query)
+      const data = res.data
+      const tableData = data.map((product) => ({
+        ...product,
+        key: product.product_id
+      }))
+      setFilterData(tableData)
+      setData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: tableData.length
+        }
+      })
+    } catch (err) {
+      setStatus(400)
+      setMessageResult(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   //page size change
@@ -428,35 +441,18 @@ const AdminProducts = () => {
 
   //#endregion
 
-  //#region Message API and response state(status, message result) of fetch API
-  //Message API
-  const [messageApi, contextHolder] = message.useMessage()
-  const openMessage = (type, content, duration) => {
-    messageApi.open({
-      type: type,
-      content: content,
-      duration: duration
-    })
-  }
-
-  //Response state
-  const [responseState, setResponseState] = useState({ status: 0, messageResult: '', type: null })
+  //#region status and message result of fetch api call
   useEffect(() => {
-    const { status, messageResult, type } = responseState
-    if (type) {
-      if ([200, 201, 202, 204].includes(status)) {
-        openMessage('success', `${type} product success`, 3)
-        fetchProducts({
-          sortlatest: true,
-          search: searchValue
-        })
-        setResponseState({ status: 0, messageResult: '', type: null })
-      } else if (status >= 400) {
-        openMessage('error', `${type} product failed: ${messageResult}`, 3)
-        setResponseState({ status: 0, messageResult: '', type: null })
-      }
+    if ([200, 201, 202, 204].includes(status)) {
+      openMessage('success', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
+    } else if (status >= 400) {
+      openMessage('error', messageResult, 3)
+      setStatus(null)
+      setMessageResult(null)
     }
-  }, [responseState])
+  }, [status, messageResult])
   //#endregion
 
   return (
@@ -505,14 +501,7 @@ const AdminProducts = () => {
                 }
               }}
             />
-            <button
-              onClick={() => {
-                fetchProducts({
-                  sortlatest: true,
-                  search: searchValue
-                })
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>

@@ -23,7 +23,8 @@ import {
   AdminAddIllness,
   AdminUpdateIllness,
   AdminViewOrder,
-  AdminDelivery
+  AdminDelivery,
+  AdminReviewComment
 } from '../Component'
 import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
 import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
@@ -163,162 +164,256 @@ export default function useRouterElement() {
       path: '/auth/forgot-password/admin',
       element: <AdminResetPassword />
     },
+
+    { path: '/admin', element: <Navigate to='/admin/overview' /> },
     {
       path: '/admin',
-      element: <Navigate to='/admin/overview' />
-    },
-    {
-      path: '/admin/overview',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <AdminOverview />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/inventory',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <div>
-            <h1>This is inventory</h1>
-          </div>
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/products',
       element: (
         <AdminMainLayout scrollBar='simpleBar'>
           <Outlet />
         </AdminMainLayout>
       ),
       children: [
+        { path: 'overview', element: <AdminOverview /> },
         {
-          path: '',
-          element: <AdminProducts />
+          path: 'inventory',
+          element: (
+            <div>
+              <h1>This is inventory</h1>
+            </div>
+          )
         },
         {
-          path: 'add-product',
-          element: <AdminAddProduct />
+          path: 'products',
+          element: <Outlet />,
+          children: [
+            { path: '', element: <AdminProducts /> },
+            { path: 'add-product', element: <AdminAddProduct /> },
+            { path: 'update/:productID', element: <AdminEditProduct /> },
+            { path: ':productID', element: <AdminViewProduct /> }
+          ]
+        },
+        { path: 'categories', element: <AdminCategories /> },
+        { path: 'manage-admins', element: <AdminManagement /> },
+        { path: 'manage-users', element: <AdminCustomer /> },
+        {
+          path: 'orders',
+          element: <Outlet />,
+          children: [
+            { path: '', element: <AdminOrders /> },
+            { path: ':id', element: <AdminViewOrder /> }
+          ]
         },
         {
-          path: 'update/:productID',
-          element: <AdminEditProduct />
+          path: 'payments',
+          element: (
+            <div className='col-span-3 bg-gray-light'>
+              <h1>payment</h1>
+            </div>
+          )
+        },
+        { path: 'deliveries', element: <AdminDelivery /> },
+        {
+          path: 'imports',
+          element: <Outlet />,
+          children: [
+            { path: '', element: <AdminImports /> },
+            { path: ':id', element: <AdminDetailImport /> }
+          ]
+        },
+        { path: 'suppliers', element: <AdminSuppliers /> },
+        { path: 'brands', element: <AdminBrands /> },
+        {
+          path: 'users',
+          element: (
+            <div className='col-span-3 bg-gray-light'>
+              <div className='h-[1000px] flex items-center justify-center'>Users</div>
+            </div>
+          )
         },
         {
-          path: ':productID',
-          element: <AdminViewProduct />
-        }
-      ]
-    },
-    {
-      path: '/admin/categories',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <AdminCategories />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/manage-admins',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <AdminManagement />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/manage-users',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <AdminCustomer />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/orders',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <Outlet />
-        </AdminMainLayout>
-      ),
-      children: [
-        {
-          path: '',
-          element: <AdminOrders />
+          path: 'comment_review',
+          element: <AdminReviewComment />
         },
         {
-          path: ':id',
-          element: <AdminViewOrder />
-        }
+          path: 'disease',
+          element: <Outlet />,
+          children: [
+            { path: '', element: <AdminIllness /> },
+            { path: 'add', element: <AdminAddIllness /> },
+            { path: 'update/:id', element: <AdminUpdateIllness /> }
+          ]
+        },
+        { path: 'setting', element: <AdminSetting /> }
       ]
     },
 
-    {
-      path: '/admin/payments',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <div className='col-span-3 bg-gray-light  '>
-            <h1>payment</h1>
-          </div>
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/deliveries',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <AdminDelivery />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/imports',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <Outlet />
-        </AdminMainLayout>
-      ),
-      children: [
-        {
-          path: '',
-          element: <AdminImports />
-        },
-        {
-          path: ':id',
-          element: <AdminDetailImport />
-        }
-      ]
-    },
-    {
-      path: '/admin/suppliers',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <AdminSuppliers />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/brands',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <AdminBrands />
-        </AdminMainLayout>
-      )
-    },
-    {
-      path: '/admin/users',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <div className='col-span-3 bg-gray-light  '>
-            <div className=''>
-              {/* Adjust the height according to your header's height */}
-              <div className='h-[1000px] flex items-center justify-center'>Users</div>
-            </div>
-          </div>
-        </AdminMainLayout>
-      )
-    },
+    // {
+    //   path: '/admin',
+    //   element: <Navigate to='/admin/overview' />
+    // },
+    // {
+    //   path: '/admin/overview',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <AdminOverview />
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin',
+    //   element: (
+    //     <AdminRejectRoute>
+    //       <AdminMainLayout scrollBar='simpleBar'>
+    //         <Outlet />
+    //       </AdminMainLayout>
+    //     </AdminRejectRoute>
+    //   )
+    // },
+    // {
+    //   path: '/admin/inventory',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <div>
+    //         <h1>This is inventory</h1>
+    //       </div>
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin/products',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <Outlet />
+    //     </AdminMainLayout>
+    //   ),
+    //   children: [
+    //     {
+    //       path: '',
+    //       element: <AdminProducts />
+    //     },
+    //     {
+    //       path: 'add-product',
+    //       element: <AdminAddProduct />
+    //     },
+    //     {
+    //       path: 'update/:productID',
+    //       element: <AdminEditProduct />
+    //     },
+    //     {
+    //       path: ':productID',
+    //       element: <AdminViewProduct />
+    //     }
+    //   ]
+    // },
+    // {
+    //   path: '/admin/categories',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <AdminCategories />
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin/manage-admins',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <AdminManagement />
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin/manage-users',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <AdminCustomer />
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin/orders',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <Outlet />
+    //     </AdminMainLayout>
+    //   ),
+    //   children: [
+    //     {
+    //       path: '',
+    //       element: <AdminOrders />
+    //     },
+    //     {
+    //       path: ':id',
+    //       element: <AdminViewOrder />
+    //     }
+    //   ]
+    // },
+
+    // {
+    //   path: '/admin/payments',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <div className='col-span-3 bg-gray-light  '>
+    //         <h1>payment</h1>
+    //       </div>
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin/deliveries',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <AdminDelivery />
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin/imports',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <Outlet />
+    //     </AdminMainLayout>
+    //   ),
+    //   children: [
+    //     {
+    //       path: '',
+    //       element: <AdminImports />
+    //     },
+    //     {
+    //       path: ':id',
+    //       element: <AdminDetailImport />
+    //     }
+    //   ]
+    // },
+    // {
+    //   path: '/admin/suppliers',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <AdminSuppliers />
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin/brands',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <AdminBrands />
+    //     </AdminMainLayout>
+    //   )
+    // },
+    // {
+    //   path: '/admin/users',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <div className='col-span-3 bg-gray-light  '>
+    //         <div className=''>
+    //           {/* Adjust the height according to your header's height */}
+    //           <div className='h-[1000px] flex items-center justify-center'>Users</div>
+    //         </div>
+    //       </div>
+    //     </AdminMainLayout>
+    //   )
+    // },
     // {
     //   path: '/admin/comment_review',
     //   element: (
@@ -333,36 +428,36 @@ export default function useRouterElement() {
     //     </AdminMainLayout>
     //   )
     // },
-    {
-      path: '/admin/disease',
-      element: (
-        <AdminMainLayout scrollBar='simpleBar'>
-          <Outlet />
-        </AdminMainLayout>
-      ),
-      children: [
-        {
-          path: '',
-          element: <AdminIllness />
-        },
-        {
-          path: 'add',
-          element: <AdminAddIllness />
-        },
-        {
-          path: 'update/:id',
-          element: <AdminUpdateIllness />
-        }
-      ]
-    },
-    {
-      path: '/admin/setting',
-      element: (
-        <AdminMainLayout>
-          <AdminSetting />
-        </AdminMainLayout>
-      )
-    },
+    // {
+    //   path: '/admin/disease',
+    //   element: (
+    //     <AdminMainLayout scrollBar='simpleBar'>
+    //       <Outlet />
+    //     </AdminMainLayout>
+    //   ),
+    //   children: [
+    //     {
+    //       path: '',
+    //       element: <AdminIllness />
+    //     },
+    //     {
+    //       path: 'add',
+    //       element: <AdminAddIllness />
+    //     },
+    //     {
+    //       path: 'update/:id',
+    //       element: <AdminUpdateIllness />
+    //     }
+    //   ]
+    // },
+    // {
+    //   path: '/admin/setting',
+    //   element: (
+    //     <AdminMainLayout>
+    //       <AdminSetting />
+    //     </AdminMainLayout>
+    //   )
+    // },
     {
       path: '',
       element: <RejectRoute />,

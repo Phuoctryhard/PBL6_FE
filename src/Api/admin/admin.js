@@ -1,70 +1,22 @@
 import { BASE_URL } from '../../until'
-
+import { fetchWithAuth } from './handleErrorAPI'
 const rootAdmin = `${BASE_URL}/admin`
 const AdminAPI = {
-  getAllAdmin: async (token) =>
-    await fetch(`${rootAdmin}/manage-admins`, {
-      method: 'GET',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
-  getAdmin: async (token) =>
-    await fetch(`${rootAdmin}/profile`, {
-      method: 'GET',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
+  getAllAdmin: async (token) => await fetchWithAuth(`${rootAdmin}/manage-admins`, 'GET', token, 'fetch all admin'),
+  getAdmin: async (token) => await fetchWithAuth(`${rootAdmin}/profile`, 'GET', token, 'Get admin'),
   addAdmin: async (data, token) =>
-    await fetch(`${rootAdmin}/add-admin`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token
-      },
-      body: data
-    }),
+    await fetchWithAuth(`${rootAdmin}/add-admin`, 'POST', token, 'fetch add admin', data),
   updateAdmin: async (data, token) =>
-    await fetch(`${rootAdmin}/update-profile`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token
-      },
-      body: data
-    }),
+    await fetchWithAuth(`${rootAdmin}/update-profile`, 'POST', token, 'update admin profile', data),
   deleteAdmin: async (id, token) =>
-    await fetch(`${rootAdmin}/delete-admin/${id}`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
-  searchAdmin: async (query, token) =>
-    await fetch(`${rootAdmin}?${query}`, {
-      method: 'GET',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
+    await fetchWithAuth(`${rootAdmin}/delete-admin/${id}`, 'POST', token, 'delete admin profile'),
+  searchAdmin: async (query, token) => await fetchWithAuth(`${rootAdmin}?${query}`, 'GET', token, 'search admin'),
   changePassword: async (data, token) =>
-    await fetch(`${rootAdmin}/change-password`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token
-      },
-      body: data
-    }),
-  changeRole: async (id, token) =>
-    await fetch(`${rootAdmin}/change-role/${id}`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
+    await fetchWithAuth(`${rootAdmin}/change-password`, 'POST', token, 'change password', data),
+  changeRole: async (id, token) => await fetchWithAuth(`${rootAdmin}/change-role/${id}`, 'POST', token, 'change role'),
   verifyEmail: async (token) =>
-    await fetch(`${rootAdmin}/verify-email?${token}`, {
-      method: 'POST'
-    })
+    await fetchWithAuth(`${rootAdmin}/verify-email?${token}`, 'POST', token, 'verify email'),
+  resendEmail: async (token) => {}
 }
 
 export default AdminAPI

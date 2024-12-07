@@ -1,28 +1,14 @@
 import { BASE_URL } from '../../until'
+import { fetchWithAuth } from './handleErrorAPI'
 const rootCustomer = `${BASE_URL}/admin`
 
 const CustomerAPI = {
   getAllCustomer: async (token) =>
-    await fetch(`${rootCustomer}/manage-users`, {
-      method: 'GET',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
+    await fetchWithAuth(`${rootCustomer}/manage-users`, 'GET', token, 'fetch all customers'),
   changeBlock: async (id, token) =>
-    await fetch(`${rootCustomer}/change-block/${id}`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    }),
+    await fetchWithAuth(`${rootCustomer}/change-block/${id}`, 'POST', token, 'change block user'),
   deleteCustomer: async (id, token) =>
-    await fetch(`${rootCustomer}/delete-user/${id}`, {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token
-      }
-    })
+    await fetchWithAuth(`${rootCustomer}/delete-user/${id}`, 'POST', token, 'delete user')
 }
 
 export default CustomerAPI

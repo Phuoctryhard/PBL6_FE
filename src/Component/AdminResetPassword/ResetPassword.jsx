@@ -54,18 +54,23 @@ const ResetPassword = () => {
   }
 
   const handlePasswordChange = async (formData) => {
-    const response = await AdminAuthAPI.resetPassword(formData)
-    if (response.status >= 400) {
-      const message = response.messages ? response.messages.join('. ') : 'Change password failed'
+    try {
+      const response = await AdminAuthAPI.resetPassword(formData)
+      if (response.status >= 400) {
+        const message = response.messages ? response.messages.join('. ') : 'Change password failed'
+        setStatus(400)
+        setMessageResult(message)
+        return
+      } else {
+        setStatus(200)
+        setMessageResult('Change password successfully. Redirecting to login page...')
+        setTimeout(() => {
+          navigate('/admin/login')
+        }, 2000)
+      }
+    } catch (error) {
       setStatus(400)
-      setMessageResult(message)
-      return
-    } else {
-      setStatus(200)
-      setMessageResult('Change password successfully')
-      setTimeout(() => {
-        navigate('/admin/login')
-      }, 2000)
+      setMessageResult('Change password failed:', error.message)
     }
   }
 
@@ -85,11 +90,11 @@ const ResetPassword = () => {
     <section
       className='w-[100vw] h-[100vh] flex justify-center items-center moving-background bg-cover bg-no-repeat bg-center'
       style={{
-        backgroundImage: 'url(/assets/images/admin_login.jpg)'
+        backgroundImage: 'url(/assets/images/test_2.jpg)'
       }}
     >
       {contextHolder}
-      <div className='bg-transparent rounded-xl border-[0.188rem] border-solid border-[rgb(179,103,214,0.2)] backdrop-blur-xl w-[28.125rem] animate-slideUp'>
+      <div className='bg-[rgb(14,8,33,0.8)] rounded-xl border-[0.188rem] border-solid border-[rgb(179,103,214,0.2)] backdrop-blur-0 w-[28.125rem] animate-slideUp mx-5'>
         <form action='' onSubmit={onSubmit} noValidate>
           <div className='text-[#fff] flex flex-col justify-end p-7'>
             <h1 className='text-3xl text-center text-[#ffff] font-semibold'>Reset Password</h1>

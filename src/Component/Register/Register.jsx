@@ -1,7 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import anh from './_480f2c92-d896-48ef-978c-6c37301968f7.png'
 import { schemaRegister } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -26,7 +25,6 @@ export default function Register() {
   })
   const onSubmit = handleSubmit((data) => {
     // gửi lên api data
-    console.log(data) // gửi lên api data
     mutation.mutate(data, {
       onSuccess: (data) => {
         console.log(data?.data?.messages[0])

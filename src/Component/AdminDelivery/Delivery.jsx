@@ -1,30 +1,19 @@
 import { Add, SearchNormal, Edit, Eye, Refresh } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Dropdown, Popconfirm, message, Modal, Tooltip, Spin, DatePicker, ConfigProvider, Image } from 'antd'
-import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { AdminDeliveryAPI } from '../../Api/admin'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const { RangePicker } = DatePicker
 
 const Delivery = () => {
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -221,43 +210,14 @@ const Delivery = () => {
     setTableParams(params)
     setLoading(false)
   }
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          if (res.message) {
-            setMessageResult(res.message)
-            setStatus(response.status)
-          } else if (res.messages) {
-            setMessageResult(res.messages.join('. '))
-            setStatus(response.status)
-          } else {
-            setStatus(400)
-            setMessageResult(defaultErrorText)
-          }
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
-      }
-      return false
-    }
-    return true
-  }
 
   const fetchAllDelivery = async () => {
     try {
       setLoading(true)
-      const response = await AdminDeliveryAPI.getAllDeliveryMethod(token)
-      const isResponseOK = await handleResponse(response, 'Error fetch all delivery')
-      if (!isResponseOK) {
+      const res = await AdminDeliveryAPI.getAllDeliveryMethod(token)
+      if (!res) {
         return
       }
-      const res = await response.json()
       const data = res.data
       const tableData = data.map((item) => ({
         ...item,
@@ -273,6 +233,12 @@ const Delivery = () => {
         }
       })
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setLoading(false)
     }
@@ -281,35 +247,44 @@ const Delivery = () => {
   const searchDelivery = () => {
     try {
       const formatDate = (date) => {
+        let format = date
+
+        // Check if the date is in DD/MM/YYYY format
         if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
           const [day, month, year] = date.split('/')
-          return `${year}-${month}-${day}`
+          format = `${year}-${month}-${day}`
         }
 
         // Check if the date is in ISO 8601 format
-        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
+        else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) {
           const parsedDate = new Date(date)
           const day = String(parsedDate.getDate()).padStart(2, '0')
           const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
           const year = parsedDate.getFullYear()
-          return `${year}-${month}-${day}`
+          format = `${year}-${month}-${day}`
         }
 
         // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
-        if (Date.parse(date)) {
+        else if (Date.parse(date)) {
           const parsedDate = new Date(date)
           const day = String(parsedDate.getDate()).padStart(2, '0')
           const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
           const year = parsedDate.getFullYear()
-          return `${year}-${month}-${day}`
+          format = `${year}-${month}-${day}`
         }
-        return ''
+
+        return format ? new Date(format) : null
       }
       const filter = data.filter((item) => {
-        const matchesName = item.delivery_method_name.toLowerCase().includes(searchValue.toLowerCase())
+        const matchesName =
+          item.delivery_method_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.delivery_method_id.toString() === searchValue
         const matchesDateRange =
           selectedFrom && selectedTo
-            ? formatDate(item.created_at) >= formatDate(selectedFrom) &&
+            ? formatDate(item.created_at) &&
+              formatDate(selectedFrom) &&
+              formatDate(selectedTo) &&
+              formatDate(item.created_at) >= formatDate(selectedFrom) &&
               formatDate(item.created_at) <= formatDate(selectedTo)
             : true
         return matchesName && matchesDateRange
@@ -322,7 +297,10 @@ const Delivery = () => {
           total: filter.length
         }
       })
-    } catch (e) {}
+    } catch (e) {
+      setStatus(400)
+      setMessageResult("Error in search delivery's data: " + e.message)
+    }
   }
 
   useEffect(() => {
@@ -425,29 +403,45 @@ const Delivery = () => {
   }
   // handle delete brand record
   const handleDeleteDelivery = async (id) => {
-    const formData = new FormData()
-    formData.append('delivery_is_active', 1)
-    const response = await AdminDeliveryAPI.deleteDeliveryMethod(token, id, formData)
-    const isResponseOK = await handleResponse(response, `Error delete delivery with id: ${id}`)
-    if (!isResponseOK) {
-      return
+    try {
+      const formData = new FormData()
+      formData.append('delivery_is_active', 1)
+      const response = await AdminDeliveryAPI.deleteDeliveryMethod(token, id, formData)
+      if (!response) {
+        return
+      }
+      fetchAllDelivery()
+      setStatus(200)
+      setMessageResult('Delivery method was successfully deleted')
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     }
-    fetchAllDelivery()
-    setStatus(200)
-    setMessageResult('Delivery method was successfully deleted')
   }
 
   const handleRestoreDelivery = async (id) => {
     const formData = new FormData()
     formData.append('delivery_is_active', 0)
-    const response = await AdminDeliveryAPI.deleteDeliveryMethod(token, id, formData)
-    const isResponseOK = await handleResponse(response, `Error restore delivery with id: ${id}`)
-    if (!isResponseOK) {
-      return
+    try {
+      const response = await AdminDeliveryAPI.deleteDeliveryMethod(token, id, formData)
+      if (!response) {
+        return
+      }
+      fetchAllDelivery()
+      setStatus(200)
+      setMessageResult('Delivery method was successfully restored')
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     }
-    fetchAllDelivery()
-    setStatus(200)
-    setMessageResult('Delivery method was successfully restored')
   }
 
   // handle submit and or update brand
@@ -474,8 +468,7 @@ const Delivery = () => {
         }
         response = await AdminDeliveryAPI.updateDeliveryMethod(token, deliverySelected, formData)
       }
-      const isResponseOK = await handleResponse(response, `Error ${typeModal} delivery method fetch`)
-      if (!isResponseOK) {
+      if (!response) {
         return
       }
       setStatus(200)
@@ -486,6 +479,12 @@ const Delivery = () => {
       }
       handleCancel()
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setSubmitLoading(false)
     }
@@ -712,11 +711,7 @@ const Delivery = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchAllDelivery()
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>

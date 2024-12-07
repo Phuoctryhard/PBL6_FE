@@ -24,6 +24,8 @@ import AdminEditor from './AdminEditor'
 import AdminUpdateIllness from './AdminUpdateIllness'
 import AdminViewOrder from './AdminViewOrder'
 import AdminDelivery from './AdminDelivery'
+import AdminErrorInternetConnection from './AdminErrorInternetConnection'
+import AdminReviewComment from './AdminReviewComment'
 export {
   AdminVerifyEmail,
   AdminMainLayout,
@@ -50,5 +52,7 @@ export {
   AdminEditor,
   AdminUpdateIllness,
   AdminViewOrder,
-  AdminDelivery
+  AdminDelivery,
+  AdminErrorInternetConnection,
+  AdminReviewComment
 }

@@ -11,6 +11,7 @@ import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from '../../context/app.context'
 import dayjs from 'dayjs'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 dayjs.extend(customParseFormat)
 const { RangePicker } = DatePicker
@@ -49,35 +50,11 @@ const { colorTextPlaceholder, ...restToken } = filterTheme.token
 //#endregion
 
 const AdminImports = () => {
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
   const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
-
-  const fakeSupplierData = {
-    data: [
-      {
-        supplier_id: 1,
-        supplier_name: 'Supplier 1'
-      },
-      {
-        supplier_id: 2,
-        supplier_name: 'Supplier 2'
-      },
-      {
-        supplier_id: 3,
-        supplier_name: 'Supplier 3'
-      }
-    ]
-  }
 
   //#region filter data
   const [searchValue, setSearchValue] = useState('')
@@ -235,20 +212,29 @@ const AdminImports = () => {
                     type='button'
                     className='flex items-center gap-x-2 justify-start w-full'
                     onClick={() => {
-                      const Data = async () => {
-                        setSubmitLoading(true)
-                        const data = await fetchImportById(record.import_id)
-                        if (data) {
-                          const import_detailData = data.import_details
-                          setSupplierID(data.supplier_id)
-                          setImportDate(convertToDDMMYYYY(data.import_date))
-                          setItems(import_detailData)
-                          setOpenModal(true)
-                          setTypeModal('update')
+                      try {
+                        const Data = async () => {
+                          setSubmitLoading(true)
+                          const data = await fetchImportById(record.import_id)
+                          if (data) {
+                            const import_detailData = data.import_details
+                            setSupplierID(data.supplier_id)
+                            setImportDate(convertToDDMMYYYY(data.import_date))
+                            setItems(import_detailData)
+                            setOpenModal(true)
+                            setTypeModal('update')
+                          }
+                          setSubmitLoading(false)
                         }
-                        setSubmitLoading(false)
+                        Data()
+                      } catch (e) {
+                        if (e.message.includes('401')) {
+                          setIsLogin(false)
+                          return
+                        }
+                        setStatus(400)
+                        setMessageResult(e.message)
                       }
-                      Data()
                     }}
                   >
                     <Edit size='15' color='#bc9143' /> <span>Update</span>
@@ -312,35 +298,44 @@ const AdminImports = () => {
 
   const searchImports = () => {
     const formatDate = (date) => {
+      let format = date
+
+      // Check if the date is in DD/MM/YYYY format
       if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
         const [day, month, year] = date.split('/')
-        return `${year}-${month}-${day}`
+        format = `${year}-${month}-${day}`
       }
 
       // Check if the date is in ISO 8601 format
-      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
+      else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) {
         const parsedDate = new Date(date)
         const day = String(parsedDate.getDate()).padStart(2, '0')
         const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
         const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
+        format = `${year}-${month}-${day}`
       }
 
       // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
-      if (Date.parse(date)) {
+      else if (Date.parse(date)) {
         const parsedDate = new Date(date)
         const day = String(parsedDate.getDate()).padStart(2, '0')
         const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
         const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
+        format = `${year}-${month}-${day}`
       }
-      return ''
+
+      return format ? new Date(format) : null
     }
     const result = data.filter((item) => {
-      const matchesSupplierName = item.supplier_name.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesSupplierName =
+        item.supplier_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.import_id.toString().includes(searchValue)
       const matchesDateRange =
         selectedFrom && selectedTo
-          ? formatDate(item.import_created_at) >= formatDate(selectedFrom) &&
+          ? formatDate(item.import_created_at) &&
+            formatDate(selectedFrom) &&
+            formatDate(selectedTo) &&
+            formatDate(item.import_created_at) >= formatDate(selectedFrom) &&
             formatDate(item.import_created_at) <= formatDate(selectedTo)
           : true
       return matchesSupplierName && matchesDateRange
@@ -360,27 +355,13 @@ const AdminImports = () => {
   const fetchImports = async () => {
     setLoading(true)
     try {
-      const response = await ImportsAPI.getAllImports(token)
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleUnauthorized()
-        }
-        setStatus(response.status)
-        setMessageResult(`Error fetching imports: with status ${response.status}`)
-        setLoading(false)
-        return
-      }
-      const result = await response.json()
+      const result = await ImportsAPI.getAllImports(token)
+      if (!result) return
       const data = result.data
       const tableData = data
         .map((item) => ({
-          key: item.import_id,
-          import_id: item.import_id,
-          supplier_name: item.supplier_name,
-          import_total_amount: item.import_total_amount,
-          import_created_at: item.import_created_at,
-          import_updated_at: item.import_updated_at,
-          product_expiry_date: item.import_date
+          ...item,
+          key: item.import_id
         }))
         .sort((a, b) => new Date(b.import_created_at) - new Date(a.import_created_at))
       setFilterData(tableData)
@@ -393,6 +374,12 @@ const AdminImports = () => {
         }
       })
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setLoading(false)
     }
@@ -400,19 +387,18 @@ const AdminImports = () => {
 
   const fetchImportById = async (id) => {
     try {
-      const response = await ImportsAPI.getImportById(token, id)
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleUnauthorized()
-        }
-        setStatus(response.status)
-        setMessageResult(`Error fetching import: with status ${response.status}`)
-        return
-      }
-      const result = await response.json()
+      const result = await ImportsAPI.getImportById(token, id)
+      if (!result) return
       const data = result.data
       return data
-    } catch (e) {}
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   useEffect(() => {
@@ -634,20 +620,16 @@ const AdminImports = () => {
   const handleAddImport = async (data) => {
     try {
       const response = await ImportsAPI.addImport(token, data)
-      if (!response.ok) {
-        const { messages, status } = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        }
-        setMessageResult(`Error adding import: with status ${status} and message ${messages.join(', ')}`)
-        setStatus(status)
-        setSubmitLoading(false)
-        return
-      }
+      if (!response) return
       setStatus(200)
       setMessageResult('Import added successfully')
     } catch (e) {
-      console.log('Error adding import', e.message)
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     }
   }
 
@@ -655,17 +637,17 @@ const AdminImports = () => {
   const handleUpdateImport = async (data) => {
     try {
       const response = await ImportsAPI.updateImport(token, data)
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleUnauthorized()
-        }
-        setStatus(response.status)
-        setMessageResult(`Error updating import: with status ${response.status}`)
-        return
-      }
+      if (!response) return
       setStatus(200)
       setMessageResult('Import updated successfully')
-    } catch (e) {}
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   //#endregion
@@ -847,38 +829,38 @@ const AdminImports = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await ProductsAPI.getProducts()
-      if (!response.ok) {
-        setStatus(response.status)
-        setMessageResult(`Error fetching products: with status ${response.status}`)
-        return
-      }
-      const result = await response.json()
+      const result = await ProductsAPI.getProducts()
+      if (!result) return
       const data = result.data
       const selectData = data.map((item) => ({
         label: item.product_name,
         value: item.product_id
       }))
       setProducts(selectData)
-    } catch (e) {}
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   const fetchSuppliers = async () => {
     try {
-      const response = await SuppliersAPI.getAllSuppliers(token)
-      if (!response.ok) {
-        setStatus(response.status)
-        setMessageResult(`Error fetching suppliers: with status ${response.status}`)
-        return
-      }
-      const result = await response.json()
+      const result = await SuppliersAPI.getAllSuppliers(token)
+      if (!result) return
       const data = result.data
       const selectData = data.map((item) => ({
         label: item.supplier_name,
         value: item.supplier_id
       }))
       setSupplierData(selectData)
-    } catch (e) {}
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   useEffect(() => {
@@ -1243,13 +1225,7 @@ const AdminImports = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchProducts({
-                  search: searchValue
-                })
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>

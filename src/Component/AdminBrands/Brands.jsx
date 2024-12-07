@@ -1,30 +1,19 @@
 import { BrandsAPI } from '../../Api/admin'
 import { Add, SearchNormal, Edit, Eye, Refresh } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Dropdown, Popconfirm, message, Modal, Tooltip, Spin, DatePicker, ConfigProvider, Image } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const { RangePicker } = DatePicker
 
 const Brands = () => {
+  const { setIsLogin } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
-  }
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -56,7 +45,7 @@ const Brands = () => {
 
   // Date format
   const DateFormat = (date) => {
-    const formattedDate = new Date(date).toLocaleDateString('en-US', optionsDateformat)
+    const formattedDate = new Date(date).toLocaleDateString('en-GB', optionsDateformat)
     return `${formattedDate}`
   }
 
@@ -77,7 +66,7 @@ const Brands = () => {
       sorter: (a, b) => a.brand_name.localeCompare(b.brand_name),
       ellipsis: true,
       render: (text, record) => (
-        <div className='flex items-center gap-x-2 justify-start'>
+        <div className='flex items-center gap-2 justify-start'>
           <img src={record.brand_logo} alt={text} className='w-[48px] h-[48px] object-cover rounded-full' />
           <span>{text}</span>
         </div>
@@ -225,49 +214,62 @@ const Brands = () => {
   }
 
   const searchBrand = () => {
-    const formatDate = (date) => {
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-        const [day, month, year] = date.split('/')
-        return `${year}-${month}-${day}`
-      }
+    try {
+      const formatDate = (date) => {
+        let format = date
 
-      // Check if the date is in ISO 8601 format
-      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
-      }
+        // Check if the date is in DD/MM/YYYY format
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+          const [day, month, year] = date.split('/')
+          format = `${year}-${month}-${day}`
+        }
 
-      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
-      if (Date.parse(date)) {
-        const parsedDate = new Date(date)
-        const day = String(parsedDate.getDate()).padStart(2, '0')
-        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
-        const year = parsedDate.getFullYear()
-        return `${year}-${month}-${day}`
+        // Check if the date is in ISO 8601 format
+        else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          format = `${year}-${month}-${day}`
+        }
+
+        // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+        else if (Date.parse(date)) {
+          const parsedDate = new Date(date)
+          const day = String(parsedDate.getDate()).padStart(2, '0')
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+          const year = parsedDate.getFullYear()
+          format = `${year}-${month}-${day}`
+        }
+
+        return format ? new Date(format) : null
       }
-      return ''
+      const result = data.filter((item) => {
+        const matchesBrandName =
+          item.brand_name.toLowerCase().includes(searchValue.toLowerCase()) || item.brand_id.toString() === searchValue
+        const matchesDateRange =
+          selectedFrom && selectedTo
+            ? formatDate(item.brand_created_at) &&
+              formatDate(selectedFrom) &&
+              formatDate(selectedTo) &&
+              formatDate(item.brand_created_at) >= formatDate(selectedFrom) &&
+              formatDate(item.brand_created_at) <= formatDate(selectedTo)
+            : true
+        return matchesBrandName && matchesDateRange
+      })
+      const tableData = result.sort((a, b) => new Date(b.brand_created_at) - new Date(a.brand_created_at))
+      setFilterData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: result.length
+        }
+      })
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
     }
-    const result = data.filter((item) => {
-      const matchesBrandName = item.brand_name.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesDateRange =
-        selectedFrom && selectedTo
-          ? formatDate(item.brand_created_at) >= formatDate(selectedFrom) &&
-            formatDate(item.brand_created_at) <= formatDate(selectedTo)
-          : true
-      return matchesBrandName && matchesDateRange
-    })
-    const tableData = result.sort((a, b) => new Date(b.brand_created_at) - new Date(a.brand_created_at))
-    setFilterData(tableData)
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        total: result.length
-      }
-    })
   }
 
   const fetchBrands = async (params) => {
@@ -276,26 +278,13 @@ const Brands = () => {
       ...params
     })
     try {
-      const response = await BrandsAPI.searchBrands(query)
-      if (!response.ok) {
-        setStatus(response.status)
-        setMessageResult(`Error fetching categories: with status ${response.status}`)
-        setLoading(false)
-        return
-      }
-      const result = await response.json()
+      const result = await BrandsAPI.searchBrands(query)
+      if (!result) return
       const data = result.data
       const tableData = data
         .map((item) => ({
-          key: item.brand_id,
-          brand_name: item.brand_name,
-          brand_slug: item.brand_slug,
-          brand_logo: item.brand_logo,
-          brand_description: item.brand_description,
-          brand_is_delete: item.brand_is_delete,
-          brand_created_at: item.brand_created_at,
-          brand_updated_at: item.brand_updated_at,
-          brand_id: item.brand_id
+          ...item,
+          key: item.brand_id
         }))
         .sort((a, b) => new Date(b.brand_updated_at) - new Date(a.brand_updated_at))
       setFilterData(tableData)
@@ -307,9 +296,9 @@ const Brands = () => {
           total: data.length
         }
       })
-      setLoading(false)
     } catch (e) {
-      setLoading(false)
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setLoading(false)
     }
@@ -421,53 +410,41 @@ const Brands = () => {
     return true
   }
 
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          if (res.message) {
-            setMessageResult(res.message)
-            setStatus(response.status)
-          } else if (res.messages) {
-            setMessageResult(res.messages.join('. '))
-            setStatus(response.status)
-          } else {
-            setStatus(400)
-            setMessageResult(defaultErrorText)
-          }
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
-      }
-      return false
-    }
-    return true
-  }
-
   // handle delete brand record
   const handleDeleteBrand = async (id) => {
-    const response = await BrandsAPI.deleteBrands(id, token)
-    const isResponseOK = await handleResponse(response, `Error delete brand with id: ${id}`)
-    if (!isResponseOK) {
-      return
+    try {
+      const res = await BrandsAPI.deleteBrands(id, token)
+      if (!res) {
+        return
+      }
+      setStatus(200)
+      setMessageResult('Brand was successfully deleted')
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     }
-    setStatus(200)
-    setMessageResult('Brand was successfully deleted')
   }
 
   const handleRestoreBrand = async (id) => {
-    const response = await BrandsAPI.restoreBrands(id, token)
-    const isResponseOK = await handleResponse(response, `Error restore brand with id: ${id}`)
-    if (!isResponseOK) {
-      return
+    try {
+      const res = await BrandsAPI.restoreBrands(id, token)
+      if (!res) {
+        return
+      }
+      setStatus(200)
+      setMessageResult('Brand was successfully restored')
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     }
-    setStatus(200)
-    setMessageResult('Brand was successfully restored')
   }
 
   // handle submit and or update brand
@@ -496,8 +473,7 @@ const Brands = () => {
       if (typeModal === 'update') {
         response = await BrandsAPI.updateBrands(selectedBrand, formData, token)
       }
-      const isResponseOK = await handleResponse(response, `Error ${typeModal} brand fetch`)
-      if (!isResponseOK) {
+      if (!response) {
         return
       }
       setStatus(200)
@@ -507,6 +483,12 @@ const Brands = () => {
         setMessageResult('Brand was successfully updated')
       }
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(500)
+      setMessageResult(e.message)
     } finally {
       setSubmitLoading(false)
     }
@@ -770,13 +752,7 @@ const Brands = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchBrands({
-                  search: searchValue
-                })
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>

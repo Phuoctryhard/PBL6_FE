@@ -3,26 +3,47 @@ import { CategoriesAPI } from '../../Api/admin'
 import { Add, SearchNormal, ArrowDown2, Edit, Eye, Refresh } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { ConfigProvider } from 'antd'
-import { TreeSelect, Dropdown, Popconfirm, message, Modal, Tooltip, Spin, Image } from 'antd'
+import { TreeSelect, Dropdown, Popconfirm, message, Modal, Tooltip, Spin, Image, Select, ConfigProvider } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/app.context'
+import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
-const Categories = () => {
-  const navigate = useNavigate()
-  const { logout } = useAuth()
-  const handleUnauthorized = () => {
-    toast.error('Unauthorized access or token expires, please login again!', {
-      autoClose: { time: 3000 }
-    })
-    logout()
-    navigate('/admin/login')
+
+const filterTheme = {
+  token: {
+    colorTextQuaternary: '#1D242E',
+    colorTextPlaceholder: '#9da4b0',
+    fontFamily: 'Poppins, sans-serif',
+    controlOutline: 'none',
+    colorBorder: '#e8ebed',
+    borderRadius: '4px',
+    colorPrimary: '#008f99'
+  },
+  components: {
+    Select: {
+      activeBorderColor: '#1D242E',
+      hoverBorderColor: '#1D242E',
+      optionActiveBg: 'rgb(0, 143, 153, 0.3)',
+      optionSelectedBg: 'rgb(0, 143, 153, 0.3)',
+      optionSelectedColor: '#1D242E'
+    },
+    TreeSelect: {
+      nodeHoverBg: 'rgb(0, 143, 153, 0.3)',
+      nodeSelectedBg: 'rgb(0, 143, 153, 0.3)'
+    },
+    DatePicker: {
+      activeBorderColor: '#1D242E',
+      hoverBorderColor: '#1D242E'
+    }
   }
+}
+const Categories = () => {
+  const { setIsLogin } = useAdminMainLayoutFunction()
 
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -34,6 +55,7 @@ const Categories = () => {
   }
 
   const [data, setData] = useState([])
+  const [data1D, setData1D] = useState([])
   const [filterData, setFilterData] = useState([])
   const [loading, setLoading] = useState(true)
   const [treeData, setTreeData] = useState([])
@@ -61,6 +83,7 @@ const Categories = () => {
   const [submitLoading, setSubmitLoading] = useState(false)
   const [openModalView, setOpenModalView] = useState(false)
   const [selectedCategoryData, setSelectedCategoryData] = useState(null)
+  const [selectedStatus, setSelectedStatus] = useState()
   const [showDescription, setShowDescription] = useState(false)
 
   const optionsDateformatFull = {
@@ -280,12 +303,22 @@ const Categories = () => {
   }
 
   const searchCategories = () => {
-    const results = data.filter((item) => {
-      const matchesProductName = item.category_name.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesType = item.category_type.toLowerCase().includes(searchValue.toLowerCase())
-
-      return matchesProductName || matchesType
-    })
+    let results
+    if (searchValue)
+      results = data1D.filter((item) => {
+        const matchCategoryInfo =
+          item.category_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.category_id.toString() === searchValue ||
+          item.category_type.toLowerCase().includes(searchValue.toLowerCase())
+        const matchesStatus = selectedStatus !== undefined ? item.category_is_delete === selectedStatus : true
+        return matchCategoryInfo && matchesStatus
+      })
+    else {
+      results = data.filter((item) => {
+        const matchesStatus = selectedStatus !== undefined ? item.category_is_delete === selectedStatus : true
+        return matchesStatus
+      })
+    }
     const tableData = results
     const typeData = [...new Set(tableData.map((item) => item.category_type))]
     const typeDataFilter = typeData.map((item) => ({
@@ -309,32 +342,16 @@ const Categories = () => {
       ...params
     })
     try {
-      const response = await CategoriesAPI.searchCategories(token, query)
-      if (!response.ok) {
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          setStatus(response.status)
-          setMessageResult(`Error fetching categories: with status ${response.status}`)
-        }
+      const result = await CategoriesAPI.searchCategories(token, query)
+      if (!result) {
         return
       }
-      const result = await response.json()
       const data = result.data
+      setData1D(data)
       const treeDataConvert = convertDataToTree(data)
       const tableData = treeDataConvert.map((item) => ({
-        key: item.category_id,
-        category_name: item.category_name,
-        category_slug: item.category_slug,
-        category_type: item.category_type,
-        category_thumbnail: item.category_thumbnail,
-        category_description: item.category_description,
-        category_parent_id: item.category_parent_id,
-        category_is_delete: item.category_is_delete,
-        category_created_at: item.category_created_at,
-        category_updated_at: item.category_updated_at,
-        children: item.children,
-        category_id: item.category_id
+        ...item,
+        key: item.category_id
       }))
       const treeDataSelect = convertToTreeData(treeDataConvert)
       const typeData = [...new Set(tableData.map((item) => item.category_type))]
@@ -354,6 +371,12 @@ const Categories = () => {
         }
       })
     } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
     } finally {
       setLoading(false)
     }
@@ -462,51 +485,39 @@ const Categories = () => {
   }
 
   const handleDeleteCategory = async (id) => {
-    const response = await CategoriesAPI.deleteCategories(id, token)
-    const isResponseOK = await handleResponse(response, `Error delete category with id: ${id}`)
-    if (!isResponseOK) {
-      return
+    try {
+      const response = await CategoriesAPI.deleteCategories(id, token)
+      if (!response) {
+        return
+      }
+      setStatus(200)
+      setMessageResult(`Delete category with id: ${id} successfully.`)
+    } catch (err) {
+      if (err.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(err.message)
     }
-    setStatus(200)
-    setMessageResult(`Delete category with id: ${id} successfully.`)
   }
 
   const handleRestoreCategory = async (id) => {
-    const response = await CategoriesAPI.restoreCategories(id, token)
-    const isResponseOK = await handleResponse(response, `Error restore category with id: ${id}`)
-    if (!isResponseOK) {
-      return
-    }
-    setStatus(200)
-    setMessageResult(`Restore category with id: ${id} successfully.`)
-  }
-
-  const handleResponse = async (response, defaultErrorText = 'Error fetch') => {
-    if (!response.ok) {
-      const content_type = response.headers.get('content-type')
-      if (content_type && content_type.includes('application/json')) {
-        const res = await response.json()
-        if (response.status === 401) {
-          handleUnauthorized()
-        } else {
-          if (res.message) {
-            setMessageResult(res.message)
-            setStatus(response.status)
-          } else if (res.messages) {
-            setMessageResult(res.messages.join('. '))
-            setStatus(response.status)
-          } else {
-            setStatus(400)
-            setMessageResult(defaultErrorText)
-          }
-        }
-      } else {
-        setStatus(response.status)
-        setMessageResult(response.statusText ? response.statusText : defaultErrorText)
+    try {
+      const response = await CategoriesAPI.restoreCategories(id, token)
+      if (!response) {
+        return
       }
-      return false
+      setStatus(200)
+      setMessageResult(`Restore category with id: ${id} successfully.`)
+    } catch (err) {
+      if (err.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(err.message)
     }
-    return true
   }
 
   const handleSubmit = async (e) => {
@@ -550,9 +561,7 @@ const Categories = () => {
       } else if (typeModal === 'update') {
         response = await CategoriesAPI.updateCategories(selectedCategory, formData, token)
       }
-
-      const isResponseOK = await handleResponse(response, `Error ${typeModal} category fetch`)
-      if (!isResponseOK) {
+      if (!response) {
         return
       }
       setStatus(200)
@@ -562,6 +571,12 @@ const Categories = () => {
         setMessageResult('Category was updated successfully')
       }
     } catch (error) {
+      if (error.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(error.message)
     } finally {
       setSubmitLoading(false)
     }
@@ -579,6 +594,7 @@ const Categories = () => {
     }
   }, [
     searchValue,
+    selectedStatus,
     tableParams.pagination?.current,
     tableParams?.sortOrder,
     tableParams?.sortField,
@@ -912,15 +928,28 @@ const Categories = () => {
                 setSearchValue(e.target.value)
               }}
             />
-            <button
-              onClick={() => {
-                fetchCategories(token, {
-                  search: searchValue
-                })
-              }}
-            >
+            <button onClick={() => {}}>
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
+          </div>
+          <div>
+            <ConfigProvider theme={filterTheme}>
+              <Select
+                suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+                allowClear
+                placeholder='Select status'
+                placement='bottomLeft'
+                options={[
+                  { label: 'Active', value: 0 },
+                  { label: 'Deleted', value: 1 }
+                ]}
+                value={selectedStatus}
+                className='w-[250px] h-[50px]'
+                onChange={(value) => {
+                  setSelectedStatus(value)
+                }}
+              />
+            </ConfigProvider>
           </div>
         </div>
         <div className='pt-4'>
