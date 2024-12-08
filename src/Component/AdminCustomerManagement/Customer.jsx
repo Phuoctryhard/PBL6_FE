@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Add, SearchNormal, Refresh, ArrowDown2, ArrowSwapHorizontal } from 'iconsax-react'
-import { useNavigate } from 'react-router-dom'
-import { Dropdown, Popconfirm, message, DatePicker, ConfigProvider, Select } from 'antd'
+import { SearchNormal, Refresh, ArrowDown2, ArrowSwapHorizontal, Eye } from 'iconsax-react'
+import { Dropdown, Popconfirm, message, DatePicker, ConfigProvider, Select, Modal } from 'antd'
 import { DashOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { CustomerAPI } from '../../Api/admin'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+
 const { RangePicker } = DatePicker
 const filterTheme = {
   token: {
@@ -40,6 +38,21 @@ const filterTheme = {
   }
 }
 const Customer = () => {
+  const optionsDate = { year: 'numeric', month: 'long', day: '2-digit' }
+  const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
+  const formatDateInRealTime = (date) => {
+    if (!date) return
+    const dateOptions = new Date(date).toLocaleDateString('en-GB', optionsDate)
+    const timeOptions = new Date(date).toLocaleTimeString('en-GB', optionsTime)
+    return (
+      <>
+        {dateOptions}
+        <br />
+        at {timeOptions}
+      </>
+    )
+  }
+
   const { setIsLogin } = useAdminMainLayoutFunction()
   const token = localStorage.getItem('accesstoken')
   const [status, setStatus] = useState(null)
@@ -185,6 +198,21 @@ const Customer = () => {
             items: [
               {
                 key: '1',
+                label: (
+                  <button
+                    type='button'
+                    className='flex items-center gap-x-2 justify-start w-full'
+                    onClick={() => {
+                      setModalData(record)
+                      setOpenModal(true)
+                    }}
+                  >
+                    <Eye size='15' color='green' /> <span>View</span>
+                  </button>
+                )
+              },
+              {
+                key: '2',
                 label:
                   record.user_is_delete === 0 ? (
                     <Popconfirm
@@ -231,7 +259,7 @@ const Customer = () => {
                   )
               },
               {
-                key: '2',
+                key: '3',
                 label: (
                   <Popconfirm
                     align={{ offset: [20, 20] }}
@@ -298,7 +326,6 @@ const Customer = () => {
     setLoading(true)
     try {
       const res = await CustomerAPI.getAllCustomer(token)
-
       if (!res) return
       const resData = res.data
       const tableData = resData
@@ -417,6 +444,16 @@ const Customer = () => {
   ])
   //#endregion
 
+  //#region modal
+  const [openModal, setOpenModal] = useState(false)
+  const [modalData, setModalData] = useState(null)
+
+  const handleCancel = () => {
+    setOpenModal(false)
+    setModalData(null)
+  }
+  //#endregion
+
   const handleDeleteCustomer = async (id, type = 'delete') => {
     try {
       const response = await CustomerAPI.deleteCustomer(id, token)
@@ -475,6 +512,81 @@ const Customer = () => {
           <p>List of users available in system</p>
         </div>
       </header>
+      <Modal
+        destroyOnClose
+        title={<span>User information</span>}
+        centered
+        open={openModal}
+        footer={null}
+        onCancel={handleCancel}
+        width='auto'
+      >
+        <div className='mt-6 p-5'>
+          <div className='flex justify-start gap-8'>
+            <div className='flex items-center'>
+              <div className='flex flex-col gap-3 justify-center items-center'>
+                <img
+                  src={modalData?.user_avatar ? modalData.user_avatar : '/assets/images/default-avatar.png'}
+                  alt='avatar'
+                  className='w-40 h-40 object-cover rounded-[50%]'
+                  onError={(e) => {
+                    e.target.onerror = null
+                    e.target.src = '/assets/images/default-avatar.png'
+                  }}
+                />
+                <div className='flex flex-col justify-center items-center'>
+                  <h2 className='text-sm font-semibold'>{modalData?.user_fullname}</h2>
+                  <span className='text-xs text-gray-500 mb-1'>{modalData?.email}</span>
+                  <span className='text-xs'>{modalData?.user_phone ? modalData?.user_phone : 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+            <div className='flex flex-col gap-4 justify-start items-start'>
+              <div>
+                <h3 className='text-red-400 text-sm font-semibold'>Join at</h3>
+                <span className='text-sm'>
+                  {formatDateInRealTime(modalData?.user_created_at) || formatDateInRealTime(new Date())}
+                </span>
+              </div>
+              <div>
+                <h3 className='text-red-400 text-sm font-semibold'>Gender</h3>
+                <span className='text-sm'>
+                  {modalData?.user_gender ? (modalData?.user_gender === 0 ? 'Male' : 'Female') : 'Male'}
+                </span>
+              </div>
+              <div>
+                <h3 className='text-red-400 text-sm font-semibold'>Block status</h3>
+                <span className='text-sm'>{modalData?.user_is_block === 1 ? 'Blocked' : 'Active'}</span>
+              </div>
+              <div>
+                <h3 className='text-red-400 text-sm font-semibold'>Delete status</h3>
+                <span className='text-sm'> {modalData?.user_is_delete === 1 ? 'Deleted' : 'Active'}</span>
+              </div>
+            </div>
+            <div className='flex flex-col gap-4 justify-start items-start'>
+              <div>
+                <h3 className='text-red-400 text-sm font-semibold'>Date of birth</h3>
+                <span className='text-sm'>
+                  {formatDateInRealTime(modalData?.user_birthday) ||
+                    formatDateInRealTime(new Date(2003, 11, 1, 6, 0, 0))}
+                </span>
+              </div>
+              <div>
+                <h3 className='text-red-400 text-sm font-semibold'>Height</h3>
+                <span className='text-sm'>{modalData?.user_height ? `${modalData?.user_height} cm` : '70 cm'}</span>
+              </div>
+              <div>
+                <h3 className='text-red-400 text-sm font-semibold'>Weight</h3>
+                <span className='text-sm'>{modalData?.user_weight ? `${modalData?.user_weight} kg` : '70 kg'}</span>
+              </div>
+              <div>
+                <h3 className='text-red-400 text-sm font-semibold'>IBM</h3>
+                <span className='text-sm'>{modalData?.user_ibm ? `${modalData?.user_ibm} kg/m²` : '32 kg/m²'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
       <div className='p-5 my-6 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp flex flex-col gap-4'>
         <div className='flex justify-between items-center gap-x-3'>
           <div className='flex items-center w-[250px] justify-between text-[14px] rounded-[4px] relative'>

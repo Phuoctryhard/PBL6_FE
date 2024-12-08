@@ -7,6 +7,7 @@ import { AdminOrderApi, AdminDeliveryAPI, AdminPaymentApi } from '../../Api/admi
 import { Eye, Edit, SearchNormal, ArrowDown2 } from 'iconsax-react'
 import { DashOutlined, DeleteOutlined } from '@ant-design/icons'
 import qs from 'qs'
+import { render } from '@testing-library/react'
 
 const { RangePicker } = DatePicker
 const filterTheme = {
@@ -462,12 +463,14 @@ const Orders = () => {
       const res = await AdminOrderApi.getAllOrder(token)
       if (res) {
         const resData = res.data
-        const formattedData = resData.map((item) => {
-          return {
-            ...item,
-            key: item.order_id
-          }
-        })
+        const formattedData = resData
+          .map((item) => {
+            return {
+              ...item,
+              key: item.order_id
+            }
+          })
+          .sort((a, b) => new Date(b.order_created_at) - new Date(a.order_created_at))
         setData(formattedData)
         setFilterData(formattedData)
         setTableParams({
@@ -560,8 +563,7 @@ const Orders = () => {
         item.order_id.toString() === searchValue ||
         item.user_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.receiver_name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        item.receiver_phone.includes(searchValue) ||
-        item.receiver_address.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.receiver_phone === searchValue ||
         item.ward_name.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.district_name.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.province_name.toLowerCase().includes(searchValue.toLowerCase()) ||
