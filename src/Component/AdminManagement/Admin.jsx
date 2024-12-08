@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { AdminAPI } from '../../Api/admin'
-import { Add, SearchNormal, Edit, Refresh, ArrowDown2, ArrowSwapHorizontal } from 'iconsax-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { AdminAPI, AdminPermissionsAPI } from '../../Api/admin'
+import { Add, SearchNormal, Refresh, ArrowDown2, ArrowSwapHorizontal, AddCircle } from 'iconsax-react'
+import { Link } from 'react-router-dom'
 import { Dropdown, Popconfirm, message, Modal, Tooltip, Spin, DatePicker, ConfigProvider, Select } from 'antd'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useAuth } from '../../context/app.context'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
+import { useAuth } from '../../context/app.context'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const { RangePicker } = DatePicker
 const filterTheme = {
@@ -42,6 +41,8 @@ const filterTheme = {
 
 const Admin = () => {
   const { setIsLogin } = useAdminMainLayoutFunction()
+  const { isProfile } = useAuth()
+  const { role } = isProfile
   const token = localStorage.getItem('accesstoken')
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -58,7 +59,6 @@ const Admin = () => {
   const [searchValue, setSearchValue] = useState('')
   const [selectedFrom, setSelectedFrom] = useState(null)
   const [selectedTo, setSelectedTo] = useState(null)
-  const [selectedAdmin, setSelectedAdmin] = useState(null)
   const [roles, setRoles] = useState(['Admin', 'Super Admin', 'Manager'])
   const [selectedRoles, setSelectedRoles] = useState()
   const [adminStatus, setAdminStatus] = useState(['Active', 'Deleted'])
@@ -134,26 +134,26 @@ const Admin = () => {
     },
     {
       title: 'Role',
-      dataIndex: 'admin_is_admin',
-      key: 'admin_is_admin',
+      dataIndex: 'role_id',
+      key: 'role_id',
       width: '15%',
       render: (text, record) => {
         let color
         let backgroundColor
-        let role = record.admin_is_admin
+        let role = record.role_id
         let statusText
         switch (role) {
-          case 0:
+          case 1:
             color = 'green'
             backgroundColor = 'rgba(0, 255, 0, 0.1)'
             statusText = 'Admin'
             break
-          case 1:
+          case 2:
             color = 'red'
             backgroundColor = 'rgba(255, 0, 0, 0.1)'
             statusText = 'Super Admin'
             break
-          case 2:
+          case 3:
             color = 'rgb(249, 115, 22)'
             backgroundColor = 'rgba(255, 165, 0, 0.1)'
             statusText = 'Manager'
@@ -178,93 +178,130 @@ const Admin = () => {
         <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
       )
     },
-    {
-      title: 'Action',
-      dataIndex: 'action',
-      key: 'action',
-      width: '10%',
-      render: (text, record) => (
-        <Dropdown
-          trigger={['click']}
-          placement='bottomRight'
-          menu={{
-            items: [
-              {
-                key: '3',
-                label:
-                  record.admin_is_delete === 1 ? (
-                    <Popconfirm
-                      align={{ offset: [20, 20] }}
-                      placement='bottomRight'
-                      title={`Restore record ${record.admin_id}`}
-                      description='Are you sure to store this record?'
-                      onConfirm={() => handleRestoreAdmin(record)}
-                      okText='Restore'
-                      cancelText='Cancel'
-                    >
-                      <button
-                        type='button'
-                        className='flex items-center gap-x-2 justify-start w-full'
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Refresh className='text-[green]' size={15} /> <span>Restore</span>
-                      </button>
-                    </Popconfirm>
-                  ) : (
-                    <Popconfirm
-                      align={{ offset: [20, 20] }}
-                      placement='bottomRight'
-                      title={`Delete record ${record.admin_id}`}
-                      description='Are you sure to delete this record?'
-                      onConfirm={() => handleDeleteAdmin(record)}
-                      okText='Delete'
-                      cancelText='Cancel'
-                    >
-                      <button
-                        type='button'
-                        className='flex items-center gap-x-2 justify-start w-full'
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <DeleteOutlined className='text-[14px] text-[red]' />
-                        <span>Delete</span>
-                      </button>
-                    </Popconfirm>
-                  )
-              },
-              {
-                key: '4',
-                label: (
-                  <Popconfirm
-                    align={{ offset: [20, 20] }}
-                    placement='bottomRight'
-                    title={`Change role record ${record.admin_id}`}
-                    description='Are you sure to change role this record?'
-                    onConfirm={() => {
-                      handleChangeRole(record)
-                    }}
-                    okText='Ok'
-                    cancelText='Cancel'
-                  >
-                    <button
-                      type='button'
-                      className='flex items-center gap-x-2 justify-center'
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ArrowSwapHorizontal className='text-[green]' size={15} /> <span>Change Role</span>
-                    </button>
-                  </Popconfirm>
-                )
-              }
-            ]
-          }}
-          className='flex justify-center bg-[#fafafa] items-center px-2 rounded-md w-[50px] h-[40px] border-[1px] border-solid border-[#e8ebed]'
-        >
-          <button type='button' className='flex items-center'>
-            <DashOutlined className='text-[15px]' />
-          </button>
-        </Dropdown>
-      )
-    }
+    ...(role.toLowerCase() === 'manager'
+      ? [
+          {
+            title: 'Action',
+            dataIndex: 'action',
+            key: 'action',
+            width: '10%',
+            render: (text, record) => (
+              <Dropdown
+                trigger={['click']}
+                placement='bottomRight'
+                menu={{
+                  items: [
+                    {
+                      key: '3',
+                      label:
+                        record.admin_is_delete === 1 ? (
+                          <Popconfirm
+                            align={{ offset: [20, 20] }}
+                            placement='bottomRight'
+                            title={`Restore record ${record.admin_id}`}
+                            description='Are you sure to store this record?'
+                            onConfirm={() => handleRestoreAdmin(record)}
+                            okText='Restore'
+                            cancelText='Cancel'
+                          >
+                            <button
+                              type='button'
+                              className='flex items-center gap-x-2 justify-start w-full'
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Refresh className='text-[green]' size={15} /> <span>Restore</span>
+                            </button>
+                          </Popconfirm>
+                        ) : (
+                          <Popconfirm
+                            align={{ offset: [20, 20] }}
+                            placement='bottomRight'
+                            title={`Delete record ${record.admin_id}`}
+                            description='Are you sure to delete this record?'
+                            onConfirm={() => handleDeleteAdmin(record)}
+                            okText='Delete'
+                            cancelText='Cancel'
+                          >
+                            <button
+                              type='button'
+                              className='flex items-center gap-x-2 justify-start w-full'
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <DeleteOutlined className='text-[14px] text-[red]' />
+                              <span>Delete</span>
+                            </button>
+                          </Popconfirm>
+                        )
+                    },
+                    {
+                      key: '4',
+                      label: (
+                        <Popconfirm
+                          align={{ offset: [20, 20] }}
+                          placement='bottomRight'
+                          title={`Change role record ${record.admin_id}`}
+                          description='Are you sure to change role of this record?'
+                          onConfirm={() => {
+                            handleChangeRole(record)
+                          }}
+                          okText='Ok'
+                          cancelText='Cancel'
+                        >
+                          <button
+                            type='button'
+                            className='flex items-center gap-x-2 justify-center'
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ArrowSwapHorizontal className='text-[green]' size={15} /> <span>Change Role</span>
+                          </button>
+                        </Popconfirm>
+                      )
+                    },
+                    {
+                      key: '5',
+                      label: (
+                        <button
+                          type='button'
+                          className='flex items-center gap-x-2 justify-start w-full'
+                          onClick={() => {
+                            setOpenModalAddPermission(true)
+                            setSelectedAdmin(record.admin_id)
+                            getAdminByID(record.admin_id)
+                          }}
+                        >
+                          <AddCircle size='15' color='blue' /> <span>Add permission</span>
+                        </button>
+                      )
+                    },
+                    {
+                      key: '6',
+
+                      label: (
+                        <button
+                          type='button'
+                          className='flex items-center gap-x-2 justify-start w-full'
+                          onClick={() => {
+                            setOpenModalRemovePermission(true)
+                            setSelectedAdmin(record.admin_id)
+                            getAdminByID(record.admin_id)
+                          }}
+                        >
+                          <CloseCircleOutlined size={17} className='text-red-600' /> <span>Remove permission</span>
+                        </button>
+                      )
+                    }
+                  ]
+                }}
+                className='flex justify-center bg-[#fafafa] items-center px-2 rounded-md w-[50px] h-[40px] border-[1px] border-solid border-[#e8ebed]'
+              >
+                <button type='button' className='flex items-center'>
+                  <DashOutlined className='text-[15px]' />
+                </button>
+              </Dropdown>
+            )
+          }
+        ]
+      : [])
   ]
 
   //Table data
@@ -357,13 +394,14 @@ const Admin = () => {
     setLoading(true)
     try {
       const result = await AdminAPI.getAllAdmin(token)
+
       if (!result) return
+
       const data = result.data
       const tableData = data
         .map((item) => ({
           ...item,
-          key: item.admin_id,
-          admin_updated_at: item.admin_updated_at
+          key: item.admin_id
         }))
         .sort((a, b) => new Date(b.admin_created_at) - new Date(a.admin_created_at))
       setFilterData(tableData)
@@ -390,6 +428,7 @@ const Admin = () => {
   }
 
   useEffect(() => {
+    fetchAllPermissions()
     fetchAdmins()
   }, [])
 
@@ -602,6 +641,174 @@ const Admin = () => {
 
   //#endregion
 
+  //#region add permissions to admin
+  //#region permissions data
+  const [permissionData, setPermissionData] = useState([])
+  const [permissionSelected, setPermissionSelected] = useState([])
+  const [selectedAdmin, setSelectedAdmin] = useState(null)
+  const [permissionInAdmin, setPermissionInAdmin] = useState([])
+  const [permissionNotInAdmin, setPermissionNotInAdmin] = useState([])
+  const [errorPermission, setErrorPermission] = useState('')
+  //#endregion
+
+  const fetchAllPermissions = async () => {
+    try {
+      const res = await AdminPermissionsAPI.getAllPermissions(token)
+      if (!res) throw new Error('Fetch all permissions failed')
+      const data = res.data
+      const permissionName = data.map((p) => {
+        let result
+        try {
+          const name = p.permission_name.split('_').join(' ')
+          result = name.charAt(0).toUpperCase() + name.slice(1)
+        } catch (err) {
+          result = p.permission_name
+        }
+        return result
+      })
+
+      const permissionData = data.map((p, index) => ({
+        ...p,
+        permission_name: permissionName[index]
+      }))
+      setPermissionData(permissionData)
+    } catch (err) {
+      setStatus(400)
+      setMessageResult(err.message)
+    }
+  }
+
+  const getAdminByID = async (admin_id) => {
+    try {
+      const res = await AdminAPI.getAdminByID(admin_id, token)
+      if (!res) throw new Error('Get admin by ID failed')
+      const data = res.data
+      const permissionOfAdmin = data.permission_private.map((p) => {
+        let result
+        try {
+          const name = p.permission_name.split('_').join(' ')
+          result = name.charAt(0).toUpperCase() + name.slice(1)
+        } catch (err) {
+          result = p.permission_name
+        }
+        return {
+          ...p,
+          permission_name: result
+        }
+      })
+      const permissionOfAdminID = permissionOfAdmin.map((p) => p.permission_id)
+      const permissionNotInAdmin = permissionData.filter((p) => !permissionOfAdminID.includes(p.permission_id))
+      const permissionInAdminSelectData = permissionOfAdmin.map((p) => ({
+        label: p.permission_name,
+        value: p.permission_id
+      }))
+      const permissionNotInAdminSelectData = permissionNotInAdmin.map((p) => ({
+        label: p.permission_name,
+        value: p.permission_id
+      }))
+      setPermissionNotInAdmin(permissionNotInAdminSelectData)
+      setPermissionInAdmin(permissionInAdminSelectData)
+    } catch (err) {
+      if (err.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(err.message)
+    }
+  }
+
+  //#region add permission modal
+  const [openModalAddPermission, setOpenModalAddPermission] = useState(false)
+
+  const handleCancelAddPermission = () => {
+    setOpenModalAddPermission(false)
+    setSelectedAdmin(null)
+    setPermissionSelected([])
+    setErrorPermission('')
+  }
+
+  const handleAddPermission = async (e) => {
+    try {
+      e.preventDefault()
+      if (!permissionSelected || permissionSelected.length === 0) {
+        setErrorPermission('Permission is required')
+        return
+      }
+
+      if (!selectedAdmin) {
+        setErrorPermission('Admin ID is required')
+        return
+      }
+
+      const data = { permission_ids: permissionSelected }
+      const res = await AdminAPI.assignPermissions(selectedAdmin, token, data)
+      if (!res) throw new Error('Add permission to admin failed')
+      setStatus(200)
+      setMessageResult(
+        res?.message ? res.message : res?.messages ? res.messages.join('. ') : 'Add permission to admin successfully'
+      )
+      handleCancelAddPermission()
+      fetchAdmins()
+    } catch (err) {
+      if (err.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(err.message)
+    }
+  }
+  //#endregion
+
+  //#region remove permissions modal
+  const [openModalRemovePermission, setOpenModalRemovePermission] = useState(false)
+
+  const handleRemovePermission = async (e) => {
+    try {
+      e.preventDefault()
+      if (!permissionSelected || permissionSelected.length === 0) {
+        setErrorPermission('Permission is required')
+        return
+      }
+
+      if (!selectedAdmin) {
+        setErrorPermission('Admin ID is required')
+        return
+      }
+
+      const data = { permission_ids: permissionSelected }
+      const res = await AdminAPI.removePermissions(selectedAdmin, token, data)
+      if (!res) throw new Error('Remove permission from admin failed')
+      setStatus(200)
+      setMessageResult(
+        res?.message
+          ? res.message
+          : res?.messages
+            ? res.messages.join('. ')
+            : 'Remove permission from admin successfully'
+      )
+      handleCancelRemovePermission()
+      fetchAdmins()
+    } catch (err) {
+      if (err.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(err.message)
+    }
+  }
+
+  const handleCancelRemovePermission = () => {
+    setOpenModalRemovePermission(false)
+    setSelectedAdmin(null)
+    setPermissionSelected([])
+    setErrorPermission('')
+  }
+
+  //#endregion
+
   //#region status and message result of fetch api call
   useEffect(() => {
     if ([200, 201, 202, 204].includes(status)) {
@@ -777,6 +984,135 @@ const Admin = () => {
                   Save
                 </button>
                 <button type='button' className='AddCategoryForm__cancelBtn' onClick={handleCancelModal}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </Modal>
+      <Modal
+        title='Add permission'
+        centered
+        open={openModalAddPermission}
+        width={400}
+        footer={false}
+        destroyOnClose
+        onCancel={handleCancelAddPermission}
+      >
+        <div className='mt-7 relative'>
+          <form action='' method='POST' onSubmit={handleAddPermission} autoComplete='off'>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
+                <label htmlFor='permission_id' className='AddCategoryForm__label'>
+                  <span className='text-[red]'>* </span>Permission(Choose 1 upto 5 permissions)
+                </label>
+                <Tooltip
+                  title={errorPermission}
+                  open={errorPermission !== ''}
+                  placement='bottomLeft'
+                  align={{
+                    offset: [60, -8]
+                  }}
+                >
+                  <ConfigProvider theme={filterTheme}>
+                    <Select
+                      maxCount={5}
+                      mode='multiple'
+                      id='permission_id'
+                      suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+                      allowClear
+                      showSearch
+                      onClick={() => {
+                        setErrorPermission('')
+                      }}
+                      placeholder='Select a permission'
+                      placement='bottomLeft'
+                      options={permissionNotInAdmin}
+                      filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                      className='w-[100%] mt-2 min-h-10'
+                      onChange={(value) => {
+                        if (value !== '' && value !== null && value !== undefined) {
+                          setPermissionSelected(value)
+                          setPermissionNotInAdmin(permissionNotInAdmin.filter((p) => !value.includes(p.value)))
+                        }
+                      }}
+                    />
+                  </ConfigProvider>
+                </Tooltip>
+              </div>
+            </div>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__groupButton'>
+                <button type='submit' className='AddCategoryForm__submitBtn'>
+                  Save
+                </button>
+                <button type='button' className='AddCategoryForm__cancelBtn' onClick={handleCancelAddPermission}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </Modal>
+
+      <Modal
+        title='Remove permission'
+        centered
+        open={openModalRemovePermission}
+        width={400}
+        footer={false}
+        destroyOnClose
+        onCancel={handleCancelRemovePermission}
+      >
+        <div className='mt-7 relative'>
+          <form action='' method='POST' onSubmit={handleRemovePermission} autoComplete='off'>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__group AddCategoryForm__WidthFull'>
+                <label htmlFor='permission_id' className='AddCategoryForm__label'>
+                  <span className='text-[red]'>* </span>Permission(Choose 1 upto 5 permissions)
+                </label>
+                <Tooltip
+                  title={errorPermission}
+                  open={errorPermission !== ''}
+                  placement='bottomLeft'
+                  align={{
+                    offset: [60, -8]
+                  }}
+                >
+                  <ConfigProvider theme={filterTheme}>
+                    <Select
+                      maxCount={5}
+                      mode='multiple'
+                      id='permission_id'
+                      suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+                      allowClear
+                      showSearch
+                      onClick={() => {
+                        setErrorPermission('')
+                      }}
+                      placeholder='Select a permission'
+                      placement='bottomLeft'
+                      options={permissionInAdmin}
+                      filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                      className='w-[100%] mt-2 min-h-10'
+                      onChange={(value) => {
+                        if (value !== '' && value !== null && value !== undefined) {
+                          setPermissionSelected(value)
+                          setPermissionInAdmin(permissionInAdmin.filter((p) => !value.includes(p.value)))
+                        }
+                      }}
+                    />
+                  </ConfigProvider>
+                </Tooltip>
+              </div>
+            </div>
+            <div className='AddCategoryForm__row'>
+              <div className='AddCategoryForm__groupButton'>
+                <button type='submit' className='AddCategoryForm__submitBtn'>
+                  Save
+                </button>
+                <button type='button' className='AddCategoryForm__cancelBtn' onClick={handleCancelRemovePermission}>
                   Cancel
                 </button>
               </div>

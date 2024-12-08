@@ -40,31 +40,20 @@ export default function AdminLogin() {
     if (data.status >= 400) {
       throw new Error(data.messages)
     }
-    const { admin_avatar, admin_fullname, admin_is_admin, email } = data.data
-    let roles
-    switch (admin_is_admin) {
-      case 0:
-        roles = 'Admin'
-        break
-      case 1:
-        roles = 'Super Admin'
-        break
-      case 2:
-        roles = 'Manager'
-    }
+
+    const { admin_avatar, admin_fullname, role, email } = data.data
     const adminData = {
       admin_avatar,
       admin_fullname,
-      admin_is_admin: roles,
+      role,
       email
     }
+
     login(adminData, data.data.access_token)
     localStorage.setItem('profile', JSON.stringify(adminData))
-    const role = data.data.role
-    if (role == 'admin') {
-      toast.success('Đăng nhập thành công')
-      navigate('/admin')
-    }
+    document.title = 'MedicareCentral'
+    toast.success('Đăng nhập thành công')
+    navigate('/admin')
   }
   const handleForgotPasswordSubmit = (data) => {
     if (data.status >= 400) throw new Error(data.messages)
