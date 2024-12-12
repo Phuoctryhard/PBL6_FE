@@ -3,31 +3,35 @@ import { Link } from 'react-router-dom'
 import { AuthContext } from '../../../../context/app.context'
 import { useMutation } from '@tanstack/react-query'
 import authAPI from '../../../../Api/user/auth'
+import { toast } from 'react-toastify'
 
 //
 export default function Profile() {
   const [previewImage, setPreviewImage] = useState(null) // Lưu URL của ảnh preview
-  const { isProfile } = useContext(AuthContext)
+
+  const { isProfile, setProfile } = useContext(AuthContext)
   console.log(isProfile)
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '', // or null, depending on your form requirements
+    user_fullname: '',
+    user_phone: '', // or null, depending on your form requirements
     email: '',
-    avatar: null, // if avatar is an image URL or file, keep it as an empty string or null
-    birthday: '', // ensure the format matches the expected date format
-    gender: null // assuming gender is null initially
+    // user_avatar: '', // if avatar is an image URL or file, keep it as an empty string or null
+    user_birthday: '', // ensure the format matches the expected date format
+    user_gender: null // assuming gender is null initially
   })
+  const [user_avatar, setImage] = useState('')
   // Gán dữ liệu khi component mount
   useEffect(() => {
     if (isProfile) {
       setFormData({
-        name: isProfile.user_fullname || '',
-        phone: isProfile?.user_phone, // Ensure phone is either a string or null
+        user_fullname: isProfile.user_fullname || '',
+        user_phone: isProfile?.user_phone, // Ensure phone is either a string or null
         email: isProfile.email || '', // email should be an empty string if not available
-        birthday: isProfile.user_birthday || '2024-12-25', // Default to empty string if no birthday
-        avatar: isProfile.user_avatar, // Default to empty string if no avatar
-        gender: isProfile?.user_gender // Default to null if no gender
+        user_birthday: isProfile.user_birthday || '2024-12-25', // Default to empty string if no birthday
+        // user_avatar: isProfile.user_avatar, // Default to empty string if no avatar
+        user_gender: isProfile?.user_gender // Default to null if no gender
       })
+      setImage(isProfile.user_avatar)
     }
   }, [])
 
@@ -44,7 +48,7 @@ export default function Profile() {
       setPreviewImage(previewUrl)
       setFormData((prevState) => ({
         ...prevState,
-        avatar: File
+        user_avatar: File
       }))
     }
   }
@@ -65,6 +69,13 @@ export default function Profile() {
     const formDataToSend = new FormData()
     Object.entries(formData).forEach(([key, value]) => {
       formDataToSend.append(key, value)
+    })
+    muTateUpdateProfile.mutate(formDataToSend, {
+      onSuccess: (data) => {
+        setProfile(data?.data?.data)
+        console.log(data)
+        toast.success('Cập nhật Tài khoản thành công ')
+      }
     })
     // muTateUpdateProfile.mutate(formDataToSend)
     console.log('Dữ liệu gửi:', Object.fromEntries(formDataToSend))
@@ -89,9 +100,9 @@ export default function Profile() {
               <input
                 type='text'
                 className='w-full rounded-sm border border-gray-300 px-3 py-2 outline-none focus:border-gray-500 focus:shadow-sm'
-                value={formData.name}
+                value={formData.user_fullname}
                 onChange={handleChange}
-                name='name'
+                name='user_fullname'
               />
             </div>
           </div>
@@ -107,9 +118,9 @@ export default function Profile() {
               <input
                 type='number'
                 className='w-full rounded-sm border border-gray-300 px-3 py-2 '
-                value={formData.phone}
+                value={formData.user_phone}
                 onChange={handleChange}
-                name='phone'
+                name='user_phone'
               />
             </div>
           </div>
@@ -119,8 +130,8 @@ export default function Profile() {
             <div className='sm:w-[80%] sm:pl-5'>
               <input
                 type='date'
-                name='birthday'
-                value={formData.birthday}
+                name='user_birthday'
+                value={formData.user_birthday}
                 onChange={handleChange}
                 className='w-full rounded-sm border border-gray-300 px-3 py-2 outline-none focus:border-gray-500 focus:shadow-sm'
               />
@@ -132,8 +143,8 @@ export default function Profile() {
             <div className='sm:w-[80%] sm:pl-5 '>
               <select
                 className='px-3 py-2 w-full border border-gray-300 rounded-sm outline-none'
-                name='gender'
-                value={formData.gender}
+                name='user_gender'
+                value={formData.user_gender}
                 onChange={handleChange}
               >
                 <option value='' disabled>
@@ -141,7 +152,6 @@ export default function Profile() {
                 </option>
                 <option value={0}>Nam</option>
                 <option value={1}>Nữ</option>
-                <option value='other'>Khác</option>
               </select>
             </div>
           </div>
@@ -181,9 +191,7 @@ export default function Profile() {
           <div className='flex flex-col items-center '>
             <div className='my-5 h-24 w-24'>
               {previewImage && <img src={previewImage} alt='' className='w-full h-full rounded-full object-cover' />}
-              {!previewImage && (
-                <img src={formData.avatar} alt='' className='w-full h-full rounded-full object-cover' />
-              )}
+              {!previewImage && <img src={user_avatar} alt='' className='w-full h-full rounded-full object-cover' />}
             </div>
 
             <input type='file' accept='.jpg,.jpeg,.png' className='hidden' ref={ImageRef} onChange={handleFileChange} />

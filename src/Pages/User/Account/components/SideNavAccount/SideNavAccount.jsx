@@ -1,16 +1,21 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
+import { AuthContext } from '../../../../../context/app.context'
 export default function SideNavAccount() {
   const active = window.location.pathname
+  const { isProfile } = useContext(AuthContext)
   return (
     <div className=''>
       <div className=' flex border-b border-b-gray-300 py-4 px-3  '>
         <Link to='' className='w-12 h-12 rounded-full overflow-hidden'>
-          <img
-            src='https://production-cdn.pharmacity.io/digital/256x256/plain/e-com/images/static-website/20240706162835-0-user-avatar.svg'
-            alt=''
-            className='w-full h-full object-cover'
-          />
+          {isProfile && <img src={isProfile.user_avatar} alt='' className='w-full h-full object-cover' />}
+          {!isProfile && (
+            <img
+              src='https://production-cdn.pharmacity.io/digital/256x256/plain/e-com/images/static-website/20240706162835-0-user-avatar.svg'
+              alt=''
+              className='w-full h-full object-cover'
+            />
+          )}
         </Link>
         <div className='flex-grow pl-3'>
           <div className='text-neutral-900  font-bold capitalize mb-1'>Khách hàng</div>

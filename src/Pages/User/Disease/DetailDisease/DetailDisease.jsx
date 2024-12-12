@@ -45,9 +45,9 @@ export default function DetailDisease() {
       ) : (
         <>
           <Flex gap='middle' vertical>
-            <Spin spinning={isLoading} tip='loading'>
+            
               <Skeleton1 />
-            </Spin>
+          
           </Flex>
         </>
       )}

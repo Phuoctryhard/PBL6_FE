@@ -1,10 +1,10 @@
 import React from 'react'
-import { AntDesignOutlined, UserOutlined } from '@ant-design/icons'
-import { Avatar, Divider, Tooltip } from 'antd'
-const Avatar1 = ({ urlAvatar }) => (
+import { UserOutlined } from '@ant-design/icons'
+import { Avatar, Tooltip } from 'antd'
+const Avatar1 = ({ user_avatar }) => (
   <div className='flex items-center justify-center h-full gap-x-2'>
-    {urlAvatar ? (
-      <img src='' alt='' className='w-full h- full rounded-full object-cover' />
+    {user_avatar ? (
+      <img src={user_avatar} alt='' className='w-[35px] h-[35px] rounded-full object-cover' />
     ) : (
       <Avatar.Group>
         <Tooltip title='Ant User' placement='top'>
