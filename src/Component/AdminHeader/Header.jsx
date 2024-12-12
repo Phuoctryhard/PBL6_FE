@@ -48,10 +48,87 @@ const Header = forwardRef((_, ref) => {
   const optionsDate = { year: 'numeric', month: 'long', day: '2-digit' }
   const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }
 
+  const formatDateInRealTime = (date) => {
+    const dateOptions = date.toLocaleDateString('en-GB', optionsDate)
+    const timeOptions = date.toLocaleTimeString('en-GB', optionsTime)
+    return `${dateOptions} at ${timeOptions}`
+  }
+
   const formatDate = (date) => {
-    const formattedDate = new Date(date).toLocaleDateString('en-GB', optionsDate)
-    const formattedTime = new Date(date).toLocaleTimeString('en-GB', optionsTime)
-    return `${formattedDate} at ${formattedTime}`
+    try {
+      let format = date
+
+      // Check if the date is in DD/MM/YYYY format
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+        const [day, month, year] = date.split('/')
+        format = `${year}-${month}-${day}`
+      }
+
+      // Check if the date is in ISO 8601 format
+      else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(date)) {
+        const parsedDate = new Date(date)
+        const day = String(parsedDate.getDate()).padStart(2, '0')
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+        const year = parsedDate.getFullYear()
+        format = `${year}-${month}-${day}`
+      }
+
+      // Check if the date is in the format "Wed Sep 25 2024 00:00:00 GMT+0700 (Indochina Time)"
+      else if (Date.parse(date)) {
+        const parsedDate = new Date(date)
+        const day = String(parsedDate.getDate()).padStart(2, '0')
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0') // Months are zero-based
+        const year = parsedDate.getFullYear()
+        format = `${year}-${month}-${day}`
+      }
+      return format ? format : null
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
+  }
+
+  const formatTimeDifference = (date) => {
+    try {
+      if (!date) throw new Error('Date is missing or invalid')
+
+      const currentDate = new Date()
+      const dateObj = new Date(date)
+
+      if (isNaN(dateObj)) throw new Error('Invalid date format')
+
+      const diffInSeconds = Math.floor((currentDate - dateObj) / 1000)
+
+      if (diffInSeconds < 60) {
+        return `${diffInSeconds} giây trước`
+      }
+
+      const diffInMinutes = Math.floor(diffInSeconds / 60)
+      if (diffInMinutes < 60) {
+        return `${diffInMinutes} phút trước`
+      }
+
+      const diffInHours = Math.floor(diffInMinutes / 60)
+      if (diffInHours < 24) {
+        return `${diffInHours} giờ trước`
+      }
+
+      const diffInDays = Math.floor(diffInHours / 24)
+      if (diffInDays < 30) {
+        return `${diffInDays} ngày trước`
+      }
+
+      const diffInMonths = Math.floor(diffInDays / 30)
+      if (diffInMonths < 12) {
+        return `${diffInMonths} tháng trước`
+      }
+
+      const diffInYears = Math.floor(diffInMonths / 12)
+      return `${diffInYears} năm trước`
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   const [searchValue, setSearchValue] = useState('')
@@ -63,11 +140,15 @@ const Header = forwardRef((_, ref) => {
   const [importData, setImportData] = useState([])
   const [notifyData, setNotifyData] = useState([])
   const [badgeCount, setBadgeCount] = useState(0)
+
+  const [showSearchResults, setShowSearchResults] = useState(false)
+
   //#region show notify
   const [showNotify, setShowNotify] = useState(false)
   const [showOptionNotify, setShowOptionNotify] = useState(false)
   const notifyRef = useRef(null)
   let closeTimeout
+  //#endregion
 
   useImperativeHandle(ref, () => ({
     setNotifyData
@@ -140,6 +221,7 @@ const Header = forwardRef((_, ref) => {
       const res = await AdminOrderApi.getAllOrder(token)
       if (res) {
         const resData = res.data
+        console.log(resData)
         const filterOrderNeedConfirmation = resData
           .filter((o) => {
             const payment_transactions = ['VNPAY', 'PAYOS', 'MOMO']
@@ -155,7 +237,7 @@ const Header = forwardRef((_, ref) => {
           .map((o) => {
             return { ...o, isRead: false }
           })
-
+          .sort((a, b) => new Date(b.order_created_at) - new Date(a.order_created_at))
         const filterLength = filterOrderNeedConfirmation.length
         let badgeCount = 0
         if (filterLength > 0 && filterLength <= 99) {
@@ -413,9 +495,10 @@ const Header = forwardRef((_, ref) => {
     fetchProducts({ search: searchValue })
     fetchAllOrders()
     fetchAllImports()
-    const interval = setInterval(() => {
+
+    const timeInterval = setInterval(() => {
       const currentTime = new Date()
-      setTime(formatDate(currentTime))
+      setTime(formatDateInRealTime(currentTime))
       const hours = currentTime.getHours()
       if (hours >= 5 && hours < 12) {
         setGreeting('Good morning')
@@ -432,7 +515,14 @@ const Header = forwardRef((_, ref) => {
       }
     }, 1000)
 
-    return () => clearInterval(interval)
+    const fetchOrderInterval = setInterval(() => {
+      fetchAllOrders()
+    }, 300000) // 300000 ms = 5 phút
+
+    return () => {
+      clearInterval(timeInterval)
+      clearInterval(fetchOrderInterval)
+    }
   }, [])
 
   //#region status and message result of fetch api call
@@ -467,12 +557,20 @@ const Header = forwardRef((_, ref) => {
                 onChange={(e) => {
                   setSearchValue(e.target.value)
                 }}
+                onFocus={() => {
+                  setShowSearchResults(true)
+                }}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setShowSearchResults(false)
+                  }, 300)
+                }}
               />
               <SearchNormal className='absolute right-0 top-[50%] -translate-y-1/2 mr-3' />
               <div
                 className='absolute w-full h-[18.75rem] bg-white top-[120%] z-[100] overflow-hidden border border-solid border-[#bdc5d1] rounded-md'
                 style={{
-                  display: searchValue.length > 0 ? 'block' : 'none'
+                  display: searchValue.length > 0 && showSearchResults ? 'block' : 'none'
                 }}
               >
                 <SimpleBar style={{ width: '100%', height: '100%' }}>
@@ -518,7 +616,7 @@ const Header = forwardRef((_, ref) => {
               >
                 <Notification size={30} color='#1D242E' />
                 <div className='absolute w-5 h-5 rounded-[50%] bg-red-600 text-white right-[-15%] top-0 flex justify-center items-center px-2'>
-                  <span className='text-xs'>{badgeCount}+</span>
+                  <span className='text-xs'>{badgeCount}</span>
                 </div>
                 <div
                   className='flex flex-col absolute top-[161%] right-[-200%] z-[100]'
@@ -544,113 +642,122 @@ const Header = forwardRef((_, ref) => {
                         <span className='text-sm text-black text-center font-semibold'>Chưa có thông báo mới!</span>
                       </div>
                     ) : (
-                      <div className='w-full h-full flex flex-col gap-2 overflow-auto' style={{}}>
-                        {notifyData.map((notify) => {
-                          return (
-                            <div
-                              key={notify.order_id}
-                              className={`flex items-center gap-4 hover:bg-[rgb(0,143,153,0.1)] hover:cursor-pointer w-full rounded-md p-4 relative`}
-                            >
-                              <div className='flex gap-1'>
-                                <button
-                                  className={`w-[95%] flex items-center gap-4 before:w-1 before:h-1 before:rounded-[50%] before:absolute before:left-2 before:top-1/2 before:-translate-y-1/2 ${notify.isRead ? 'before:bg-transparent' : 'before:bg-blue'}`}
-                                  onClick={() => {
-                                    handleMarkedRead(notify.order_id)
-                                    triggerSidebar('orders')
-                                    navigate(`/admin/orders/${notify.order_id}`, {
-                                      replace: true,
-                                      state: { notifyData }
-                                    })
-                                    setShowNotify(false)
-                                  }}
+                      <div className='w-full h-full overflow-hidden'>
+                        <SimpleBar
+                          style={{
+                            width: '100%',
+                            height: '100%'
+                          }}
+                        >
+                          <div className='w-full flex flex-col gap-2 overflow-auto'>
+                            {notifyData.map((notify) => {
+                              return (
+                                <div
+                                  key={notify.order_id}
+                                  className={`flex items-center gap-4 hover:bg-[rgb(0,143,153,0.1)] hover:cursor-pointer w-full rounded-md p-4 relative`}
                                 >
-                                  <img
-                                    src={
-                                      notify?.order_detail[0].product_images
-                                        ? JSON.parse(notify.order_detail[0].product_images)?.map(
-                                            (image) => `${image}`
-                                          )[0]
-                                        : '/assets/images/default-image.png'
-                                    }
-                                    alt={notify?.order_detail[0].product_name}
-                                    className='w-12 h-12'
-                                    onError={(e) => {
-                                      e.target.onerror = null
-                                      e.target.src = '/assets/images/default-image.png'
-                                    }}
-                                  />
-                                  <div className='flex flex-col text-left text-sm text-black gap-1'>
-                                    <span>Bạn có đơn hàng với id: {notify.order_id} cần được xác nhận</span>
-                                    <div>
-                                      <span>Người nhận: </span>
-                                      <span>{notify.receiver_name}</span>
-                                    </div>
-                                    <div>
-                                      <span>Địa chỉ: </span>
-                                      <span>
-                                        {notify.receiver_address}, {notify.ward_name}, {notify.district_name},{' '}
-                                        {notify.province_name}
-                                      </span>
-                                    </div>
-                                    <div className='text-xs text-gray-400 font-light mt-3'>
-                                      <span>{formatDate(notify.created_at)}</span>
-                                    </div>
+                                  <div className='flex gap-1'>
+                                    <button
+                                      className={`w-[95%] flex items-center gap-4 before:w-1 before:h-1 before:rounded-[50%] before:absolute before:left-2 before:top-1/2 before:-translate-y-1/2 ${notify.isRead ? 'before:bg-transparent' : 'before:bg-blue'}`}
+                                      onClick={() => {
+                                        handleMarkedRead(notify.order_id)
+                                        triggerSidebar('orders')
+                                        navigate(`/admin/orders/${notify.order_id}`, {
+                                          replace: true,
+                                          state: { notifyData }
+                                        })
+                                        setShowNotify(false)
+                                      }}
+                                    >
+                                      <img
+                                        src={
+                                          notify?.order_detail[0].product_images
+                                            ? JSON.parse(notify.order_detail[0].product_images)?.map(
+                                                (image) => `${image}`
+                                              )[0]
+                                            : '/assets/images/default-image.png'
+                                        }
+                                        alt={notify?.order_detail[0].product_name}
+                                        className='w-12 h-12'
+                                        onError={(e) => {
+                                          e.target.onerror = null
+                                          e.target.src = '/assets/images/default-image.png'
+                                        }}
+                                      />
+                                      <div className='flex flex-col text-left text-sm text-black gap-1'>
+                                        <span>Bạn có đơn hàng với id: {notify.order_id} cần được xác nhận</span>
+                                        <div>
+                                          <span>Người nhận: </span>
+                                          <span>{notify.receiver_name}</span>
+                                        </div>
+                                        <div>
+                                          <span>Địa chỉ: </span>
+                                          <span>
+                                            {notify.receiver_address}, {notify.ward_name}, {notify.district_name},{' '}
+                                            {notify.province_name}
+                                          </span>
+                                        </div>
+                                        <div className='text-xs text-gray-500 font-normal mt-3'>
+                                          <span>{formatTimeDifference(formatDate(notify.order_created_at))}</span>
+                                        </div>
+                                      </div>
+                                    </button>
                                   </div>
-                                </button>
-                              </div>
-                              <div className='rotate-90'>
-                                <Dropdown
-                                  destroyPopupOnHide
-                                  trigger={['click']}
-                                  onOpenChange={(open) => {
-                                    if (open) setShowOptionNotify(true)
-                                    else setShowOptionNotify(false)
-                                  }}
-                                  placement='bottomRight'
-                                  menu={{
-                                    items: [
-                                      {
-                                        key: '1',
-                                        label: (
-                                          <button
-                                            type='button'
-                                            className='flex items-center gap-1'
-                                            onClick={() => {
-                                              try {
-                                                const orderID = notify.order_id
-                                                const newNotify = notifyData.filter(
-                                                  (notify) => notify.order_id !== orderID
-                                                )
-                                                let badgeCount = 0
-                                                const newNotifyLength = newNotify.filter(
-                                                  (notify) => !notify.isRead
-                                                ).length
-                                                if (newNotifyLength > 0 && newNotifyLength <= 99) {
-                                                  badgeCount = newNotifyLength
-                                                } else if (newNotifyLength > 99) {
-                                                  badgeCount = '99+'
-                                                }
-                                                setBadgeCount(badgeCount)
-                                                setNotifyData(newNotify)
-                                              } catch (e) {
-                                                setStatus(400)
-                                                setMessageResult(e.message)
-                                              }
-                                            }}
-                                          >
-                                            <DeleteOutlined className='text-sm text-[red]' /> Xóa thông báo này
-                                          </button>
-                                        )
-                                      }
-                                    ]
-                                  }}
-                                >
-                                  <More size={20} color='#1D242E' />
-                                </Dropdown>
-                              </div>
-                            </div>
-                          )
-                        })}
+                                  <div className='rotate-90'>
+                                    <Dropdown
+                                      destroyPopupOnHide
+                                      trigger={['click']}
+                                      onOpenChange={(open) => {
+                                        if (open) setShowOptionNotify(true)
+                                        else setShowOptionNotify(false)
+                                      }}
+                                      placement='bottomRight'
+                                      menu={{
+                                        items: [
+                                          {
+                                            key: '1',
+                                            label: (
+                                              <button
+                                                type='button'
+                                                className='flex items-center gap-1'
+                                                onClick={() => {
+                                                  try {
+                                                    const orderID = notify.order_id
+                                                    const newNotify = notifyData.filter(
+                                                      (notify) => notify.order_id !== orderID
+                                                    )
+                                                    let badgeCount = 0
+                                                    const newNotifyLength = newNotify.filter(
+                                                      (notify) => !notify.isRead
+                                                    ).length
+                                                    if (newNotifyLength > 0 && newNotifyLength <= 99) {
+                                                      badgeCount = newNotifyLength
+                                                    } else if (newNotifyLength > 99) {
+                                                      badgeCount = '99+'
+                                                    }
+                                                    setBadgeCount(badgeCount)
+                                                    setNotifyData(newNotify)
+                                                  } catch (e) {
+                                                    setStatus(400)
+                                                    setMessageResult(e.message)
+                                                  }
+                                                }}
+                                              >
+                                                <DeleteOutlined className='text-sm text-[red]' /> Xóa thông báo này
+                                              </button>
+                                            )
+                                          }
+                                        ]
+                                      }}
+                                    >
+                                      <More size={20} color='#1D242E' />
+                                    </Dropdown>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </SimpleBar>
                       </div>
                     )}
                   </div>

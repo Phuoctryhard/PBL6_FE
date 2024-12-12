@@ -74,11 +74,11 @@ const Overview = () => {
   //#region Chart settings
   const [earningSeries, setEarningSeries] = useState([
     {
-      name: 'Revenue',
+      name: 'Profit',
       data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     {
-      name: 'Profit',
+      name: 'Revenue',
       data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
   ])
