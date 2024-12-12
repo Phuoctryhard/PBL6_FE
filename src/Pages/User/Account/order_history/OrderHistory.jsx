@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { Tabs } from 'antd'
+import { Space, Tabs } from 'antd'
 import './ant.css'
 import { Link, Navigate } from 'react-router-dom'
 import { Empty } from 'antd'
@@ -13,23 +13,25 @@ import { queryClient } from '../../../..'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../../../context/app.context'
 import ModalReviewProduct from './ModalReviewProduct'
+
 export default function OrderHistory() {
   const { isAuthenticated, logout, checkedProducts, setCheckedProducts } = useContext(AuthContext)
   const navigate = useNavigate() // Hook để điều hướng
   const [IdOrder, setIdOrder] = useState('')
   const [IdProduct, setIdProduct] = useState('')
   const [isActive, setActive] = useState('All')
+
   const ORDER_STATUS = [
     { name: 'Tất cả', status: 'All' },
-    // đang chờ khách hàng  thanh toán , chuyển khoản  : 
+    // đang chờ khách hàng  thanh toán , chuyển khoản  :
     { name: 'Đang xử lí ', status: 'pending' },
-    // admin xác nhận đơn đã gói hàng cb vận chuyển 
+    // admin xác nhận đơn đã gói hàng cb vận chuyển
     { name: 'Đã xác nhận', status: 'confirmed' },
-    // shiper lấy hàng và đang giao đơn hàng  : vận chuyển 
+    // shiper lấy hàng và đang giao đơn hàng  : vận chuyển
     { name: 'Đang giao', status: 'shipped' },
     // đã giao cho khách hàng , kh nhận thành công
     { name: 'Đã giao', status: 'delivered' },
-    // hủy ở giai đoạn 
+    // hủy ở giai đoạn
     { name: 'Đã hủy', status: 'cancelled' }
   ]
   const { data } = useQuery({
@@ -45,11 +47,12 @@ export default function OrderHistory() {
       setDataAll(data?.data?.data)
     }
     if (isActive && isActive !== 'All') {
-      const filter = data?.data?.data.filter((element) => {
+      const filter = data?.data?.data?.filter((element) => {
         return element?.order_status === isActive
       })
-
-      setDataAll(filter)
+      if (filter) {
+        setDataAll(filter)
+      }
     } else if (isActive == 'All') {
       setDataAll(data?.data?.data)
     }
@@ -122,10 +125,11 @@ export default function OrderHistory() {
     setIdProduct(product_id)
     setIsModalOpen(true)
   }
+  console.log(dataAll)
   return (
     <div className=''>
       <div className='flex justify-between  '>
-        {ORDER_STATUS.map((element) => {
+        {ORDER_STATUS?.map((element) => {
           return (
             <div
               className={`flex flex-1 items-center justify-center border-b-2 cursor-pointer ${isActive === element.status ? 'text-red-600  border-red-600' : 'border-white'}`}
@@ -139,72 +143,81 @@ export default function OrderHistory() {
         })}
       </div>
       <div className=''>
-        {dataAll?.map((element) => {
-          //  console.log(element)
-          return (
-            <div key={element?.order_id}>
-              {element?.order_detail?.map((detail) => (
-                <div className='flex mt-7 p-2' key={detail?.order_detail_id}>
-                  <div className='flex-shrink-0 w-20 h-20'>
-                    <img
-                      src={JSON.parse(detail.product_images)[0]} // Lấy ảnh đầu tiên từ mảng `product_images`
-                      alt={detail.product_name}
-                      className='w-full h-full rounded-lg object-contain'
-                    />
-                  </div>
-                  <div className='flex flex-grow ml-3'>
-                    <div className='flex flex-col justify-between'>
-                      <p className='font-semibold line-clamp-2'>{detail.product_name}</p>
-                      <span className='text-sm'>Phân loại hàng 200</span>
-                      <span className='text-sm'>*{detail.order_quantity}</span>
+        {dataAll ? (
+          dataAll?.map((element) => {
+            //  console.log(element)
+            return (
+              <div key={element?.order_id}>
+                {element?.order_detail?.map((detail) => (
+                  <div className='flex mt-7 p-2' key={detail?.order_detail_id}>
+                    <div className='flex-shrink-0 w-20 h-20'>
+                      <img
+                        src={JSON.parse(detail.product_images)[0]} // Lấy ảnh đầu tiên từ mảng `product_images`
+                        alt={detail.product_name}
+                        className='w-full h-full rounded-lg object-contain'
+                      />
+                    </div>
+                    <div className='flex flex-grow ml-3'>
+                      <div className='flex flex-col justify-between'>
+                        <p className='font-semibold line-clamp-2'>{detail.product_name}</p>
+                        <span className='text-sm'>Phân loại hàng 200</span>
+                        <span className='text-sm'>*{detail.order_quantity}</span>
+                      </div>
+                    </div>
+                    <div className='flex shrink-0 ml-3 items-center gap-x-4'>
+                      <span className='line-through text-gray-500'>
+                        ₫{parseInt(detail.order_price).toLocaleString()}
+                      </span>
+                      <span className='text-red-500 font-semibold'>
+                        ₫{parseInt(detail.order_total_price).toLocaleString()}
+                      </span>
+                      {element.delivery_status === 'delivered' && (
+                        <button
+                          className='p-3 border border-blue text-blue   rounded-md'
+                          onClick={() => showModal(detail.order_id, detail.product_id)}
+                        >
+                          Đánh giá
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className='flex shrink-0 ml-3 items-center gap-x-4'>
-                    <span className='line-through text-gray-500'>₫{parseInt(detail.order_price).toLocaleString()}</span>
-                    <span className='text-red-500 font-semibold'>
-                      ₫{parseInt(detail.order_total_price).toLocaleString()}
-                    </span>
-                    {element.delivery_status === 'delivered' && (
-                      <button
-                        className='p-3 border border-blue text-blue   rounded-md'
-                        onClick={() => showModal(detail.order_id, detail.product_id)}
-                      >
-                        Đánh giá
-                      </button>
-                    )}
-                  </div>
+                ))}
+                <div className='flex justify-end font-semibold text-lg mr-3'>
+                  Tổng tiền: {formatCurrency(element.order_total_amount)}
                 </div>
-              ))}
-              <div className='flex justify-end font-semibold text-lg mr-3'>
-                Tổng tiền: {formatCurrency(element.order_total_amount)}
-              </div>
-              <div className='flex gap-x-5'>
-                <button
-                  className='text-white bg-blue  rounded-lg py-3 px-6  '
-                  onClick={() => handleBuyAgain(element.order_detail)}
-                >
-                  Mua lại{' '}
-                </button>
-                <Link to={`/account/order-history/${element.order_id}`}>
-                  <button className='text-white bg-blue rounded-lg py-3 px-6'>Xem chi tiết đơn hàng</button>
-                </Link>
-                {element.delivery_status === 'pending' && (
+                <div className='flex gap-x-5'>
                   <button
                     className='text-white bg-blue  rounded-lg py-3 px-6  '
-                    onClick={() => handleCancelOrder(element.order_id)}
+                    onClick={() => handleBuyAgain(element.order_detail)}
                   >
-                    Hủy đơn hàng{' '}
+                    Mua lại{' '}
                   </button>
-                )}
+                  <Link to={`/account/order-history/${element.order_id}`}>
+                    <button className='text-white bg-blue rounded-lg py-3 px-6'>Xem chi tiết đơn hàng</button>
+                  </Link>
+                  {element.delivery_status === 'pending' && (
+                    <button
+                      className='text-white bg-blue  rounded-lg py-3 px-6  '
+                      onClick={() => handleCancelOrder(element.order_id)}
+                    >
+                      Hủy đơn hàng{' '}
+                    </button>
+                  )}
+                </div>
+                <Divider
+                  style={{
+                    borderColor: '#7cb305'
+                  }}
+                ></Divider>
               </div>
-              <Divider
-                style={{
-                  borderColor: '#7cb305'
-                }}
-              ></Divider>
-            </div>
-          )
-        })}
+            )
+          })
+        ) : (
+          <>
+            <Empty />;
+          </>
+        )}
+        {dataAll?.length === 0 && <Empty style={{ marginTop: '50px' }} />}
         <ModalReviewProduct
           isModalOpen={isModalOpen}
           setIsModalOpen={setIsModalOpen}
@@ -213,7 +226,6 @@ export default function OrderHistory() {
           IdOrder={IdOrder}
           IdProduct={IdProduct}
         />
-        {dataAll?.length == 0 ? <Empty /> : <></>}
       </div>
     </div>
   )

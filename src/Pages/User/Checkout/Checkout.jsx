@@ -17,10 +17,11 @@ import ModalPaymentSucess from './component/PaymentSucess'
 import { AuthContext } from '../../../context/app.context'
 import CartAPI from '../../../Api/user/cart'
 import { queryClient } from '../../../index.js'
+import ModalAddAddress from './component/ModalAddAddress.jsx'
 export default function Checkout() {
   const location = useLocation()
   const [isModalOpen1, setIsModalOpen1] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  // const [isModalOpen, setIsModalOpen] = useState(false)
   const [isModalOpenBuy, setIsModalOpenBuy] = useState(false)
   const { isAuthenticated, logout, checkedProducts, setCheckedProducts } = useContext(AuthContext)
   const { product_id, cart_quantity, productName, productPrice, productImage, product_discount } = location.state || {}
@@ -202,17 +203,88 @@ export default function Checkout() {
   const [isModalDelivery, setModalDelivery] = useState(false)
   console.log(PriceDelivery, product_discount)
 
+  // modal them
   const [isModalOpenAdd, setIsModalOpenAdd] = useState(false)
 
-  const handleOk = () => {
-    setOpenListAddress(false)
-  }
-  const handleCancel = () => {
-    setOpenListAddress(false)
-  }
+  // const handleOk = () => {
+  //   setOpenListAddress(false)
+  // }
+
+  // const handleCancel = () => {
+  //   setOpenListAddress(false)
+  // }
+
   return (
     <div className='px-24 grid grid-cols-1 md: lg:grid-cols-9 bg-[#e5e5e5] gap-y-3'>
       <div className='text-lg font-bold mt-2'>Thanh Toán</div>
+      <div className='lg:col-span-9 bg-white mt-1  n p-4 rounded-sm'>
+        <div className='w-full mt-4'>
+          <div className='font-semibold flex items-center gap-x-2 '>
+            <svg height={16} viewBox='0 0 12 16' width={12} className='text-blue'>
+              <path
+                d='M6 3.2c1.506 0 2.727 1.195 2.727 2.667 0 1.473-1.22 2.666-2.727 2.666S3.273 7.34 3.273 5.867C3.273 4.395 4.493 3.2 6 3.2zM0 6c0-3.315 2.686-6 6-6s6 2.685 6 6c0 2.498-1.964 5.742-6 9.933C1.613 11.743 0 8.498 0 6z'
+                fillRule='evenodd'
+                className=''
+              />
+            </svg>
+            Địa chỉ nhận hàng{' '}
+          </div>
+          {getAddress?.data?.data.length > 0 && selectedAddress && (
+            <div className='flex mt-4'>
+              <div className='w-[40%]'>
+                <div className=''>
+                  {selectedAddress.receiver_name} | {selectedAddress.receiver_phone}
+                </div>
+                <span class='rounded-sm  py-[4px] text-xs font-medium text-blue mt-1'>Mặc định</span>
+              </div>
+              <div className='w-[60%] flex md:flex-col lg:flex-row  justify-between'>
+                <div className=''>{selectedAddress.receiver_address}</div>
+                <div
+                  className='text-[#05a] cursor-pointer '
+                  onClick={() => {
+                    setOpenListAddress(true)
+                  }}
+                >
+                  Thay đổi
+                </div>
+              </div>
+            </div>
+          )}
+          {getAddress?.data?.data.length === 0 && (
+            <div className='flex mt-4 items-center gap-5 '>
+              <div
+                className='font-bold'
+                onClick={() => {
+                  setIsModalOpen1(true)
+                }}
+              >
+                Thêm địa chỉ
+              </div>
+              <div
+                className='text-white  '
+                onClick={() => {
+                  setIsModalOpen1(true)
+                }}
+              >
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  strokeWidth='1.5'
+                  stroke='currentColor'
+                  className='size-6 bg-[#1A51A2] rounded-full'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'
+                  />
+                </svg>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className='lg:col-span-9 bg-white rounded-sm p-5'>
         <div className='text-base font-semibold '>Sản phẩm</div>
@@ -331,75 +403,6 @@ export default function Checkout() {
         </div>
       </div>
 
-      <div className='lg:col-span-9 bg-white mt-1  n p-4 rounded-sm'>
-        <div className='w-full mt-4'>
-          <div className='font-semibold flex items-center gap-x-2 '>
-            <svg height={16} viewBox='0 0 12 16' width={12} className='text-blue'>
-              <path
-                d='M6 3.2c1.506 0 2.727 1.195 2.727 2.667 0 1.473-1.22 2.666-2.727 2.666S3.273 7.34 3.273 5.867C3.273 4.395 4.493 3.2 6 3.2zM0 6c0-3.315 2.686-6 6-6s6 2.685 6 6c0 2.498-1.964 5.742-6 9.933C1.613 11.743 0 8.498 0 6z'
-                fillRule='evenodd'
-                className=''
-              />
-            </svg>
-            Địa chỉ nhận hàng{' '}
-          </div>
-          {getAddress?.data?.data.length > 0 && selectedAddress && (
-            <div className='flex mt-4'>
-              <div className='w-[40%]'>
-                <div className=''>
-                  {selectedAddress.receiver_name} | {selectedAddress.receiver_phone}
-                </div>
-                <span class='rounded-sm  py-[4px] text-xs font-medium text-blue mt-1'>Mặc định</span>
-              </div>
-              <div className='w-[60%] flex md:flex-col lg:flex-row  justify-between'>
-                <div className=''>{selectedAddress.receiver_address}</div>
-                <div
-                  className='text-[#05a] cursor-pointer '
-                  onClick={() => {
-                    setOpenListAddress(true)
-                  }}
-                >
-                  Thay đổi
-                </div>
-              </div>
-            </div>
-          )}
-          {getAddress?.data?.data.length == 0 && (
-            <div className='flex mt-4 items-center gap-5 '>
-              <div
-                className='font-bold'
-                onClick={() => {
-                  setIsModalOpen(true)
-                }}
-              >
-                Thêm địa chỉ
-              </div>
-              <div
-                className='text-white  '
-                onClick={() => {
-                  setIsModalOpen(true)
-                }}
-              >
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  strokeWidth='1.5'
-                  stroke='currentColor'
-                  className='size-6 bg-[#1A51A2] rounded-full'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'
-                  />
-                </svg>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       <ModalListAddress
         OpenListAddress={OpenListAddress}
         setOpenListAddress={setOpenListAddress}
@@ -418,11 +421,8 @@ export default function Checkout() {
         setPriceDelivery={setPriceDelivery}
       />
       <ModalPaymentSucess isModalOpen={isModalOpenBuy} setIsModalOpen={setIsModalOpenBuy} />
-      <Modal title='Địa chỉ mới' open={isModalOpen1} onOk={handleOk} onCancel={handleCancel} footer={null}>
-        <>
-          <AddressForm closeModal={() => setIsModalOpen(false)} />
-        </>
-      </Modal>
+
+      <ModalAddAddress setIsModalOpen1={setIsModalOpen1} isModalOpen1={isModalOpen1}  />
     </div>
   )
 }
