@@ -3,6 +3,7 @@ import { Button, Modal } from 'antd'
 import UpdateAddress from '../../Account/address/component/updateAddressRecieve/UpdateAddress'
 import { Divider } from 'antd'
 import AddressForm from '../../Account/address/component/createAddress/CreateAddress'
+import ModalAddAddress from './ModalAddAddress'
 
 const ModalListAddress = ({
   OpenListAddress,
@@ -12,7 +13,7 @@ const ModalListAddress = ({
   valueAddress,
   setValueAddress
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalOpen2, setIsModalOpen2] = useState(false)
 
   const handleOk = () => {
     setValueAddress(+value)
@@ -31,9 +32,20 @@ const ModalListAddress = ({
       setValue(valueAddress)
     }
   }, [valueAddress])
+  const handleCancel1 = () => {
+    setOpenListAddress(false)
+  }
   return (
     <>
-      <Modal title={title} open={OpenListAddress} centered footer={null}>
+      <Modal
+        title={title}
+        open={OpenListAddress}
+        centered
+        footer={null}
+        maskClosable={false}
+        onOk={handleOk}
+        onCancel={handleCancel1}
+      >
         <>
           {getAddress &&
             getAddress?.data?.data.map((element) => {
@@ -65,7 +77,6 @@ const ModalListAddress = ({
                           element.district_name +
                           ' , ' +
                           element.province_name}
-                        }
                       </div>
                       <span
                         class={`mt-2 rounded-sm px-1 py-[4px] text-xs font-medium   ${'' + valueAddress == element.receiver_address_id ? 'text-[#CE4712] bg-[#FFE0C7]' : ''} `}
@@ -89,7 +100,7 @@ const ModalListAddress = ({
           <div
             className='text-white  '
             onClick={() => {
-              setIsModalOpen(true)
+              setIsModalOpen2(true)
             }}
           >
             <svg
@@ -117,12 +128,7 @@ const ModalListAddress = ({
           </div>
         </div>
       </Modal>
-
-      <Modal title='Địa chỉ mới' open={isModalOpen} onOk={handleOk} onCancel={handleCancel} footer={null}>
-        <>
-          <AddressForm closeModal={() => setIsModalOpen(false)} />
-        </>
-      </Modal>
+      <ModalAddAddress setIsModalOpen1={setIsModalOpen2} isModalOpen1={isModalOpen2} />
     </>
   )
 }
