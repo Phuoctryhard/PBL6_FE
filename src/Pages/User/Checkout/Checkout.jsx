@@ -124,6 +124,7 @@ export default function Checkout() {
           } else {
             // window.location.href = res.data.data
           }
+          console.log(res)
           toast.success(res.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
         } else {
           toast.error('Thaats bại')
@@ -151,12 +152,14 @@ export default function Checkout() {
             window.location.href = res.data.data
           }
         }
+        console.log(res)
         toast.success(res.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
       } else {
         toast.error('Thaats bij')
       }
     } catch (e) {
-      toast.error(e.message)
+      console.log(e)
+      toast.error(e.response.data.messages[0])
     }
   }
 

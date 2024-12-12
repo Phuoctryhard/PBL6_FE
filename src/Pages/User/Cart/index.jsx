@@ -158,7 +158,7 @@ export default function Cart() {
       let elementProduct = handleUpdateQuantity(element, cart_quantity)
       mutateUpdate.mutate(elementProduct, {
         onSuccess: () => {
-          toast.success('Update sản phẩm thành công !')
+          toast.success('Cập nhật sản phẩm thành công !')
           queryClient.invalidateQueries({ queryKey: ['getCart'] })
           // Tính tổng tiền của các sản phẩm đã được check
           const calculateTotal = () => {
@@ -314,7 +314,7 @@ export default function Cart() {
                 />
                 <div class='w-1/2 font-semibold '>Sản phẩm</div>
                 <div class='w-1/6 font-semibold  text-center'>Đơn giá</div>
-                <div class='w-1/6 font-semibold text-center'>Số lượng</div>
+                <div class='w-1/6 font-semibold pl-3 text-start '>Số lượng</div>
                 <div class='w-1/6 font-semibold text-center'>Thành tiền</div>
               </div>
               {/*Product List cart 
@@ -348,30 +348,36 @@ export default function Cart() {
                           </div>
                         </div>
                         <div class='w-1/6 text-center pl-6'>{formatCurrency(element.cart_price)}</div>
-                        <div class='w-1/6 flex text-center justify-end pr-3'>
-                          <button
-                            class='px-2 py-1 text-lg text-gray-500 border rounded-l'
-                            onClick={() => {
-                              handleSubstract(element)
-                            }}
-                          >
-                            -
-                          </button>
-
-                          <input
-                            className='p-2 w-10 outline-none'
-                            value={element.cart_quantity}
-                            onChange={(event) => handleInputChange(element, event)}
-                            onBlur={(event) => handleInputBlur(element, event)}
-                          />
-                          <button
-                            class='px-2 py-1 text-lg text-gray-500 border rounded-r'
-                            onClick={() => {
-                              handlePlus(element)
-                            }}
-                          >
-                            +
-                          </button>
+                        <div class='w-1/6 flex flex-col text-center justify-center items-center pr-3'>
+                          <div class='flex justify-center items-center'>
+                            <button
+                              class='px-2 py-1 text-lg text-gray-500 border rounded-l'
+                              onClick={() => {
+                                handleSubstract(element)
+                              }}
+                            >
+                              -
+                            </button>
+                            <input
+                              class='p-2 w-10 text-center outline-none'
+                              value={element.cart_quantity}
+                              onChange={(event) => handleInputChange(element, event)}
+                              onBlur={(event) => handleInputBlur(element, event)}
+                            />
+                            <button
+                              class='px-2 py-1 text-lg text-gray-500 border rounded-r'
+                              onClick={() => {
+                                handlePlus(element)
+                              }}
+                            >
+                              +
+                            </button>
+                          </div>
+                          <div class='text-orange text-center mt-2'>
+                            {element.product_quantity >= element.cart_quantity
+                              ? ''
+                              : 'Tối đa ' + element.product_quantity +" sản phẩm"}
+                          </div>
                         </div>
                         <div class='w-1/6 text-right pr-4'>
                           {formatCurrency(element.cart_price * element.cart_quantity)}
