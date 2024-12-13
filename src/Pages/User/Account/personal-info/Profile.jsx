@@ -4,6 +4,7 @@ import { AuthContext } from '../../../../context/app.context'
 import { useMutation } from '@tanstack/react-query'
 import authAPI from '../../../../Api/user/auth'
 import { toast } from 'react-toastify'
+import { Helmet } from 'react-helmet-async'
 
 //
 export default function Profile() {
@@ -84,6 +85,14 @@ export default function Profile() {
 
   return (
     <div className=' px-3 py-3 '>
+      <Helmet>
+        <title>Xem Profile | Nhà Thuốc PBL6</title>
+        <meta
+          name='description'
+          content='Quản lý thông tin cá nhân tại Nhà Thuốc PBL6. Xem và cập nhật hồ sơ cá nhân, bao gồm tên, số điện thoại, địa chỉ và các thông tin liên quan một cách nhanh chóng và bảo mật.'
+        />
+      </Helmet>
+
       <div className='border-b border-b-gray-300'>
         <p className='capitalize text-xl text-[#2A2A2A] font-bold'>Hồ sơ của tôi </p>
 

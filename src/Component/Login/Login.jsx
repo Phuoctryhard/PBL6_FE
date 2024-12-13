@@ -10,6 +10,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/app.context'
 import { Facebook, Gift, Google } from 'iconsax-react'
+import { Helmet } from 'react-helmet-async'
 export default function Login() {
   const { login } = useContext(AuthContext)
   const navigate = useNavigate()
@@ -48,6 +49,10 @@ export default function Login() {
   })
   return (
     <div className='h-full'>
+      <Helmet>
+        <title>Đăng Nhập Tài Khoản</title>
+        <meta name='description' content='Trang đặng nhập website bán thuốc pbl6' />
+      </Helmet>
       <div className='lg:grid-cols-6 bg-[rgb(39,107,68,0.4)] grid h-full'>
         <div className='hidden lg:flex lg:flex-col lg:justify-center lg:items-center lg:col-start-1 lg:col-span-3'>
           <div className='flex flex-col justify-center items-center'>

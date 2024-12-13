@@ -8,6 +8,7 @@ import './oki.css'
 import { Pagination, Spin, Flex } from 'antd'
 import Skeleton1 from '../Component/TypeDisease/Skeleton'
 import Loading from '../../../../Component/Loading/Loading'
+import { Helmet } from 'react-helmet-async'
 export default function DetailDisease() {
   const { slug } = useParams()
   const { data, isLoading } = useQuery({
@@ -35,6 +36,14 @@ export default function DetailDisease() {
   }, [data])
   return (
     <div className=' mt-5 px-24'>
+      <Helmet>
+        <title>Blog Bệnh | Nhà Thuốc PBL6</title>
+        <meta
+          name='description'
+          content='Cập nhật thông tin hữu ích về các bệnh lý thường gặp tại Blog Bệnh của Nhà Thuốc PBL6. Tìm hiểu triệu chứng, nguyên nhân, cách phòng ngừa và điều trị hiệu quả từ các chuyên gia y tế.'
+        />
+      </Helmet>
+
       {editorHTML ? (
         <div
           className='ql-editor flex flex-col gap-4 w-full'
@@ -45,9 +54,7 @@ export default function DetailDisease() {
       ) : (
         <>
           <Flex gap='middle' vertical>
-            
-              <Skeleton1 />
-          
+            <Skeleton1 />
           </Flex>
         </>
       )}
