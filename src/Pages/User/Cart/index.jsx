@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Empty } from 'antd'
 import { AuthContext } from '../../../context/app.context'
 import { formatCurrency } from '../../../until'
+import { Helmet } from 'react-helmet-async'
 export default function Cart() {
   const { isAuthenticated, logout, checkedProducts, setCheckedProducts } = useContext(AuthContext)
 
@@ -287,6 +288,11 @@ export default function Cart() {
   }
   return (
     <div className='px-24'>
+      <Helmet>
+        <title>Giỏ Hàng</title>
+
+        <meta name='description' content='Xem chi tiết giỏ hàng , những mặt hàng đã thêm vào giỏ hàng nhà thuốc Pbl6' />
+      </Helmet>
       <div className='grid grid-cols-9 pt-5 gap-x-5 '>
         <div className='col-span-6'>
           <div className='flex justify-between '>
@@ -376,7 +382,7 @@ export default function Cart() {
                           <div class='text-orange text-center mt-2'>
                             {element.product_quantity >= element.cart_quantity
                               ? ''
-                              : 'Tối đa ' + element.product_quantity +" sản phẩm"}
+                              : 'Tối đa ' + element.product_quantity + ' sản phẩm'}
                           </div>
                         </div>
                         <div class='w-1/6 text-right pr-4'>

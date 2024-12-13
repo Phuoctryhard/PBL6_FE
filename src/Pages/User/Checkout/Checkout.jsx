@@ -18,6 +18,7 @@ import { AuthContext } from '../../../context/app.context'
 import CartAPI from '../../../Api/user/cart'
 import { queryClient } from '../../../index.js'
 import ModalAddAddress from './component/ModalAddAddress.jsx'
+import { Helmet } from 'react-helmet-async'
 export default function Checkout() {
   const location = useLocation()
   const [isModalOpen1, setIsModalOpen1] = useState(false)
@@ -204,18 +205,18 @@ export default function Checkout() {
   console.log(PriceDelivery, product_discount)
 
   // modal them
-  const [isModalOpenAdd, setIsModalOpenAdd] = useState(false)
-
-  // const handleOk = () => {
-  //   setOpenListAddress(false)
-  // }
-
-  // const handleCancel = () => {
-  //   setOpenListAddress(false)
-  // }
-
+  // const [isModalOpenAdd, setIsModalOpenAdd] = useState(false)
+  console.log(selectedAddress)
   return (
     <div className='px-24 grid grid-cols-1 md: lg:grid-cols-9 bg-[#e5e5e5] gap-y-3'>
+      <Helmet>
+        <title>Thanh Toán | Nhà Thuốc PBL6</title>
+        <meta
+          name='description'
+          content='Hoàn tất thanh toán tại Nhà Thuốc PBL6 một cách nhanh chóng và an toàn. Cung cấp các phương thức thanh toán linh hoạt, hỗ trợ khách hàng 24/7.'
+        />
+      </Helmet>
+
       <div className='text-lg font-bold mt-2'>Thanh Toán</div>
       <div className='lg:col-span-9 bg-white mt-1  n p-4 rounded-sm'>
         <div className='w-full mt-4'>
@@ -238,7 +239,15 @@ export default function Checkout() {
                 <span class='rounded-sm  py-[4px] text-xs font-medium text-blue mt-1'>Mặc định</span>
               </div>
               <div className='w-[60%] flex md:flex-col lg:flex-row  justify-between'>
-                <div className=''>{selectedAddress.receiver_address}</div>
+                <div className=''>
+                  {selectedAddress.receiver_address +
+                    ',' +
+                    selectedAddress.ward_name +
+                    ' ' +
+                    selectedAddress.district_name +
+                    ' ' +
+                    selectedAddress.province_name}
+                </div>
                 <div
                   className='text-[#05a] cursor-pointer '
                   onClick={() => {
@@ -422,7 +431,7 @@ export default function Checkout() {
       />
       <ModalPaymentSucess isModalOpen={isModalOpenBuy} setIsModalOpen={setIsModalOpenBuy} />
 
-      <ModalAddAddress setIsModalOpen1={setIsModalOpen1} isModalOpen1={isModalOpen1}  />
+      <ModalAddAddress setIsModalOpen1={setIsModalOpen1} isModalOpen1={isModalOpen1} />
     </div>
   )
 }

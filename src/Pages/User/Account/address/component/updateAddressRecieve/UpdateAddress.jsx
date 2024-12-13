@@ -46,12 +46,12 @@ export default function UpdateAddress({ receiver_address_id }) {
     resolver: yupResolver(schema)
   })
   const handleBack = () => {
-    setValue('fullName', data.data.data.receiver_name)
-    setValue('phoneNumber', data.data.data.receiver_phone)
-    setValue('city', data.data.data.province_name)
-    setValue('district', data.data.data.district_name)
-    setValue('ward', data.data.data.ward_name)
-    setValue('numberHome', data.data.data.receiver_address)
+    setValue('fullName', DetailAddress.data.data.receiver_name)
+    setValue('phoneNumber', DetailAddress.data.data.receiver_phone)
+    setValue('city', DetailAddress.data.data.province_name)
+    setValue('district', DetailAddress.data.data.district_name)
+    setValue('ward', DetailAddress.data.data.ward_name)
+    setValue('numberHome', DetailAddress.data.data.receiver_address)
 
     setIsModalOpenUpdate(false)
   }
@@ -82,24 +82,43 @@ export default function UpdateAddress({ receiver_address_id }) {
     if (data.numberHome) {
       data.numberHome = data.numberHome.replace(/,/g, '')
     }
-    //const addressMain = data.numberHome + ',' + data.ward + ',' + data.district + ',' + data.city
 
-    const address_Receive = {
-      receiver_name: data.fullName,
-      receiver_phone: data.phoneNumber, //required
-      receiver_address: data.numberHome,
-      province_id: +data.city,
-      district_id: +data.district,
-      ward_id: +data.ward
+    //const addressMain = data.numberHome + ',' + data.ward + ',' + data.district + ',' + data.city
+    var address_Receive = {}
+    if (!isNaN(+data.city)) {
+      address_Receive = {
+        receiver_name: data.fullName,
+        receiver_phone: data.phoneNumber, //required
+        receiver_address: data.numberHome,
+        province_id: +data.city,
+        district_id: +data.district,
+        ward_id: +data.ward
+      }
+    } else if (!isNaN(+data.district)) {
+      address_Receive = {
+        receiver_name: data.fullName,
+        receiver_phone: data.phoneNumber, //required
+        receiver_address: data.numberHome,
+        province_id: +DetailAddress.data.data.province_id,
+        district_id: +data.district,
+        ward_id: +data.ward
+      }
+    } else if (!isNaN(+data.ward)) {
+      address_Receive = {
+        receiver_name: data.fullName,
+        receiver_phone: data.phoneNumber, //required
+        receiver_address: data.numberHome,
+        province_id: ++DetailAddress.data.data.province_id,
+        district_id: ++DetailAddress.data.data.district_id,
+        ward_id: +data.ward
+      }
     }
+    console.log(DetailAddress)
+
+    console.log(data, +data.district, +data.ward)
     const id = receiver_address_id
     console.log(id)
     mutation.mutate({ id, data: address_Receive })
-  }
-
-  const handleChange = (value) => {
-    // setSelectedProvince(value) // Cập nhật giá trị tỉnh/thành phố đã chọn
-    // console.log('Bạn đã chọn:', value) // In ra giá trị vừa chọn
   }
 
   // Xử lí modal
@@ -115,27 +134,28 @@ export default function UpdateAddress({ receiver_address_id }) {
     setIsModalOpenUpdate(false)
   }
   // lay ra dia chi theo id
-  const { data, isLoading } = useQuery({
+  const { data: DetailAddress } = useQuery({
     queryKey: ['todos', receiver_address_id],
     queryFn: () => AddressApi.getAddressbyId(receiver_address_id)
   })
+  console.log(DetailAddress)
 
   useEffect(() => {
-    if (data) {
-      console.log(data)
-
-      setValue('fullName', data.data.data.receiver_name)
-      setValue('phoneNumber', data.data.data.receiver_phone)
-      setValue('city', data.data.data.province_name)
-      setValue('district', data.data.data.district_name)
-      setValue('ward', data.data.data.ward_name)
-      setValue('numberHome', data.data.data.receiver_address)
+    if (DetailAddress) {
+      console.log(DetailAddress)
+      // data.data.data.receiver_name
+      setValue('fullName', 'cdsjnv')
+      setValue('phoneNumber', DetailAddress.data.data.receiver_phone)
+      setValue('city', DetailAddress.data.data.province_name)
+      setValue('district', DetailAddress.data.data.district_name)
+      setValue('ward', DetailAddress.data.data.ward_name)
+      setValue('numberHome', DetailAddress.data.data.receiver_address)
 
       if (provincesData) {
         setProvinces(provincesData.data.data)
       }
     }
-  }, [data, setValue, provincesData])
+  }, [DetailAddress, setValue, provincesData])
   // if (isLoading) return <div>Loading...</div>
 
   const handleProviceChange = async (value) => {
@@ -179,27 +199,37 @@ export default function UpdateAddress({ receiver_address_id }) {
     //   return element.id === currentCity
     // })
     // tìm kiem huyen theo id tinh
-    if (currentCity) {
+    if (!isNaN(+currentCity)) {
       const { data } = await AddressApi.getDistricts(currentCity)
       console.log(currentCity)
       setDistricts(data.data) // Cập nhật danh sách huyen
+    } else {
+      const currentCity = DetailAddress.data.data.province_id
+      const { data: ListHuyen } = await AddressApi.getDistricts(currentCity)
+      console.log(currentCity)
+      setDistricts(ListHuyen.data) // Cập nhật danh sách huyen
     }
   }
 
   // Focus vao xa hiện data lay id huyen
   const handleFocusWard = async () => {
     // lay id tinh
-    const currentDistrict = getValues('district')
 
-    // const {id} = districts.find((element) => {
-    //   return element.name == currentDistrict
-    // })
-    // console.log(data)
-    // // tìm kiem huyen theo id tinh
-    // if (id) {
-    //   const { data: award } = await AddressApi.getWards(id)
-    //   setWards(award.data) // Cập nhật danh sách huyen
-    // }
+    const currentDistrict = getValues('district')
+    console.log(currentDistrict)
+    console.log(districts)
+    if (currentDistrict) {
+      if (!isNaN(+currentDistrict)) {
+        const { data: ListWards } = await AddressApi.getWards(currentDistrict)
+        console.log(currentDistrict)
+        setWards(ListWards.data) // Cập nhật danh sách huyen
+      } else {
+        const currentdistrict = DetailAddress.data.data.district_id
+        const { data: ListWards } = await AddressApi.getWards(currentdistrict)
+        console.log(ListWards)
+        setWards(ListWards.data) // Cập nhật danh sách huyen
+      }
+    }
   }
   console.log(provinces)
   console.log(districts)

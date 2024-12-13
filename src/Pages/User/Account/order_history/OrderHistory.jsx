@@ -13,6 +13,7 @@ import { queryClient } from '../../../..'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../../../context/app.context'
 import ModalReviewProduct from './ModalReviewProduct'
+import { Helmet } from 'react-helmet-async'
 
 export default function OrderHistory() {
   const { isAuthenticated, logout, checkedProducts, setCheckedProducts } = useContext(AuthContext)
@@ -128,6 +129,14 @@ export default function OrderHistory() {
   console.log(dataAll)
   return (
     <div className=''>
+      <Helmet>
+        <title>Lịch sử đơn hàng | Nhà Thuốc PBL6</title>
+        <meta
+          name='description'
+          content='Xem lại lịch sử đơn hàng tại Nhà Thuốc PBL6. Theo dõi chi tiết các đơn hàng đã đặt, trạng thái giao hàng và thông tin thanh toán một cách dễ dàng và nhanh chóng.'
+        />
+      </Helmet>
+
       <div className='flex justify-between  '>
         {ORDER_STATUS?.map((element) => {
           return (

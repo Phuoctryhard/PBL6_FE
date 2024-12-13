@@ -35,6 +35,7 @@ import {
   Breadcrumb,
   Flex
 } from 'antd'
+import { Helmet } from 'react-helmet-async'
 export default function CategoryListProduct() {
   const location = useLocation()
   const queryParams = new URLSearchParams(location.search)
@@ -340,6 +341,14 @@ export default function CategoryListProduct() {
   }
   return (
     <div className=''>
+      <Helmet>
+        <title>Trang Category | Nhà Thuốc PBL6</title>
+        <meta
+          name='description'
+          content='Khám phá các danh mục sản phẩm tại Nhà Thuốc PBL6, từ thuốc kê đơn, thực phẩm chức năng đến thiết bị y tế. Đảm bảo chất lượng và giá cả hợp lý, phù hợp với mọi nhu cầu chăm sóc sức khỏe.'
+        />
+      </Helmet>
+
       <div className='px-24 py-6'>
         <div class='hidden bg-neutral-100 md:block  mb-4'>
           <div class='container '>

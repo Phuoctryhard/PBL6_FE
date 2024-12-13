@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import AddressApi from '../../../../Api/user/address'
 import UpdateAddress from './component/updateAddressRecieve/UpdateAddress'
 import { Pagination, Spin, Flex } from 'antd'
+import { Helmet } from 'react-helmet-async'
 
 export default function Adress() {
   const [currentPage, setCurrentPage] = useState(1) // Trang hiện tại
@@ -55,6 +56,14 @@ export default function Adress() {
 
   return (
     <div className='px-3 py-3 '>
+      <Helmet>
+        <title>Địa chỉ đơn hàng | Nhà Thuốc PBL6</title>
+        <meta
+          name='description'
+          content='Quản lý và cập nhật địa chỉ giao hàng tại Nhà Thuốc PBL6. Dễ dàng thêm mới, chỉnh sửa hoặc xóa địa chỉ để đảm bảo đơn hàng được giao đúng nơi một cách nhanh chóng và chính xác.'
+        />
+      </Helmet>
+
       <div className=' flex items-center justify-between  border-b border-b-gray-300 pb-4'>
         <div className='text-xl text-[#333]  '>Số địa chỉ nhận hàng</div>
         <button

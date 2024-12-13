@@ -70,8 +70,6 @@ const ModalListAddress = ({
                       <div className='my-2'>
                         {element.receiver_address +
                           ' , ' +
-                          element.receiver_address +
-                          ' , ' +
                           element.ward_name +
                           ' , ' +
                           element.district_name +

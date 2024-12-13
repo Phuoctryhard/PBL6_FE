@@ -18,6 +18,8 @@ import { useNavigate } from 'react-router-dom'
 import { useLocation } from 'react-router-dom'
 import ModalChatZalo from '../Component/ModalChatZalo'
 import Review from '../../Review/Review'
+import { Helmet } from 'react-helmet-async'
+import { convert } from 'html-to-text'
 export default function DetailProduct() {
   const [Errorquantity, setErrorquantity] = useState('')
 
@@ -133,7 +135,7 @@ export default function DetailProduct() {
     //const res = await CartAPI.addproduct_inCart({ product_id: idproduct1, cart_quantity: quantity })
     if (idproduct1) {
       queryClient.invalidateQueries({ queryKey: ['getCart'] })
-      toast.success(data.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
+      // toast.success(data.data.messages[0], { autoClose: 1000 }) // Đóng sau 1 giây
       navigate('/checkout', {
         state: {
           product_id: idproduct1,
@@ -164,6 +166,19 @@ export default function DetailProduct() {
   const [OpenModalChat, setOpenModalChat] = useState(false)
   return (
     <div className='px-24  '>
+      <Helmet>
+        <title>{data?.data?.data?.product_name}</title>
+
+        <meta
+          name='description'
+          content={
+            (convert(data?.data?.data?.product_description),
+            {
+              wordwrap: 120
+            })
+          }
+        />
+      </Helmet>
       {isLoading ? (
         <div className='py-10'>
           <ProductLoader />
