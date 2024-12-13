@@ -193,17 +193,7 @@ const AdminSetting = () => {
       setAdminFullNameCard(data.admin_fullname)
       setEmailCard(data.email)
       setImageCard(data.admin_avatar)
-      switch (data.admin_is_admin) {
-        case 0:
-          setAdminRole('Admin')
-          break
-        case 1:
-          setAdminRole('Super Admin')
-          break
-        case 2:
-          setAdminRole('Manager')
-          break
-      }
+      setAdminRole(data.role_name.charAt(0).toUpperCase() + data.role_name.slice(1))
     } catch (e) {
       if (e.message.includes('401')) {
         setIsLogin(false)

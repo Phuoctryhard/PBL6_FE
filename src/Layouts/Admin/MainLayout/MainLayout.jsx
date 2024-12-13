@@ -108,6 +108,13 @@ export default function MainLayout({ children, scrollBar = 'htmlBar' }) {
     }
   }
 
+  const handleSubNavClick = (subNavID) => {
+    const sidebar = sidebarRef.current
+    if (sidebar) {
+      sidebar.handleSubNavClick(subNavID)
+    }
+  }
+
   const triggerSidebar = (navParentID, navChildrenID = undefined) => {
     const sidebar = sidebarRef.current
     if (sidebar) {
@@ -132,7 +139,9 @@ export default function MainLayout({ children, scrollBar = 'htmlBar' }) {
   return isNetworkConnection ? (
     isLogin && (
       <div className='w-full max-w-[100%] flex'>
-        <AdminMainLayoutContext.Provider value={{ scrollToTop, triggerSidebar, setIsLogin, setHeaderNotifyData }}>
+        <AdminMainLayoutContext.Provider
+          value={{ scrollToTop, triggerSidebar, setIsLogin, setHeaderNotifyData, handleSubNavClick }}
+        >
           <Sidebar ref={sidebarRef} />
           <div className='w-[calc(100%-256px)] h-[100vh]'>
             <Header ref={headerRef} />

@@ -12,7 +12,7 @@ export const handleResponse = async (response, defaultErrorText = 'Error fetch')
             throw new Error('401. Bạn chưa được xác thực. Vui lòng đăng nhập để tiếp tục.')
           }
         }
-        let messages = res?.messages?.join('. ') || res?.data?.join('. ') || res?.status || defaultErrorText
+        let messages = res?.message || res?.messages?.join('. ') || res?.data?.join('. ') || res?.status
 
         if (messages) {
           throw new Error(messages)
@@ -86,7 +86,7 @@ export const fetchWithAuth = async (
       body: body !== undefined ? body : undefined
     }
     const response = await fetch(url, options)
-    const isResponseOK = await handleResponse(response, `${defaultErrorText} error with: [${method} ${url}]`)
+    const isResponseOK = await handleResponse(response, `Error with ${defaultErrorText}`)
     if (isResponseOK) {
       return await response.json()
     }

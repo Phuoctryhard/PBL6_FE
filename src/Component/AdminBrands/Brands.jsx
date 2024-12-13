@@ -30,7 +30,7 @@ const Brands = () => {
   const [selectedTo, setSelectedTo] = useState(null)
   //#endregion
 
-  //#region Table data and custom pagination
+  //#region Table data
   // Date format options
   const optionsDateformat = {
     weekday: 'long',
