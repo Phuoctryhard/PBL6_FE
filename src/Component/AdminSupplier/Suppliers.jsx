@@ -10,6 +10,7 @@ import { message, Popconfirm, Dropdown, Select, ConfigProvider, Modal, Spin, Too
 import { DeleteOutlined, DashOutlined } from '@ant-design/icons'
 import { SuppliersAPI } from '../../Api/admin'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+import DownloadCSV from '../DownloadCSV'
 const filterTheme = {
   token: {
     colorTextQuaternary: '#1D242E',
@@ -523,17 +524,22 @@ const Suppliers = () => {
           <BreadCrumbs items={[{ title: `Suppliers(${filterData?.length})` }]} />
           <p>List of suppliers available</p>
         </div>
-        <div tabIndex={-1} type='button'>
-          <button
-            className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
-            onClick={() => {
-              setOpenModalItem(true)
-              setTypeModalItem('Add')
-            }}
-          >
-            Add new
-            <Add size='20' />
-          </button>
+        <div className='flex gap-4'>
+          <div tabIndex={-1} type='button'>
+            <button
+              className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+              onClick={() => {
+                setOpenModalItem(true)
+                setTypeModalItem('Add')
+              }}
+            >
+              Add new
+              <Add size='20' />
+            </button>
+          </div>
+          <div>
+            <DownloadCSV data={filterData} filename='suppliers' columns={columns} />
+          </div>
         </div>
       </header>
       <Modal

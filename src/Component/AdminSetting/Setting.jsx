@@ -193,17 +193,7 @@ const AdminSetting = () => {
       setAdminFullNameCard(data.admin_fullname)
       setEmailCard(data.email)
       setImageCard(data.admin_avatar)
-      switch (data.admin_is_admin) {
-        case 0:
-          setAdminRole('Admin')
-          break
-        case 1:
-          setAdminRole('Super Admin')
-          break
-        case 2:
-          setAdminRole('Manager')
-          break
-      }
+      setAdminRole(data.role_name.charAt(0).toUpperCase() + data.role_name.slice(1))
     } catch (e) {
       if (e.message.includes('401')) {
         setIsLogin(false)
@@ -401,7 +391,7 @@ const AdminSetting = () => {
                         <button
                           type='button'
                           onClick={() => document.getElementById('admin_avatar').click()}
-                          className='AddCategoryForm__uploadBtn setting__uploadBtn focus:outline-none focus:border-[1px] focus:border-solid focus:border-[#1d242e] [&:not(:focus)]:outline-none [&:not(:focus)]:border-[3px] [&:not(:focus)]:border-dashed [&:not(:focus)]:border-[#ebedf0]'
+                          className='setting__uploadBtn focus:outline-none focus:border-[1px] focus:border-solid focus:border-[#1d242e] [&:not(:focus)]:outline-none [&:not(:focus)]:border-[3px] [&:not(:focus)]:border-dashed [&:not(:focus)]:border-[#ebedf0] w-[160px] h-[160px]'
                           style={{
                             border: Avatar ? 'none' : dragging ? '3px dashed #1d242e' : '3px dashed #ebedf0'
                           }}

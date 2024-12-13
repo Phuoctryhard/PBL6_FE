@@ -13,6 +13,7 @@ import { useAuth } from '../../context/app.context'
 import dayjs from 'dayjs'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import DownloadCSV from '../DownloadCSV'
 dayjs.extend(customParseFormat)
 const { RangePicker } = DatePicker
 
@@ -922,16 +923,21 @@ const AdminImports = () => {
           <AdminBreadCrumbs items={[{ title: `Imports (${filterData?.length})` }]} />
           <p>List of items imported into the warehouse</p>
         </div>
-        <button
-          className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
-          onClick={() => {
-            setOpenModal(true)
-            setTypeModal('add')
-          }}
-        >
-          Add new
-          <Add size='20' />
-        </button>
+        <div className='flex gap-4'>
+          <button
+            className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+            onClick={() => {
+              setOpenModal(true)
+              setTypeModal('add')
+            }}
+          >
+            Add new
+            <Add size='20' />
+          </button>
+          <div>
+            <DownloadCSV data={filterData} filename='imports' columns={columns} />
+          </div>
+        </div>
       </header>
       <Modal
         destroyOnClose

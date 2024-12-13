@@ -7,6 +7,7 @@ import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { CustomerAPI } from '../../Api/admin'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+import DownloadCSV from '../DownloadCSV'
 
 const { RangePicker } = DatePicker
 const filterTheme = {
@@ -510,6 +511,9 @@ const Customer = () => {
         <div className='flex flex-col gap-1'>
           <BreadCrumbs items={[{ title: 'Managers' }, { title: `List of users (${filterData?.length})` }]} />
           <p>List of users available in system</p>
+        </div>
+        <div>
+          <DownloadCSV data={filterData} filename='users' columns={columns} />
         </div>
       </header>
       <Modal

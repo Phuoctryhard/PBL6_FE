@@ -919,10 +919,10 @@ Tá dược: Lactose monohydrat, cellulose vi tinh thi (M101), povidon (kollidon
               </div>
             </div>
           </div>
-          <div className='AddForm__row button__group mt-2'>
+          <div className='flex items-center justify-end gap-4 button__group mt-2'>
             <button
               type='submit'
-              className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+              className='px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
             >
               Submit
             </button>

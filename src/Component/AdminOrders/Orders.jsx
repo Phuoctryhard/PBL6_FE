@@ -1,4 +1,4 @@
-import { BreadCrumbs, AdminTable } from '../'
+import { BreadCrumbs, AdminTable, DownloadCSV } from '../'
 import { message, Dropdown, Tooltip, Select, ConfigProvider, DatePicker } from 'antd'
 import 'react-toastify/dist/ReactToastify.css'
 import { Link, useLocation } from 'react-router-dom'
@@ -676,7 +676,7 @@ const Orders = () => {
   return (
     <section className='w-full'>
       {contextHolder}
-      <header className='animate-slideDown'>
+      <header className='animate-slideDown flex justify-between items-center'>
         <div className='flex flex-col gap-1'>
           <BreadCrumbs
             items={[
@@ -687,13 +687,16 @@ const Orders = () => {
           />
           <p>All orders available in the system</p>
         </div>
+        <div>
+          <DownloadCSV data={filterData} filename='orders' columns={columns} />
+        </div>
       </header>
       <div className='p-5 my-6 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-slideUp flex flex-col gap-4'>
         <div className='flex justify-between items-center gap-x-3'>
           <div className='flex items-center w-full max-w-[25%] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
-              placeholder='Search user'
+              placeholder='Search order'
               className='border border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[0.938rem] px-[0.938rem] rounded focus:border-[#1D242E]'
               value={searchValue}
               autoFocus
