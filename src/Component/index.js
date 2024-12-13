@@ -26,6 +26,8 @@ import AdminViewOrder from './AdminViewOrder'
 import AdminDelivery from './AdminDelivery'
 import AdminErrorInternetConnection from './AdminErrorInternetConnection'
 import AdminReviewComment from './AdminReviewComment'
+import AdminInventory from './AdminInventory'
+import AdminManageRole from './AdminManageRole'
 export {
   AdminVerifyEmail,
   AdminMainLayout,
@@ -54,5 +56,7 @@ export {
   AdminViewOrder,
   AdminDelivery,
   AdminErrorInternetConnection,
-  AdminReviewComment
+  AdminReviewComment,
+  AdminInventory,
+  AdminManageRole
 }

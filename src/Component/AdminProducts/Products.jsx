@@ -185,14 +185,14 @@ const AdminProducts = () => {
       ellipsis: true,
       filterSearch: true
     },
-    {
-      title: 'Status',
-      dataIndex: 'product_is_delete',
-      key: 'product_is_delete',
-      render: (text) => (
-        <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
-      )
-    },
+    // {
+    //   title: 'Status',
+    //   dataIndex: 'product_is_delete',
+    //   key: 'product_is_delete',
+    //   render: (text) => (
+    //     <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
+    //   )
+    // },
     {
       title: 'Action',
       dataIndex: 'action',

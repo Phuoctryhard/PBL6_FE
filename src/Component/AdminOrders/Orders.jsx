@@ -693,7 +693,7 @@ const Orders = () => {
           <div className='flex items-center w-full max-w-[25%] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
-              placeholder='Search user'
+              placeholder='Search order'
               className='border border-solid border-[#e8ebed] bg-[#fafafa] outline-none bg-transparent w-[100%] py-[0.938rem] px-[0.938rem] rounded focus:border-[#1D242E]'
               value={searchValue}
               autoFocus

@@ -49,7 +49,8 @@ const Sidebar = forwardRef((_, ref) => {
 
   const Users = [
     { id: 'manage-users', name: 'Users' },
-    { id: 'manage-admins', name: 'Admin' }
+    { id: 'manage-admins', name: 'Admin' },
+    { id: 'roles', name: 'Roles' }
   ]
 
   //show subNav
@@ -68,7 +69,11 @@ const Sidebar = forwardRef((_, ref) => {
   }
 
   const handleSubNavClick = (itemId) => {
+    const subNavIDProducts = ['products', 'categories']
+    const subNavIDUsers = ['manage-users', 'manage-admins', 'roles']
     setSelectedId(itemId)
+    if (subNavIDUsers.includes(itemId)) setShowUser(true)
+    if (subNavIDProducts.includes(itemId)) setShowInventory(true)
     setActiveNav(null)
   }
 
@@ -99,13 +104,13 @@ const Sidebar = forwardRef((_, ref) => {
     try {
       const path = location.pathname
       const navID = path.split('/')[2]
-      const subNavID = ['products', 'categories', 'Users', 'manage-admins', 'manage-users']
+      const subNavID = ['products', 'categories', 'Users', 'manage-admins', 'manage-users', 'roles']
       if (subNavID.includes(navID)) {
         if (navID === 'products' || navID === 'categories' || navID === 'orders') {
           setActiveNav(null)
           setShowInventory(true)
           setSelectedId(navID)
-        } else if (navID === 'manage-admins' || navID === 'manage-users') {
+        } else if (navID === 'manage-admins' || navID === 'manage-users' || navID === 'roles') {
           setActiveNav(null)
           setShowUser(true)
           setSelectedId(navID)
@@ -132,7 +137,7 @@ const Sidebar = forwardRef((_, ref) => {
       setAdminFullName(data.admin_fullname)
       setEmail(data.email)
       setAvatar(data.admin_avatar)
-      setAdminRole(data.admin_is_admin)
+      setAdminRole(data.role ? data.role.charAt(0).toUpperCase() + data.role.slice(1) : 'Admin')
     } catch (err) {}
   }
 
@@ -346,7 +351,6 @@ const Sidebar = forwardRef((_, ref) => {
           <SideBarItem name='Brands' iconName={<MedalStar className='w-6' />} />
         </NavLink>
         <NavLink
-          to='/admin/users'
           className={activeNav === 'users' ? 'bg-[#008f99]' : ''}
           onClick={() => {
             handleNavClick('users')
@@ -380,6 +384,8 @@ const Sidebar = forwardRef((_, ref) => {
               {Users.filter((item) => {
                 if (adminRole.toLowerCase() === 'admin') {
                   return item.id === 'manage-users'
+                } else if (adminRole.toLowerCase() === 'superadmin') {
+                  return item.id === 'manage-users' || item.id === 'manage-admins'
                 }
                 return item
               }).map((item) => {

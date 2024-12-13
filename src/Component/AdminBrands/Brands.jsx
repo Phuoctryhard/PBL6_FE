@@ -30,7 +30,7 @@ const Brands = () => {
   const [selectedTo, setSelectedTo] = useState(null)
   //#endregion
 
-  //#region Table data and custom pagination
+  //#region Table data
   // Date format options
   const optionsDateformat = {
     weekday: 'long',
@@ -80,15 +80,15 @@ const Brands = () => {
       ellipsis: true,
       render: (text) => <span className='text-[14px]'>{DateFormat(text)}</span>
     },
-    {
-      title: 'Status',
-      dataIndex: 'brand_is_delete',
-      key: 'brand_is_delete',
-      width: '10%',
-      render: (text) => (
-        <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
-      )
-    },
+    // {
+    //   title: 'Status',
+    //   dataIndex: 'brand_is_delete',
+    //   key: 'brand_is_delete',
+    //   width: '10%',
+    //   render: (text) => (
+    //     <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
+    //   )
+    // },
     {
       title: 'Action',
       dataIndex: 'action',

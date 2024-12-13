@@ -221,7 +221,6 @@ const Header = forwardRef((_, ref) => {
       const res = await AdminOrderApi.getAllOrder(token)
       if (res) {
         const resData = res.data
-        console.log(resData)
         const filterOrderNeedConfirmation = resData
           .filter((o) => {
             const payment_transactions = ['VNPAY', 'PAYOS', 'MOMO']
