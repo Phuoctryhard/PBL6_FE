@@ -3,7 +3,7 @@ import { BASE_URL } from '../../until'
 const rootAdminURL = BASE_URL + '/admin'
 const authAPI = {
   registerAccount: (body) => http.post('user/register', body),
-
+  forgotPassword: (email) => http.post(`user/forgot-password?email=${email}`),
   loginAccount: (body) => http.post('user/login', body),
   loginAccountAdmin: async (formData) =>
     await fetch(`${rootAdminURL}/login`, {

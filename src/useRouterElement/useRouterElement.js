@@ -52,6 +52,7 @@ import DetailOrderHistory from '../Pages/User/Account/order_history/DetailOrderH
 import StatusPayos from '../Pages/User/StatusPayos/StatusPayos.jsx'
 import CategoryDisease from '../Pages/User/Disease/CategoryDisease/CategoryDisease.jsx'
 import NotFound from '../Pages/User/NotFound/NotFound.jsx'
+import ForgotPotPassword from '../Component/ForgotPassword/ForgotPassword.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
 
@@ -276,6 +277,14 @@ export default function useRouterElement() {
     {
       path: '/auth/verify-email/user',
       element: <VerifyEmail />
+    },
+    {
+      path: '/forgot-password',
+      element: (
+        <RegisterLayout>
+          <ForgotPotPassword />
+        </RegisterLayout>
+      )
     },
     {
       path: '/auth/verify-email/admin',
