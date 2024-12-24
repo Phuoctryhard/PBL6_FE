@@ -9,6 +9,7 @@ import dayjs from 'dayjs'
 import qs from 'qs'
 import { useNavigate } from 'react-router-dom'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+import DownloadCSV from '../DownloadCSV'
 const { RangePicker } = DatePicker
 
 const filterTheme = {
@@ -519,16 +520,6 @@ const Overview = () => {
                   else setSelectedYear(Number(dateString))
                 }}
               />
-              <Select
-                allowClear
-                suffixIcon={<ArrowDown2 size='14' color='#1D242E' />}
-                className='w-[13.438rem] h-12 flex justify-center items-center'
-                placeholder='Download Report'
-                placement='bottomLeft'
-                value={null}
-                options={[{ label: 'Excel', value: 'excel' }]}
-                onChange={() => {}}
-              />
             </ConfigProvider>
           </div>
         </header>
@@ -678,6 +669,40 @@ const Overview = () => {
             <div className='flex items-center flex-col bg-[#ffffff] rounded-xl w-[40%] border border-solid border-[rgb(29,36,46,0.3)]'>
               <div className='flex items-center justify-between w-full px-5 pt-5 rounded-xl'>
                 <h2 className='text-lg font-semibold text-gray-700'>Order Status</h2>
+                <DownloadCSV
+                  data={[
+                    {
+                      pending: orderPieSeries[0] || 0,
+                      confirmed: orderPieSeries[1] || 0,
+                      shipped: orderPieSeries[2] || 0,
+                      delivered: orderPieSeries[3] || 0,
+                      cancelled: orderPieSeries[4] || 0
+                    }
+                  ]}
+                  columns={[
+                    {
+                      label: 'Pending',
+                      key: 'pending'
+                    },
+                    {
+                      label: 'Confirmed',
+                      key: 'confirmed'
+                    },
+                    {
+                      label: 'Shipped',
+                      key: 'shipped'
+                    },
+                    {
+                      label: 'Delivered',
+                      key: 'delivered'
+                    },
+                    {
+                      label: 'Cancelled',
+                      key: 'cancelled'
+                    }
+                  ]}
+                  filename='order_status.csv'
+                />
               </div>
               <div className='relative w-full p-5'>
                 <div className='gap-4 w-full relative'>

@@ -2,7 +2,7 @@ import BreadCrumbs from '../AdminBreadCrumbs'
 import AdminTable from '../AdminTable'
 import { useNavigate } from 'react-router-dom'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
-import { message, Skeleton, Tooltip, Table } from 'antd'
+import { message, Skeleton, Tooltip } from 'antd'
 import { ArchiveBox, Danger, Category, Category2 } from 'iconsax-react'
 import { useEffect, useState } from 'react'
 import { ProductsAPI, CategoriesAPI } from '../../Api/admin'
@@ -20,7 +20,6 @@ const Inventory = () => {
   }
 
   //header data
-  const [products, setProducts] = useState([])
   const [allProducts, setAllProducts] = useState(0)
   const [allCategories, setAllCategories] = useState(0)
   const [loadingData, setLoadingData] = useState(true)
@@ -141,7 +140,6 @@ const Inventory = () => {
         ...item,
         key: item.product_id
       }))
-      setProducts(data)
       setLowStockProductCount(lowStockProduct.length)
       setBestSellers(bestSellers.length)
       setAllProducts(data?.length || 0)
@@ -260,7 +258,9 @@ const Inventory = () => {
                 type='button'
                 className='w-full border-t border-t-solid border-t-[#01A768] bg-[rgb(1,167,104,0.3)] flex items-center justify-center gap-[0.625rem] grow'
                 onClick={() => {
-                  navigate('/admin/products')
+                  navigate('/admin/products', {
+                    state: { lowStock: false, bestSeller: true }
+                  })
                   handleSubNavClick('products')
                 }}
               >
@@ -279,7 +279,9 @@ const Inventory = () => {
                   className='text-xs text-[#1D242E] w-full flex gap-2 items-center justify-center'
                   type='button'
                   onClick={() => {
-                    navigate('/admin/products')
+                    navigate('/admin/products', {
+                      state: { lowStock: true, bestSeller: false }
+                    })
                     handleSubNavClick('products')
                   }}
                 >
@@ -316,7 +318,9 @@ const Inventory = () => {
                 type='button'
                 className='w-full border-t border-t-solid border-t-[#DBA362] bg-[rgb(219,163,98,0.2)] flex items-center justify-center gap-[0.625rem] grow'
                 onClick={() => {
-                  navigate('/admin/categories')
+                  navigate('/admin/categories', {
+                    state: { bestSeller: true }
+                  })
                   handleSubNavClick('categories')
                 }}
               >
@@ -332,7 +336,9 @@ const Inventory = () => {
                 <span
                   className='text-sm text-[#0F50AA] cursor-pointer '
                   onClick={() => {
-                    navigate('/admin/products')
+                    navigate('/admin/products', {
+                      state: { lowStock: false, bestSeller: true }
+                    })
                     handleSubNavClick('products')
                   }}
                 >
@@ -356,7 +362,9 @@ const Inventory = () => {
                 <span
                   className='text-sm text-[#0F50AA] cursor-pointer '
                   onClick={() => {
-                    navigate('/admin/categories')
+                    navigate('/admin/categories', {
+                      state: { bestSeller: true }
+                    })
                     handleSubNavClick('categories')
                   }}
                 >

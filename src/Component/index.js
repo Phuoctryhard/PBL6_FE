@@ -28,6 +28,7 @@ import AdminErrorInternetConnection from './AdminErrorInternetConnection'
 import AdminReviewComment from './AdminReviewComment'
 import AdminInventory from './AdminInventory'
 import AdminManageRole from './AdminManageRole'
+import DownloadCSV from './DownloadCSV'
 export {
   AdminVerifyEmail,
   AdminMainLayout,
@@ -58,5 +59,6 @@ export {
   AdminErrorInternetConnection,
   AdminReviewComment,
   AdminInventory,
-  AdminManageRole
+  AdminManageRole,
+  DownloadCSV
 }

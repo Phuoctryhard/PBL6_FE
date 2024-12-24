@@ -51,7 +51,6 @@ export default function AdminLogin() {
 
     login(adminData, data.data.access_token)
     localStorage.setItem('profile', JSON.stringify(adminData))
-    document.title = 'MedicareCentral'
     toast.success('Đăng nhập thành công')
     navigate('/admin')
   }

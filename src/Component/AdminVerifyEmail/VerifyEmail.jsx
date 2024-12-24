@@ -39,7 +39,6 @@ const VerifyEmail = () => {
         setMessageResult('Email verified successfully. Redirecting to login page...')
         setTimeout(() => {
           navigate('/admin/login')
-          document.title = 'MedicareCentral'
         }, 2000)
       }
     } catch (error) {
@@ -51,7 +50,6 @@ const VerifyEmail = () => {
     }
   }
   useEffect(() => {
-    document.title = 'Verify Email'
     verifyEmail()
   }, [])
 
