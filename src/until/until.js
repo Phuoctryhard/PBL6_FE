@@ -1,18 +1,12 @@
 import axios from 'axios'
-import { getAccessToken, saveAccessToken, saveProfile, tokenBear, clearAll } from '.'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { getAccessToken, saveAccessToken, saveProfile, clearAll } from '.'
 
 class Http {
   instance
-  // lỗi :  'accessToken' has no initializer and is not definitely assigned in the constructor. : ko dc use
-  // khởi tạo biến ở class thì khởi tạo trong contructor luôn
-  //https://lucifernsz.com/PBL6-BE/public/api
   accessToken
   constructor() {
     this.accessToken = getAccessToken()
     this.instance = axios.create({
-      // baseURL: 'https://lucifernsz.com/PBL6_Pharmacity/PBL6-BE/public/api/',
-      // baseURL: 'https://lucifernsz.com/PBL6-BE/public/api/',
       baseURL: 'https://lucifernsz.com/PBL6-BE/public/api/',
 
       timeout: 10000,
@@ -62,14 +56,6 @@ class Http {
         console.log(error.response.status)
 
         if (error.response.status === 401) {
-          // c1
-          // console.log('xóa')
-          // localStorage.removeItem('accesstoken')
-          // localStorage.removeItem('profile')
-          // window.location.reload() // Sử dụng window.location thay vì useNavigate
-
-          // window.location.reload()
-
           clearAll()
         }
         return Promise.reject(error)
