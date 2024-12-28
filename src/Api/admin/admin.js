@@ -17,6 +17,8 @@ const AdminAPI = {
   changeRole: async (id, token) => await fetchWithAuth(`${rootAdmin}/change-role/${id}`, 'POST', token, 'change role'),
   verifyEmail: async (token) =>
     await fetchWithAuth(`${rootAdmin}/verify-email?${token}`, 'POST', token, 'verify email'),
+  resendEmail: async (email) =>
+    await fetchWithAuth(`${rootAdmin}/resend-verify-email`, 'POST', undefined, 'resend email', email),
   assignPermissions: async (id, token, data) =>
     await fetchWithAuth(
       `${rootAdmin}/assign-permission/${id}`,
