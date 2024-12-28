@@ -10,7 +10,8 @@ import 'react-toastify/dist/ReactToastify.css'
 
 const AdminSetting = () => {
   const { setProfile } = useAuth()
-  const { setIsLogin } = useAdminMainLayoutFunction()
+  // const { setIsLogin = () => {} } = useAdminMainLayoutFunction() !== undefined ? useAdminMainLayoutFunction() : {}
+  const { setIsLogin = () => {} } = useAdminMainLayoutFunction()
   const [typeForm, setTypeForm] = useState('profile') // type form profile or change password
   const [submitLoading, setSubmitLoading] = useState(false) // loading submit state
   const [status, setStatus] = useState(null)
@@ -254,6 +255,7 @@ const AdminSetting = () => {
             admin_is_admin: adminRole,
             admin_avatar: selectedFile ? URL.createObjectURL(selectedFile) : imageCard
           }
+          console.log(profileData)
           setProfile(profileData)
         } else {
           setCurrentPassword('')
@@ -356,7 +358,7 @@ const AdminSetting = () => {
           </div>
         </div>
         <div className='w-[780px] bg-[#ffffff] rounded-xl border-[1px] border-solid border-[#ebedf0] p-6 animate-slideRightToLeft overflow-hidden h-max'>
-          <form action='' onSubmit={handleSubmit} autoComplete='off' className='w-full'>
+          <form action='' onSubmit={handleSubmit} autoComplete='off' className='w-full' noValidate>
             {typeForm === 'profile' ? (
               <div className='w-full'>
                 <div className='AddCategoryForm__row'>

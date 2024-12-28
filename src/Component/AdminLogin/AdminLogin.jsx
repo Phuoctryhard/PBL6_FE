@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { schemaForgotPassword, schemaLogin } from '../ValidateScheme/Validate'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useMutation } from '@tanstack/react-query'
-import { AdminAuthAPI } from '../../Api/admin'
+import { AdminAuthAPI, AdminAPI } from '../../Api/admin'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useNavigate } from 'react-router-dom'
@@ -18,6 +18,7 @@ export default function AdminLogin() {
   const [isEmailFocus, setIsEmailFocus] = useState(false)
   const [isPasswordFocus, setIsPasswordFocus] = useState(false)
   const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const [formType, setFormType] = useState('login')
   const [loading, setLoading] = useState(false)
 
   const {
@@ -25,14 +26,19 @@ export default function AdminLogin() {
     handleSubmit,
     formState: { errors }
   } = useForm({
-    resolver: isForgotPassword ? yupResolver(schemaForgotPassword) : yupResolver(schemaLogin)
+    resolver: formType === 'login' ? yupResolver(schemaLogin) : yupResolver(schemaForgotPassword)
   })
 
   // Mutations
   const mutation = useMutation({
     mutationFn: (formData) => {
-      if (isForgotPassword) return AdminAuthAPI.forgotPassword(formData)
-      else return AdminAuthAPI.loginAccountAdmin(formData)
+      if (formType === 'login') {
+        return AdminAuthAPI.loginAccountAdmin(formData)
+      } else if (formType === 'forgotPassword') {
+        return AdminAuthAPI.forgotPassword(formData)
+      } else {
+        return AdminAPI.resendEmail(formData)
+      }
     }
   })
 
@@ -59,20 +65,36 @@ export default function AdminLogin() {
     setStatus(200)
     setMessageResult('Form change password has been sent to your email!')
   }
+
+  const handleVerifyEmailSubmit = (data) => {
+    if (data.status >= 400) throw new Error(data.messages)
+    setStatus(200)
+    setMessageResult('Verify email has been sent to your email!')
+  }
+
   const onSubmit = handleSubmit((data) => {
     // gửi lên api data
     setLoading(true)
     const formData = new FormData()
-    if (!isForgotPassword) {
+
+    if (formType === 'login') {
       formData.append('email', data.email)
       formData.append('password', data.password)
+    } else if (formType === 'forgotPassword') {
+      formData.append('email', data.email)
     } else {
       formData.append('email', data.email)
     }
+
     mutation.mutate(formData, {
       onSuccess: (data) => {
-        if (!isForgotPassword) handleLoginSubmit(data)
-        else handleForgotPasswordSubmit(data)
+        if (formType === 'login') {
+          handleLoginSubmit(data)
+        } else if (formType === 'forgotPassword') {
+          handleForgotPasswordSubmit(data)
+        } else {
+          handleVerifyEmailSubmit(data)
+        }
         setLoading(false)
       },
       onError: (data) => {
@@ -126,7 +148,7 @@ export default function AdminLogin() {
       <Spin spinning={loading} tip='Loading...' size='large' fullscreen />
       <div className='bg-[rgb(14,8,33,0.8)] rounded-xl border-[0.188rem] border-solid border-[rgb(179,103,214,0.2)] backdrop-blur-0 w-[28.125rem] animate-slideUp mx-5'>
         <form action='' onSubmit={onSubmit} noValidate>
-          {isForgotPassword ? (
+          {formType === 'forgotPassword' ? (
             <div className='text-[#fff] flex flex-col justify-end p-7 gap-6'>
               <h1 className='text-3xl text-center text-[#ffff] font-semibold'>Forgot Password</h1>
               <div
@@ -162,7 +184,53 @@ export default function AdminLogin() {
                   className='w-full text-center bg-[#fff] py-4 px-2 uppercase rounded-full text-[black] hover:bg-opacity-70 outline-none focus:bg-opacity-70'
                   tabIndex={3}
                   type='button'
-                  onClick={() => setIsForgotPassword(false)}
+                  onClick={() => {
+                    setFormType('login')
+                  }}
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          ) : formType === 'verifyEmail' ? (
+            <div className='text-[#fff] flex flex-col justify-end p-7 gap-6'>
+              <h1 className='text-3xl text-center text-[#ffff] font-semibold'>Verify Email</h1>
+              <div
+                className='mt-8 flex gap-3 px-5 py-4 border border-[rgb(179,103,214,0.7)] justify-start items-center text-[rgb(255,255,255)] rounded-full'
+                onClick={() => document.getElementById('email').focus()}
+                onFocus={() => setIsEmailFocus(true)}
+                onBlur={() => setIsEmailFocus(false)}
+                style={{
+                  borderColor: isEmailFocus ? 'rgb(179,103,214,1)' : 'rgb(179,103,214,0.7)',
+                  boxShadow: isEmailFocus ? '0 0.25rem 0.5rem rgba(179, 103, 214, 0.5)' : 'none'
+                }}
+              >
+                <input
+                  id='email'
+                  placeholder='Email'
+                  {...register('email')}
+                  type='email'
+                  name='email'
+                  className='adminLogin__Input w-full outline-none text-sm bg-transparent placeholder:text-[#fff]'
+                  tabIndex={1}
+                />
+                <MailOutlined className='text-xl text-[#fefefe]' />
+              </div>
+              <div className='mt-5 flex items-center justify-center gap-5'>
+                <button
+                  className='w-full text-center bg-gray-500 py-4 px-2 uppercase rounded-full text-[#fff] hover:bg-opacity-70 outline-none focus:bg-opacity-70'
+                  tabIndex={3}
+                  type='submit'
+                >
+                  Submit
+                </button>
+                <button
+                  className='w-full text-center bg-[#fff] py-4 px-2 uppercase rounded-full text-[black] hover:bg-opacity-70 outline-none focus:bg-opacity-70'
+                  tabIndex={3}
+                  type='button'
+                  onClick={() => {
+                    setFormType('login')
+                  }}
                 >
                   Back
                 </button>
@@ -213,13 +281,24 @@ export default function AdminLogin() {
                 />
                 <LockOutlined className='text-xl text-[#fefefe]' />
               </div>
-              <div className='text-[#fff] outline-none flex justify-end' type='button'>
+              <div className='text-[#fff] outline-none flex justify-between' type='button'>
                 <button
                   className='hover:underline hover:decoration-1'
                   type='button'
-                  onClick={() => setIsForgotPassword(true)}
+                  onClick={() => {
+                    setFormType('forgotPassword')
+                  }}
                 >
                   Forgot Password?
+                </button>
+                <button
+                  className='hover:underline hover:decoration-1'
+                  type='button'
+                  onClick={() => {
+                    setFormType('verifyEmail')
+                  }}
+                >
+                  Verify Email?
                 </button>
               </div>
               <div className='mt-5'>
