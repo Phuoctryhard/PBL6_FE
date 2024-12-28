@@ -404,6 +404,7 @@ const Admin = () => {
           key: item.admin_id
         }))
         .sort((a, b) => new Date(b.admin_created_at) - new Date(a.admin_created_at))
+      console.log(tableData[0])
       setFilterData(tableData)
       setData(tableData)
       setTableParams({

@@ -4,7 +4,6 @@ import useRouterElement from './useRouterElement/useRouterElement'
 import { useContext, useEffect } from 'react'
 import { LocalStorageEventTarget } from './until'
 import { AuthContext } from './context/app.context'
-
 function App() {
   let element = useRouterElement()
   const { reset } = useContext(AuthContext)
