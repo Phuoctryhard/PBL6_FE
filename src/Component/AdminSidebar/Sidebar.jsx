@@ -143,7 +143,7 @@ const Sidebar = forwardRef((_, ref) => {
 
   useEffect(() => {
     fetchAdminProfile()
-  }, [])
+  }, [isProfile])
 
   //#endregion
 
