@@ -53,6 +53,9 @@ import StatusPayos from '../Pages/User/StatusPayos/StatusPayos.jsx'
 import CategoryDisease from '../Pages/User/Disease/CategoryDisease/CategoryDisease.jsx'
 import NotFound from '../Pages/User/NotFound/NotFound.jsx'
 import ForgotPotPassword from '../Component/ForgotPassword/ForgotPassword.jsx'
+import ResetPassword from '../Pages/User/ResetEmail/index.jsx'
+import Resendverifyemail from '../Component/ResendVeryfyEmail/ResendVeryfyEmail.jsx'
+import Resendemail from '../Component/ResendVeryfyEmail/ResendVeryfyEmail.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
 
@@ -491,12 +494,20 @@ export default function useRouterElement() {
       element: <VerifyEmail />
     },
     {
+      path: '/auth/forgot-password/user',
+      element: <ResetPassword />
+    },
+    {
       path: '/forgot-password',
       element: (
         <RegisterLayout>
           <ForgotPotPassword />
         </RegisterLayout>
       )
+    },
+    {
+      path: '/resend-verify-email',
+      element: <Resendemail />
     },
     {
       path: '/auth/verify-email/admin',

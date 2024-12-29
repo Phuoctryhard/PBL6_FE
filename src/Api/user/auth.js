@@ -15,6 +15,9 @@ const authAPI = {
 
   logout: () => http.post('user/logout'),
   verifyEmail: (token) => http.post('user/verify-email', token),
+  resetEmail: (data) => http.post('user/reset-password', data),
+  //resend_verify_Email: (data) => http.post('user/resend-verify-email', data),
+  resend_verify_Email: (email) => http.post(`user/resend-verify-email?email=${email}`),
   changePassword: (data) => http.post('user/change-password', data),
   // update profile
   updateProfile: (formData) => {
