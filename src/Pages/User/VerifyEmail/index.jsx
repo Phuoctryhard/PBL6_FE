@@ -18,7 +18,6 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     // Xử lý xác minh email với token
-    console.log('Token:', token)
     const tokenEmail = {
       token: token
     }
@@ -26,15 +25,16 @@ export default function VerifyEmail() {
     // Call API hoặc xử lý logic khác ở đây
     mutate.mutate(tokenEmail, {
       onSuccess: (data) => {
-        console.log(data)
         toast.success(data.data.messages[0])
         setTimeout(() => {
           window.close() // Đóng trang sau 3 giây
         }, 3000) // 1000ms = 1 giây
       },
       onError: (error) => {
-        console.log(error)
         toast.error(error?.response?.data?.messages[0])
+        setTimeout(() => {
+          window.close() // Đóng trang sau 3 giây
+        }, 3000) // 1000ms = 1 giây
       }
 
       // setTimeout(() => {
@@ -44,5 +44,5 @@ export default function VerifyEmail() {
       // }
     })
   }, [token])
-  return <div>Verify Email Toke: {token}</div>
+  return <></>
 }
