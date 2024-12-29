@@ -375,7 +375,7 @@ export default function Search() {
                       </button>
 
                       <input
-                        className='w-full border-neutral-500 focus:ring-neutral-500 focus:border-neutral-700 outline-none p-1  flex h-11 items-center justify-start rounded-md border-0 pl-10 text-start text-base font-medium text-neutral-800 truncate'
+                        className='w-full border-neutral-500 focus:ring-neutral-500 focus:border-neutral-700 outline-none p-1  flex h-11 items-center justify-start rounded-md border-0 pl-10 text-start text-base font-medium text-neutral-800 truncate '
                         placeholder='Tên thuốc, triệu chứng, vitamin và thực phẩm chức năng'
                         autoComplete='off'
                         {...register('search')} // Đăng ký với React Hook Form
@@ -422,7 +422,7 @@ export default function Search() {
                       </div>
                     </>
                   )}
-                  <div className='p-5'>
+                  <div className='p-5 cursor-pointer'>
                     {search && <div className='font-semibold'>Danh mục</div>}
                     {search &&
                       Array.from(
@@ -455,7 +455,10 @@ export default function Search() {
                     {search &&
                       productsDataDropdown?.data?.data?.data.map((element) => {
                         return (
-                          <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
+                          <Link
+                            to={`/${generateNameId(element.product_name, element.product_id)}`}
+                            className='cursor-pointer '
+                          >
                             <div className='flex items-center mt-2 gap-x-1'>
                               <div className='w-[10%] shrink-0 '>
                                 <img
@@ -581,7 +584,7 @@ export default function Search() {
               </span>
             </button>
           </div>
-          <div className='flex w-[80%] items-center gap-4 text-white font-medium'>
+          <div className='flex w-[80%] items-center gap-4 text-white font-medium cursor-pointer'>
             <p onClick={() => navigate('/benh')}>Tra cứu bệnh </p>
             <p
               onClick={() =>

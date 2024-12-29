@@ -46,12 +46,11 @@ export default function ProductList() {
       <div className='px-24 flex flex-col '>
         <div className='flex justify-between py-4 bg-[#3165b3] rounded-lg  items-center'>
           <h1 className='font-semibold line-clamp-1 text-base md:text-[20px] pl-2 text-white'>Sản phẩm bán chạy</h1>
-          
         </div>
 
-        <div className='mb-5 mt-2'>
+        <div className='mb-5 mt-3'>
           <div className='grid grid-cols-6 gap-x-4 '>
-            <ProductItem sanphammoi={newproduct} />
+            <ProductItem sanphammoi={saleproduct} sanphambanchay='sanphambanchay' />
           </div>
         </div>
       </div>
@@ -64,7 +63,7 @@ export default function ProductList() {
           </div>
           <div className='mb-5'>
             <div className='grid grid-cols-6 gap-x-4 '>
-              <ProductItem sanphammoi={saleproduct} />
+              <ProductItem sanphammoi={newproduct} />
             </div>
           </div>
         </div>

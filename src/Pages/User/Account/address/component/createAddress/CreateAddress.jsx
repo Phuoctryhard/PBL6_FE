@@ -18,7 +18,7 @@ const schema = yup
       .required('Vui lòng điền họ tên trong khoảng từ 2 - 50 ký tự.'),
     phoneNumber: yup
       .string()
-      .matches(/^[0-9]+$/, 'Số điện thoại không hợp lệ')
+      .matches(/^0[0-9]{9}$/, 'Số điện thoại phải bắt đầu bằng số 0 và có 10 chữ số.')
       .required('Vui lòng nhập số điện thoại.'),
     city: yup.string().required('Vui lòng nhập thông tin.'),
     district: yup.string().required('Vui lòng nhập thông tin.'),
@@ -50,6 +50,8 @@ export default function AddressForm({ closeModal }) {
     onSuccess: () => {
       toast.success('Thêm thành công ')
       queryClient.invalidateQueries({ queryKey: ['getAddress'] })
+      closeModal()
+      reset()
     }
   })
 
@@ -75,8 +77,6 @@ export default function AddressForm({ closeModal }) {
     }
     console.log(address_Receive)
     mutation.mutate(address_Receive)
-    reset()
-    closeModal()
   }
   useEffect(() => {
     if (provincesData) {

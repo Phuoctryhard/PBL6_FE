@@ -2,12 +2,12 @@ import React from 'react'
 import { formatCurrency, generateNameId } from '../../../../until'
 import anhloi from './anhloi.png'
 import { Link } from 'react-router-dom'
-export default function ProductItem({ sanphammoi }) {
+export default function ProductItem({ sanphammoi, sanphambanchay }) {
   return (
     <>
       {sanphammoi?.data?.data?.data?.map((element) => {
         const productImage = Array.isArray(element?.product_images) ? element.product_images[0] : null
-       // console.log(element)
+        // console.log(element)
 
         return (
           <div>
@@ -37,6 +37,14 @@ export default function ProductItem({ sanphammoi }) {
                   <span class='block h-6 text-base font-bold text-blue'>{formatCurrency(element.product_price)}</span>
                 </div>
               </div>
+              {sanphambanchay == 'sanphambanchay' && (
+                <div class='relative mt-1.5 h-[16px] overflow-hidden rounded-xl bg-red-500/50 px-2 py-[2px] text-center text-[10px] font-semibold text-white'>
+                  <div class='absolute left-0 top-0 z-[1] h-full rounded-xl bg-red-500 w-[95%]'></div>
+                  <div class='absolute bottom-0 left-0 right-0 top-0 z-[2] flex items-center justify-center py-[1px] text-xs'>
+                    Đang bán chạy
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )

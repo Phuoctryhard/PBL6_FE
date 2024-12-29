@@ -59,3 +59,6 @@ export const formatCurrency = (data) => {
     currency: 'VND'
   }).format(data ?? 0)
 }
+export const sum = (a, b) => {
+  return a + b
+}

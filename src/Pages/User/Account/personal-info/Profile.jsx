@@ -43,6 +43,23 @@ export default function Profile() {
   }
   const handleFileChange = (e) => {
     const File = e.target.files[0]
+
+    const maxFileSize = 1 * 1024 * 1024 // 1MB
+    const validFormats = ['image/jpeg', 'image/png']
+
+    if (File) {
+      // Kiểm tra định dạng ảnh
+      if (!validFormats.includes(File.type)) {
+        toast.error('Định dạng file không hợp lệ. Vui lòng chọn file .JPEG hoặc .PNG.')
+        return
+      }
+
+      // Kiểm tra dung lượng file
+      if (File.size > maxFileSize) {
+        toast.error('Dung lượng file quá lớn. Vui lòng chọn ảnh có dung lượng tối đa 1MB.')
+        return
+      }
+    }
     console.log(File)
     if (File) {
       const previewUrl = URL.createObjectURL(File) // Tạo URL tạm thời cho ảnh
@@ -55,6 +72,7 @@ export default function Profile() {
   }
   // Hàm xử lý onChange
   const handleChange = (event) => {
+    event.preventDefault()
     const { name, value } = event.target
     setFormData((prevState) => ({
       ...prevState,
@@ -67,6 +85,43 @@ export default function Profile() {
   // gửi data
   const handleSubmit = (event) => {
     event.preventDefault()
+    // Validate form fields
+    if (!formData.user_fullname || !formData.user_phone || !formData.user_birthday || !formData.user_gender) {
+      toast.error('Vui lòng điền đầy đủ thông tin!')
+      return
+    }
+
+    // Validate phone number
+    if (formData.user_phone.length < 10) {
+      toast.error('Số điện thoại phải có ít nhất 10 số!')
+      return
+    }
+    if (!formData.user_phone.startsWith('0')) {
+      toast.error('Số điện thoại phải bắt đầu bằng số 0!')
+      return
+    }
+
+    // Validate birthday (should be less than current date)
+    const currentDate = new Date()
+    const birthDate = new Date(formData.user_birthday)
+
+    // Check if birthday is a valid date and if it is less than current date
+    if (isNaN(birthDate.getTime())) {
+      toast.error('Ngày sinh không hợp lệ!')
+      return
+    }
+
+    if (birthDate >= currentDate) {
+      toast.error('Ngày sinh phải nhỏ hơn ngày hiện tại!')
+      return
+    }
+    // Validate email (optional)
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (formData.email && !emailPattern.test(formData.email)) {
+      toast.error('Email không hợp lệ!')
+      return
+    }
+
     const formDataToSend = new FormData()
     Object.entries(formData).forEach(([key, value]) => {
       formDataToSend.append(key, value)
