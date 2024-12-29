@@ -21,7 +21,7 @@ const schema = yup
       .required('Vui lòng điền họ tên trong khoảng từ 2 - 50 ký tự.'),
     phoneNumber: yup
       .string()
-      .matches(/^[0-9]+$/, 'Số điện thoại không hợp lệ')
+      .matches(/^0[0-9]{9}$/, 'Số điện thoại phải bắt đầu bằng số 0 và có 10 chữ số.')
       .required('Vui lòng nhập số điện thoại.'),
     city: yup.string().required('Vui lòng nhập thông tin.'),
     district: yup.string().required('Vui lòng nhập thông tin.'),

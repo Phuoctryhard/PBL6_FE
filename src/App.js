@@ -1,5 +1,4 @@
-import Footer from './Component/Footer'
-import Header from './Component/AdminHeader'
+
 import useRouterElement from './useRouterElement/useRouterElement'
 import { useContext, useEffect } from 'react'
 import { LocalStorageEventTarget } from './until'

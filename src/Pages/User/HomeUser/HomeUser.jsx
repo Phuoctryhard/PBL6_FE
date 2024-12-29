@@ -17,7 +17,7 @@ export default function HomeUser() {
           name='description'
           content='Nhà thuốc PBL6 cung cấp các sản phẩm thuốc chất lượng, dịch vụ tư vấn sức khỏe tận tâm. Uy tín hàng đầu trong lĩnh vực chăm sóc sức khỏe.'
         />
-        <meta name='keywords' content='Nhà thuốc, PBL6, thuốc chất lượng, chăm sóc sức khỏe, tư vấn sức khỏe' />
+
         <link rel='canonical' href='https://www.tacobell.com/' />
       </Helmet>
       <Header />

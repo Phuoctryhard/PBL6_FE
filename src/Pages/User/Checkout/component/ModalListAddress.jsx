@@ -94,27 +94,29 @@ const ModalListAddress = ({
             })}
         </>
         <div className=' flex gap-x-10 justify-between '>
-          <div className='font-bold '>Thêm địa chỉ</div>
-          <div
-            className='text-white  '
-            onClick={() => {
-              setIsModalOpen2(true)
-            }}
-          >
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              fill='none'
-              viewBox='0 0 24 24'
-              strokeWidth='1.5'
-              stroke='currentColor'
-              className='size-6 bg-[#1A51A2] rounded-full'
+          <div className='font-bold flex gap-x-2 justify-center items-center'>
+            Thêm địa chỉ
+            <div
+              className='text-white  '
+              onClick={() => {
+                setIsModalOpen2(true)
+              }}
             >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                d='M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'
-              />
-            </svg>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                fill='none'
+                viewBox='0 0 24 24'
+                strokeWidth='1.5'
+                stroke='currentColor'
+                className='size-6 bg-[#1A51A2] rounded-full'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  d='M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'
+                />
+              </svg>
+            </div>
           </div>
           <div className='flex gap-2'>
             <button className='px-3 py-2 bg-blue rounded-lg' onClick={handleCancel}>

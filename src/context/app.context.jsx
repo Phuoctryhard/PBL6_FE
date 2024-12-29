@@ -26,11 +26,12 @@ export const AuthProvider = ({ children }) => {
   }
 
   const setProfile = (profile) => {
+    saveProfile(profile)
     setIsProfile(profile)
   }
-  const reset = ()=> {
+  const reset = () => {
     setCheckedProducts([])
-     setIsProfile(null)
+    setIsProfile(null)
     setIsAuthenticated(false)
   }
 
