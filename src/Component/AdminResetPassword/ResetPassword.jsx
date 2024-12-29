@@ -90,7 +90,7 @@ const ResetPassword = () => {
     <section
       className='w-[100vw] h-[100vh] flex justify-center items-center moving-background bg-cover bg-no-repeat bg-center'
       style={{
-        backgroundImage: 'url(/assets/images/test_2.jpg)'
+        backgroundImage: 'url(/assets/images/admin_login_2.jpg)'
       }}
     >
       {contextHolder}

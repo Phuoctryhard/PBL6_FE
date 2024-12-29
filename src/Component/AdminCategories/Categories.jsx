@@ -1,18 +1,16 @@
 import './Categories.css'
-import { CategoriesAPI } from '../../Api/admin'
+import { CategoriesAPI, ProductsAPI } from '../../Api/admin'
 import { Add, SearchNormal, ArrowDown2, Edit, Eye, Refresh } from 'iconsax-react'
 import { useEffect, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { TreeSelect, Dropdown, Popconfirm, message, Modal, Tooltip, Spin, Image, Select, ConfigProvider } from 'antd'
 import qs from 'qs'
 import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined } from '@ant-design/icons'
-import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/app.context'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
+import { DownloadCSV } from '../'
 
 const filterTheme = {
   token: {
@@ -42,9 +40,10 @@ const filterTheme = {
     }
   }
 }
+
 const Categories = () => {
   const { setIsLogin } = useAdminMainLayoutFunction()
-
+  const location = useLocation()
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
     messageApi.open({
@@ -86,32 +85,9 @@ const Categories = () => {
   const [selectedStatus, setSelectedStatus] = useState()
   const [showDescription, setShowDescription] = useState(false)
 
-  const optionsDateformatFull = {
-    weekday: 'long',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }
-  const optionsDateformatShort = {
-    weekday: 'long',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }
-
-  // Date format
-  const DateFormatView = (date) => {
-    let formattedDate = 'N/A'
-    if (/^\d{4}\-\d{2}\-\d{2}$/.test(date)) {
-      const [year, month, day] = date.split('-')
-      formattedDate = new Date(year, month - 1, day).toLocaleDateString('en-GB', optionsDateformatShort)
-    } else if (date) formattedDate = new Date(date).toLocaleDateString('en-GB', optionsDateformatFull)
-    return `${formattedDate}`
-  }
+  const [otherFilterOptions, setOtherFilterOptions] = useState()
+  const [bestSellingCategory, setBestSellingCategory] = useState([])
+  const [state, setState] = useState(location.state)
 
   const columns = [
     {
@@ -303,37 +279,53 @@ const Categories = () => {
   }
 
   const searchCategories = () => {
-    let results
-    if (searchValue)
-      results = data1D.filter((item) => {
-        const matchCategoryInfo =
-          item.category_name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.category_id.toString() === searchValue ||
-          item.category_type.toLowerCase().includes(searchValue.toLowerCase())
-        const matchesStatus = selectedStatus !== undefined ? item.category_is_delete === selectedStatus : true
-        return matchCategoryInfo && matchesStatus
-      })
-    else {
-      results = data.filter((item) => {
-        const matchesStatus = selectedStatus !== undefined ? item.category_is_delete === selectedStatus : true
-        return matchesStatus
-      })
-    }
-    const tableData = results
-    const typeData = [...new Set(tableData.map((item) => item.category_type))]
-    const typeDataFilter = typeData.map((item) => ({
-      text: item,
-      value: item
-    }))
-    setTypeData(typeDataFilter)
-    setFilterData(tableData)
-    setTableParams({
-      ...tableParams,
-      pagination: {
-        ...tableParams.pagination,
-        total: results.length
+    try {
+      let results
+      if (otherFilterOptions === 'top_selling_category') {
+        results = bestSellingCategory.filter((item) => {
+          const matchCategoryInfo =
+            item.category_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            item.category_id.toString() === searchValue ||
+            item.category_type.toLowerCase().includes(searchValue.toLowerCase())
+          const matchesStatus = selectedStatus !== undefined ? item.category_is_delete === selectedStatus : true
+          return matchCategoryInfo && matchesStatus
+        })
+      } else {
+        if (!searchValue) {
+          results = data.filter((item) => {
+            const matchesStatus = selectedStatus !== undefined ? item.category_is_delete === selectedStatus : true
+            return matchesStatus
+          })
+        } else {
+          results = data1D.filter((item) => {
+            const matchCategoryInfo =
+              item.category_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+              item.category_id.toString() === searchValue ||
+              item.category_type.toLowerCase().includes(searchValue.toLowerCase())
+            const matchesStatus = selectedStatus !== undefined ? item.category_is_delete === selectedStatus : true
+            return matchCategoryInfo && matchesStatus
+          })
+        }
       }
-    })
+      const tableData = results
+      const typeData = [...new Set(tableData.map((item) => item.category_type))]
+      const typeDataFilter = typeData.map((item) => ({
+        text: item,
+        value: item
+      }))
+      setTypeData(typeDataFilter)
+      setFilterData(tableData)
+      setTableParams({
+        ...tableParams,
+        pagination: {
+          ...tableParams.pagination,
+          total: results.length
+        }
+      })
+    } catch (e) {
+      setStatus(400)
+      setMessageResult(e.message)
+    }
   }
 
   const fetchCategories = async (token, params) => {
@@ -343,12 +335,45 @@ const Categories = () => {
     })
     try {
       const result = await CategoriesAPI.searchCategories(token, query)
-      if (!result) {
+      const productResult = await ProductsAPI.getProducts()
+      if (!result || !productResult) {
         return
       }
-      const data = result.data
-      setData1D(data)
-      const treeDataConvert = convertDataToTree(data)
+      const categoryData = result.data
+      const productData = productResult.data
+      const category1DTableData = categoryData.map((item) => ({ ...item, key: item.category_id }))
+
+      const CategorySalesInfo = category1DTableData
+        .filter((c) => c.category_type !== 'disease')
+        .map((category) => {
+          // Lọc các sản phẩm thuộc danh mục hiện tại
+          const productsInCategory = productData.filter((item) => item.category_id === category.category_id)
+          const totalSold = productsInCategory.reduce((sum, product) => sum + product.product_sold, 0)
+          // Trả về kết quả
+          return {
+            category_info: { ...category },
+            total_sold: totalSold
+          }
+        })
+
+      // Tính mức trung bình
+      const averageSoldCategory =
+        CategorySalesInfo.reduce((sum, category) => sum + category.total_sold, 0) / CategorySalesInfo.length
+
+      // Lọc ra danh mục "bán chạy"
+      const bestSellingCategory = CategorySalesInfo.filter(
+        (category) => category.total_sold > averageSoldCategory
+      ).sort((a, b) => a.total_sold < b.total_sold)
+      const bestSellingTableData = bestSellingCategory.map((item) => {
+        return {
+          ...item.category_info
+        }
+      })
+
+      setBestSellingCategory(bestSellingTableData)
+      setData1D(category1DTableData)
+
+      const treeDataConvert = convertDataToTree(categoryData)
       const tableData = treeDataConvert.map((item) => ({
         ...item,
         key: item.category_id
@@ -589,12 +614,20 @@ const Categories = () => {
   }, [])
 
   useEffect(() => {
+    if (state) {
+      const { bestSeller } = state
+      if (bestSeller) setOtherFilterOptions('top_selling_category')
+      setState(null)
+    }
     if (data) {
       searchCategories()
     }
   }, [
+    data,
+    state,
     searchValue,
     selectedStatus,
+    otherFilterOptions,
     tableParams.pagination?.current,
     tableParams?.sortOrder,
     tableParams?.sortField,
@@ -637,17 +670,22 @@ const Categories = () => {
           />
           <p>List of categories available</p>
         </div>
-        <button
-          className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
-          onClick={() => {
-            setOpenModal(true)
-            setTypeModal('add')
-            setSelectedCategory(null)
-          }}
-        >
-          Add new
-          <Add size='20' />
-        </button>
+        <div className='flex gap-4 items-center'>
+          <button
+            className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+            onClick={() => {
+              setOpenModal(true)
+              setTypeModal('add')
+              setSelectedCategory(null)
+            }}
+          >
+            Add new
+            <Add size='20' />
+          </button>
+          <div>
+            <DownloadCSV data={filterData} filename='categories' columns={columns} />
+          </div>
+        </div>
       </header>
       <Modal
         destroyOnClose
@@ -829,28 +867,7 @@ const Categories = () => {
                 <label htmlFor='category_parent_id' className='AddCategoryForm__label mb-1'>
                   Parent (Default value = none parent)
                 </label>
-                <ConfigProvider
-                  theme={{
-                    token: {
-                      colorTextQuaternary: '#1D242E', // Disabled text color
-                      colorTextPlaceholder: '#1D242E', // Placeholder text color
-                      fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-                      controlOutline: 'none', // outline color
-                      colorBorder: '#e8ebed', // Border color
-                      borderRadius: '4px'
-                    },
-                    components: {
-                      Select: {
-                        activeBorderColor: '#1D242E',
-                        hoverBorderColor: '#1D242E'
-                      },
-                      TreeSelect: {
-                        nodeHoverBg: 'rgb(0, 143, 153, 0.3)',
-                        nodeSelectedBg: 'rgb(0, 143, 153, 0.3)'
-                      }
-                    }
-                  }}
-                >
+                <ConfigProvider theme={filterTheme}>
                   <TreeSelect
                     suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                     allowClear
@@ -932,25 +949,35 @@ const Categories = () => {
               <SearchNormal size='20' className='absolute top-[50%] right-0 transform -translate-y-1/2 mr-3' />
             </button>
           </div>
-          <div>
-            <ConfigProvider theme={filterTheme}>
-              <Select
-                suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
-                allowClear
-                placeholder='Select status'
-                placement='bottomLeft'
-                options={[
-                  { label: 'Active', value: 0 },
-                  { label: 'Deleted', value: 1 }
-                ]}
-                value={selectedStatus}
-                className='w-[250px] h-[50px]'
-                onChange={(value) => {
-                  setSelectedStatus(value)
-                }}
-              />
-            </ConfigProvider>
-          </div>
+          <ConfigProvider theme={filterTheme}>
+            <Select
+              suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+              allowClear
+              placeholder='Select status'
+              placement='bottomLeft'
+              options={[
+                { label: 'Active', value: 0 },
+                { label: 'Deleted', value: 1 }
+              ]}
+              value={selectedStatus}
+              className='w-[250px] h-[50px]'
+              onChange={(value) => {
+                setSelectedStatus(value)
+              }}
+            />
+            <Select
+              suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+              allowClear
+              placeholder='Statistical filter'
+              placement='bottomLeft'
+              options={[{ label: 'Top Selling Category', value: 'top_selling_category' }]}
+              value={otherFilterOptions || undefined}
+              className='w-[250px] h-[50px]'
+              onChange={(value) => {
+                setOtherFilterOptions(value)
+              }}
+            />
+          </ConfigProvider>
         </div>
         <div className='pt-4'>
           <AdminTable

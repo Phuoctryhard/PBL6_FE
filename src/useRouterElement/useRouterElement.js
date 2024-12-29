@@ -24,7 +24,9 @@ import {
   AdminUpdateIllness,
   AdminViewOrder,
   AdminDelivery,
-  AdminReviewComment
+  AdminReviewComment,
+  AdminInventory,
+  AdminManageRole
 } from '../Component'
 import HomeUser from '../Pages/User/HomeUser/HomeUser.js'
 import RegisterLayout from '../Layouts/RegisterLayout/RegisterLayout.jsx'
@@ -50,6 +52,7 @@ import DetailOrderHistory from '../Pages/User/Account/order_history/DetailOrderH
 import StatusPayos from '../Pages/User/StatusPayos/StatusPayos.jsx'
 import CategoryDisease from '../Pages/User/Disease/CategoryDisease/CategoryDisease.jsx'
 import NotFound from '../Pages/User/NotFound/NotFound.jsx'
+import ForgotPotPassword from '../Component/ForgotPassword/ForgotPassword.jsx'
 export default function useRouterElement() {
   const isAdminRoute = window.location.pathname.toLowerCase().startsWith('/admin')
 
@@ -178,11 +181,7 @@ export default function useRouterElement() {
         { path: 'overview', element: <AdminOverview /> },
         {
           path: 'inventory',
-          element: (
-            <div>
-              <h1>This is inventory</h1>
-            </div>
-          )
+          element: <AdminInventory />
         },
         {
           path: 'products',
@@ -196,6 +195,7 @@ export default function useRouterElement() {
         },
         { path: 'categories', element: <AdminCategories /> },
         { path: 'manage-admins', element: <AdminManagement /> },
+        { path: 'roles', element: <AdminManageRole /> },
         { path: 'manage-users', element: <AdminCustomer /> },
         {
           path: 'orders',
@@ -204,14 +204,6 @@ export default function useRouterElement() {
             { path: '', element: <AdminOrders /> },
             { path: ':id', element: <AdminViewOrder /> }
           ]
-        },
-        {
-          path: 'payments',
-          element: (
-            <div className='col-span-3 bg-gray-light'>
-              <h1>payment</h1>
-            </div>
-          )
         },
         { path: 'deliveries', element: <AdminDelivery /> },
         {
@@ -224,14 +216,6 @@ export default function useRouterElement() {
         },
         { path: 'suppliers', element: <AdminSuppliers /> },
         { path: 'brands', element: <AdminBrands /> },
-        {
-          path: 'users',
-          element: (
-            <div className='col-span-3 bg-gray-light'>
-              <div className='h-[1000px] flex items-center justify-center'>Users</div>
-            </div>
-          )
-        },
         {
           path: 'comment_review',
           element: <AdminReviewComment />
@@ -459,6 +443,7 @@ export default function useRouterElement() {
     //     </AdminMainLayout>
     //   )
     // },
+
     {
       path: '',
       element: <RejectRoute />,
@@ -504,6 +489,14 @@ export default function useRouterElement() {
     {
       path: '/auth/verify-email/user',
       element: <VerifyEmail />
+    },
+    {
+      path: '/forgot-password',
+      element: (
+        <RegisterLayout>
+          <ForgotPotPassword />
+        </RegisterLayout>
+      )
     },
     {
       path: '/auth/verify-email/admin',

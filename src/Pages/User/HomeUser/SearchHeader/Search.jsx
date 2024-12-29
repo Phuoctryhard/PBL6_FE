@@ -342,13 +342,15 @@ export default function Search() {
       <div className='z-20 mx-auto w-full  md:pb-3 md:pt-8 bg-[rgb(46,105,193,1)]'>
         <div className='flex items-center md:mb-4 px-24 '>
           <div className='flex w-full flex-col-reverse items-start md:flex-row gap-2'>
-            {' '}
             <div
-              className=' flex md:flex-col shrink-0  w-[20%] items-center cursor-pointer'
+              className='flex md:flex-col shrink-0 w-[20%] items-center cursor-pointer'
               onClick={() => navigate('/')}
             >
-              <p className='text-white text-xl font-semibold'>Nhà Thuốc</p>
-              <p className='text-white text-2xl font-semibold'>PBL6</p>
+              <img
+                src='/assets/images/test.png'
+                alt='Logo'
+                className='h-16 w-2/3 object-cover mx-auto -translate-x-8'
+              />
             </div>
             <div className=' grid  grid-cols-1  w-[70%] relative'>
               <div className='w-full'>

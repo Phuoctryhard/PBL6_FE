@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import ReactApexChart from 'react-apexcharts'
 import Chart from 'react-apexcharts'
-import { Bill, Profile2User, DollarCircle, ArchiveBox, ArrowDown2, UserAdd, ArrowDown, Share } from 'iconsax-react'
+import { Bill, Profile2User, DollarCircle, ArchiveBox, ArrowDown2, UserAdd, ArrowDown } from 'iconsax-react'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { Select, ConfigProvider, DatePicker, message, Skeleton } from 'antd'
 import { AdminOrderApi, AdminOverView, ProductsAPI, SuppliersAPI, CustomerAPI } from '../../Api/admin'
@@ -9,6 +9,7 @@ import dayjs from 'dayjs'
 import qs from 'qs'
 import { useNavigate } from 'react-router-dom'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+import DownloadCSV from '../DownloadCSV'
 const { RangePicker } = DatePicker
 
 const filterTheme = {
@@ -134,10 +135,11 @@ const Overview = () => {
         show: true,
         tools: { download: true }
       },
-      zoom: { enabled: false },
+      zoom: { enabled: true },
       animations: { enabled: true, speed: 300, dynamicAnimation: { enabled: true, speed: 1000 } }
     },
     dataLabels: {
+      enabledOnSeries: [0],
       enabled: true,
       style: {
         colors: ['#000']
@@ -490,47 +492,37 @@ const Overview = () => {
     <section className='w-full select-none overview__section'>
       {contextHolder}
 
-      <header className='flex justify-between items-center w-full animate-slideLeftToRight'>
-        <div className='flex flex-col gap-1 w-full justify-start'>
-          <BreadCrumbs items={[{ title: 'Overview' }]} />
-          <p className='text-sm'>A quick data overview of system</p>
-        </div>
-        <div className='flex gap-8 w-full justify-end'>
-          <ConfigProvider theme={filterTheme}>
-            <DatePicker
-              picker='year'
-              allowClear
-              showNow
-              className='w-[13.438rem] h-12'
-              suffixIcon={<ArrowDown2 size='14' color='#1D242E' />}
-              placeholder={'Select Year'}
-              onChange={(date, dateString) => {
-                if (!dateString) setSelectedYear(dayjs().year())
-                else setSelectedYear(Number(dateString))
-              }}
-            />
-            <Select
-              allowClear
-              suffixIcon={<ArrowDown2 size='14' color='#1D242E' />}
-              className='w-[13.438rem] h-12 flex justify-center items-center'
-              placeholder='Download Report'
-              placement='bottomLeft'
-              value={null}
-              options={[{ label: 'Excel', value: 'excel' }]}
-              onChange={() => {}}
-            />
-          </ConfigProvider>
-        </div>
-      </header>
       <Skeleton
         className='mt-6'
         loading={showSkeleton}
         active
         paragraph={{
-          rows: 15,
+          rows: 18,
           width: '100%'
         }}
       >
+        <header className='flex justify-between items-center w-full animate-slideLeftToRight'>
+          <div className='flex flex-col gap-1 w-full justify-start'>
+            <BreadCrumbs items={[{ title: 'Overview' }]} />
+            <p className='text-sm'>A quick data overview of system</p>
+          </div>
+          <div className='flex gap-8 w-full justify-end'>
+            <ConfigProvider theme={filterTheme}>
+              <DatePicker
+                picker='year'
+                allowClear
+                showNow
+                className='w-[13.438rem] h-12'
+                suffixIcon={<ArrowDown2 size='14' color='#1D242E' />}
+                placeholder={'Select Year'}
+                onChange={(date, dateString) => {
+                  if (!dateString) setSelectedYear(dayjs().year())
+                  else setSelectedYear(Number(dateString))
+                }}
+              />
+            </ConfigProvider>
+          </div>
+        </header>
         <div className='my-6 w-full flex flex-col gap-6'>
           <div className='flex w-full items-center gap-8 animate-slideRightToLeft'>
             <div className='w-[20%] h-[9.5rem] border border-solid border-[#01A768] rounded-md overflow-hidden flex flex-col'>
@@ -677,6 +669,40 @@ const Overview = () => {
             <div className='flex items-center flex-col bg-[#ffffff] rounded-xl w-[40%] border border-solid border-[rgb(29,36,46,0.3)]'>
               <div className='flex items-center justify-between w-full px-5 pt-5 rounded-xl'>
                 <h2 className='text-lg font-semibold text-gray-700'>Order Status</h2>
+                <DownloadCSV
+                  data={[
+                    {
+                      pending: orderPieSeries[0] || 0,
+                      confirmed: orderPieSeries[1] || 0,
+                      shipped: orderPieSeries[2] || 0,
+                      delivered: orderPieSeries[3] || 0,
+                      cancelled: orderPieSeries[4] || 0
+                    }
+                  ]}
+                  columns={[
+                    {
+                      label: 'Pending',
+                      key: 'pending'
+                    },
+                    {
+                      label: 'Confirmed',
+                      key: 'confirmed'
+                    },
+                    {
+                      label: 'Shipped',
+                      key: 'shipped'
+                    },
+                    {
+                      label: 'Delivered',
+                      key: 'delivered'
+                    },
+                    {
+                      label: 'Cancelled',
+                      key: 'cancelled'
+                    }
+                  ]}
+                  filename='order_status.csv'
+                />
               </div>
               <div className='relative w-full p-5'>
                 <div className='gap-4 w-full relative'>

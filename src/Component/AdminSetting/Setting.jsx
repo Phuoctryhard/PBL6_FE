@@ -10,7 +10,8 @@ import 'react-toastify/dist/ReactToastify.css'
 
 const AdminSetting = () => {
   const { setProfile } = useAuth()
-  const { setIsLogin } = useAdminMainLayoutFunction()
+  // const { setIsLogin = () => {} } = useAdminMainLayoutFunction() !== undefined ? useAdminMainLayoutFunction() : {}
+  const { setIsLogin = () => {} } = useAdminMainLayoutFunction()
   const [typeForm, setTypeForm] = useState('profile') // type form profile or change password
   const [submitLoading, setSubmitLoading] = useState(false) // loading submit state
   const [status, setStatus] = useState(null)
@@ -193,17 +194,7 @@ const AdminSetting = () => {
       setAdminFullNameCard(data.admin_fullname)
       setEmailCard(data.email)
       setImageCard(data.admin_avatar)
-      switch (data.admin_is_admin) {
-        case 0:
-          setAdminRole('Admin')
-          break
-        case 1:
-          setAdminRole('Super Admin')
-          break
-        case 2:
-          setAdminRole('Manager')
-          break
-      }
+      setAdminRole(data.role_name.charAt(0).toUpperCase() + data.role_name.slice(1))
     } catch (e) {
       if (e.message.includes('401')) {
         setIsLogin(false)
@@ -264,6 +255,7 @@ const AdminSetting = () => {
             admin_is_admin: adminRole,
             admin_avatar: selectedFile ? URL.createObjectURL(selectedFile) : imageCard
           }
+          console.log(profileData)
           setProfile(profileData)
         } else {
           setCurrentPassword('')
@@ -366,7 +358,7 @@ const AdminSetting = () => {
           </div>
         </div>
         <div className='w-[780px] bg-[#ffffff] rounded-xl border-[1px] border-solid border-[#ebedf0] p-6 animate-slideRightToLeft overflow-hidden h-max'>
-          <form action='' onSubmit={handleSubmit} autoComplete='off' className='w-full'>
+          <form action='' onSubmit={handleSubmit} autoComplete='off' className='w-full' noValidate>
             {typeForm === 'profile' ? (
               <div className='w-full'>
                 <div className='AddCategoryForm__row'>
@@ -401,7 +393,7 @@ const AdminSetting = () => {
                         <button
                           type='button'
                           onClick={() => document.getElementById('admin_avatar').click()}
-                          className='AddCategoryForm__uploadBtn setting__uploadBtn focus:outline-none focus:border-[1px] focus:border-solid focus:border-[#1d242e] [&:not(:focus)]:outline-none [&:not(:focus)]:border-[3px] [&:not(:focus)]:border-dashed [&:not(:focus)]:border-[#ebedf0]'
+                          className='setting__uploadBtn focus:outline-none focus:border-[1px] focus:border-solid focus:border-[#1d242e] [&:not(:focus)]:outline-none [&:not(:focus)]:border-[3px] [&:not(:focus)]:border-dashed [&:not(:focus)]:border-[#ebedf0] w-[160px] h-[160px]'
                           style={{
                             border: Avatar ? 'none' : dragging ? '3px dashed #1d242e' : '3px dashed #ebedf0'
                           }}

@@ -96,7 +96,9 @@ export default function Login() {
                 </button>
               </div>
               <div className='mt-5 flex justify-end text-[#05a] text-sm flex-wrap gap-2 text-center'>
-                <span>Quên mật khẩu</span>
+                <Link to='/forgot-password' className='text-blue ml-1'>
+                  Quên mật khẩu
+                </Link>
               </div>
               <div className='flex items-center gap-2 mt-3'>
                 <div className='h-[1px] grow bg-gray-200'></div>

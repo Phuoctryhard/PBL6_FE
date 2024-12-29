@@ -7,6 +7,7 @@ import { DashOutlined, DeleteOutlined, CloudUploadOutlined, CloseCircleOutlined 
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
+import DownloadCSV from '../DownloadCSV'
 const { RangePicker } = DatePicker
 
 const Brands = () => {
@@ -30,7 +31,7 @@ const Brands = () => {
   const [selectedTo, setSelectedTo] = useState(null)
   //#endregion
 
-  //#region Table data and custom pagination
+  //#region Table data
   // Date format options
   const optionsDateformat = {
     weekday: 'long',
@@ -79,15 +80,6 @@ const Brands = () => {
       sorter: (a, b) => new Date(a.brand_created_at) - new Date(b.brand_created_at),
       ellipsis: true,
       render: (text) => <span className='text-[14px]'>{DateFormat(text)}</span>
-    },
-    {
-      title: 'Status',
-      dataIndex: 'brand_is_delete',
-      key: 'brand_is_delete',
-      width: '10%',
-      render: (text) => (
-        <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
-      )
     },
     {
       title: 'Action',
@@ -539,16 +531,21 @@ const Brands = () => {
           <BreadCrumbs items={[{ title: `Brands (${filterData?.length})` }]} />
           <p>List of brands available</p>
         </div>
-        <button
-          className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
-          onClick={() => {
-            setOpenModal(true)
-            setTypeModal('add')
-          }}
-        >
-          Add new
-          <Add size='20' />
-        </button>
+        <div className='flex gap-4 items-center'>
+          <button
+            className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+            onClick={() => {
+              setOpenModal(true)
+              setTypeModal('add')
+            }}
+          >
+            Add new
+            <Add size='20' />
+          </button>
+          <div>
+            <DownloadCSV data={filterData} filename='brands' columns={columns} />
+          </div>
+        </div>
       </header>
       <Modal
         destroyOnClose

@@ -1,13 +1,15 @@
 import { Add, SearchNormal, ArrowDown2, Edit, Eye } from 'iconsax-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { TreeSelect, Dropdown, Popconfirm, message, Select, DatePicker, ConfigProvider, Pagination } from 'antd'
+import { Link, useLocation } from 'react-router-dom'
+import { TreeSelect, Dropdown, Popconfirm, message, Select, DatePicker, ConfigProvider } from 'antd'
 import qs from 'qs'
 import { ProductsAPI, BrandsAPI, CategoriesAPI } from '../../Api/admin'
 import { DashOutlined, DeleteOutlined } from '@ant-design/icons'
 import 'react-toastify/dist/ReactToastify.css'
 import AdminTable from '../AdminTable'
 import BreadCrumbs from '../AdminBreadCrumbs'
+import { DownloadCSV } from '../'
+
 import { useAdminMainLayoutFunction } from '../../Layouts/Admin/MainLayout/MainLayout'
 const { RangePicker } = DatePicker
 
@@ -58,6 +60,9 @@ const AdminProducts = () => {
   const [status, setStatus] = useState(null)
   const [messageResult, setMessageResult] = useState('')
 
+  const location = useLocation()
+  const [state, setState] = useState(location.state)
+
   //#region filter data
   //brand data
   const [brand, setBrand] = useState([])
@@ -73,6 +78,13 @@ const AdminProducts = () => {
   //Category data
   const [treeData, setTreeData] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('')
+
+  //other filter options
+  const [selectedFilterOptions, setSelectedFilterOptions] = useState('')
+
+  //data
+  const [bestSellerProduct, setBestSellerProduct] = useState([])
+  const [lowStockProduct, setLowStockProduct] = useState([])
 
   const convertToTreeData = (data) => {
     const filterData = data.filter((item) => item.category_type === 'medicine')
@@ -184,14 +196,6 @@ const AdminProducts = () => {
       sorter: (a, b) => a.brand_name.localeCompare(b.brand_name),
       ellipsis: true,
       filterSearch: true
-    },
-    {
-      title: 'Status',
-      dataIndex: 'product_is_delete',
-      key: 'product_is_delete',
-      render: (text) => (
-        <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
-      )
     },
     {
       title: 'Action',
@@ -332,7 +336,18 @@ const AdminProducts = () => {
 
         return format ? new Date(format) : null
       }
-      const results = data.filter((item) => {
+      let filterResults
+
+      if (selectedFilterOptions) {
+        if (selectedFilterOptions === 'top_selling_product') {
+          filterResults = bestSellerProduct
+        } else if (selectedFilterOptions === 'low_stock_product') {
+          filterResults = lowStockProduct
+        }
+      } else {
+        filterResults = data
+      }
+      const results = filterResults.filter((item) => {
         const matchProductInfo =
           item.product_name.toLowerCase().includes(searchValue.toLowerCase()) ||
           item.product_id.toString() === searchValue
@@ -350,8 +365,7 @@ const AdminProducts = () => {
         return matchProductInfo && matchesBrandName && matchesDateRange
       })
 
-      const tableData = results
-      setFilterData(tableData)
+      setFilterData(results)
       setTableParams({
         ...tableParams,
         pagination: {
@@ -378,13 +392,36 @@ const AdminProducts = () => {
         ...product,
         key: product.product_id
       }))
-      setFilterData(tableData)
+
+      const lowStockProduct = tableData
+        .filter((item) => item.product_quantity < 10)
+        .sort((a, b) => a.product_quantity - b.product_quantity)
+      const averageSold = tableData.reduce((sum, product) => sum + product.product_sold, 0) / tableData.length
+      const bestSellers = tableData
+        .filter((product) => product.product_sold > averageSold)
+        .sort((a, b) => b.product_sold - a.product_sold)
+
+      let resData
+      if (state) {
+        const { lowStock } = state
+        if (lowStock) {
+          setSelectedFilterOptions('low_stock_product')
+          resData = lowStockProduct
+        } else {
+          setSelectedFilterOptions('top_selling_product')
+          resData = bestSellers
+        }
+        setState(null)
+      } else resData = tableData
+      setBestSellerProduct(bestSellers)
+      setLowStockProduct(lowStockProduct)
+      setFilterData(resData)
       setData(tableData)
       setTableParams({
         ...tableParams,
         pagination: {
           ...tableParams.pagination,
-          total: tableData.length
+          total: resData.length
         }
       })
     } catch (err) {
@@ -405,10 +442,22 @@ const AdminProducts = () => {
 
   //filter table change
   useEffect(() => {
+    if (state) {
+      const { lowStock } = state
+      if (lowStock) {
+        setSelectedFilterOptions('low_stock_product')
+      } else {
+        setSelectedFilterOptions('top_selling_product')
+      }
+      setState(null)
+    }
     if (data) {
       searchProducts()
     }
   }, [
+    data,
+    state,
+    selectedFilterOptions,
     searchValue,
     selectedBrand,
     tableParams.pagination?.current,
@@ -435,10 +484,6 @@ const AdminProducts = () => {
     }
   }, [selectedCategory])
 
-  useEffect(() => {
-    if (data) searchProducts()
-  }, [data])
-
   //#endregion
 
   //#region status and message result of fetch api call
@@ -456,7 +501,7 @@ const AdminProducts = () => {
   //#endregion
 
   return (
-    <section className='max-w-[100%] h-full'>
+    <section className='max-w-[100%] h-full w-full'>
       {contextHolder}
       <header className='flex justify-between animate-[slideDown_1s_ease] w-full'>
         <div className='flex flex-col gap-1 w-[50%]'>
@@ -474,16 +519,21 @@ const AdminProducts = () => {
           />
           <p>List of products available for sales</p>
         </div>
-        <Link to='/admin/products/add-product' tabIndex={-1}>
-          <button className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'>
-            Add new
-            <Add size='20' />
-          </button>
-        </Link>
+        <div className='flex gap-4 items-center'>
+          <Link to='/admin/products/add-product' tabIndex={-1}>
+            <button className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'>
+              Add new
+              <Add size='20' />
+            </button>
+          </Link>
+          <div>
+            <DownloadCSV data={filterData} columns={columns} filename={'products'} />
+          </div>
+        </div>
       </header>
-      <div className='p-5 my-4 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-[slideUp_1s_ease]'>
-        <div className='flex justify-between items-center gap-x-3'>
-          <div className='flex items-center w-[300px] justify-between text-[14px] rounded-[4px] relative'>
+      <div className='p-5 my-4 bg-[#ffffff] border-[1px] border-solid border-[#e8ebed] rounded-xl animate-[slideUp_1s_ease] w-full'>
+        <div className='flex justify-between items-center gap-x-3 w-full'>
+          <div className='flex items-center w-[200px] min-w-[200px] justify-between text-[14px] rounded-[4px] relative'>
             <input
               type='text'
               placeholder='Search for product'
@@ -492,13 +542,6 @@ const AdminProducts = () => {
               autoFocus
               onChange={(e) => {
                 setSearchValue(e.target.value)
-                if (e.target.value === '') {
-                  fetchProducts({
-                    sortlatest: true,
-                    search: '',
-                    category_name: selectedCategory
-                  })
-                }
               }}
             />
             <button onClick={() => {}}>
@@ -515,7 +558,7 @@ const AdminProducts = () => {
                 placement='bottomLeft'
                 options={brand.map((item) => ({ label: item.brand_name, value: item.brand_name }))}
                 value={selectedBrand || undefined}
-                className='w-[250px] h-[50px]'
+                className='w-[200px] min-w-[200px] h-[50px]'
                 onChange={(value) => {
                   setSelectedBrand(value)
                 }}
@@ -533,7 +576,7 @@ const AdminProducts = () => {
                 treeData={treeData}
                 treeDefaultExpandAll
                 value={selectedCategory || undefined}
-                className='w-[250px] h-[50px]'
+                className='w-[200px] min-w-[200px] h-[50px]'
                 onChange={(value) => {
                   setSelectedCategory(value)
                 }}
@@ -548,6 +591,26 @@ const AdminProducts = () => {
                 onChange={(date, dateString) => {
                   setSelectedFrom(dateString[0])
                   setSelectedTo(dateString[1])
+                }}
+              />
+            </ConfigProvider>
+          </div>
+          <div className='flex gap-x-[12px] items-center'>
+            <ConfigProvider theme={filterTheme}>
+              <Select
+                suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+                allowClear
+                showSearch
+                placeholder='Statistical filter'
+                placement='bottomLeft'
+                options={[
+                  { label: 'Top Selling Products', value: 'top_selling_product' },
+                  { label: 'Low Stock Products', value: 'low_stock_product' }
+                ]}
+                value={selectedFilterOptions || undefined}
+                className='w-[200px] h-[50px]'
+                onChange={(value) => {
+                  setSelectedFilterOptions(value)
                 }}
               />
             </ConfigProvider>
