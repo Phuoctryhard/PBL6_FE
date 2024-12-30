@@ -19,7 +19,6 @@ export default function Desease() {
       <DiseaseSesson disease_common={data?.data?.data?.disease_common.slice(0, 6)} />
       <DiseaseObject disease_by_target_group={data?.data?.data?.disease_by_target_group} />
       <PartBody disease_Body={data?.data?.data?.disease_body_part.slice(0, 6)} />
-     
     </div>
   )
 }

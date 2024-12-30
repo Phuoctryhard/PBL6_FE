@@ -154,51 +154,50 @@ export default function Search() {
   )
 
   const ShopingCart = (
-    <div className=''>
-      <div className='w-full  '>
-        <p className='text-xl font-medium '>Sản phẩm mới thêm </p>
-        {data?.data?.data ? (
-          data?.data?.data
-            ?.filter((element) => {
-              return element.product_quantity > 0
-            })
-            .map((element) => {
-              console.log(element)
-
-              return (
-                <div className='flex justify-between w-full py-2 mt-3 hover:bg-gray-300 pl-1' key={element.cart_id}>
-                  <div div className='flex gap-x-1  '>
-                    <div className='h-20 w-20  '>
-                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
-                        <img
-                          src={element?.product_images[0] ? element?.product_images[0] : Anhloi}
-                          alt=''
-                          className='object-cover h-full w-full'
-                        />
-                      </Link>
-                    </div>
-                    <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
-                      <p className='truncate overflow-hidden whitespace-nowrap w-[250px] text-base font-normal'>
-                        {element.product_name}
-                      </p>
+    <div className='w-full p-2'>
+      <p className='text-xl font-medium'>Sản phẩm mới thêm</p>
+      {data?.data?.data ? (
+        data?.data?.data
+          .filter((element) => element.product_quantity > 0)
+          .map((element) => {
+            return (
+              <div
+                className='flex justify-between items-center w-full py-2 mt-3 hover:bg-gray-300'
+                key={element.cart_id}
+              >
+                <div className='flex gap-x-2'>
+                  <div className='h-16 w-16 '>
+                    <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
+                      <img
+                        src={element?.product_images[0] ? element?.product_images[0] : Anhloi}
+                        alt=''
+                        className='object-cover h-full w-full ml-1'
+                      />
                     </Link>
                   </div>
-                  <div className='text-red-500 pr-2'> {formatCurrency(element.cart_price)}</div>
+                  <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
+                    <p className='truncate overflow-hidden whitespace-nowrap w-[180px] text-base font-normal'>
+                      {element.product_name}
+                    </p>
+                    <div className='text-red-500 pr-2 md:hidden block'>{formatCurrency(element.cart_price)}</div>
+                  </Link>
                 </div>
-              )
-            })
-        ) : (
-          <div>
-            <Empty />
-          </div>
-        )}
-      </div>
+                <div className='text-red-500 pr-2 hidden md:block'>{formatCurrency(element.cart_price)}</div>
+              </div>
+            )
+          })
+      ) : (
+        <div>
+          <Empty />
+        </div>
+      )}
+
       <div className='flex justify-between items-center my-2'>
         <span>
           {data?.data?.data?.filter((element) => element.product_quantity > 0).length}
           <span style={{ marginLeft: '8px' }}>Thêm hàng vào giỏ</span>
         </span>
-        <button className='bg-[#1A51A2] px-3 py-2  rounded-lg text-white ' onClick={handleNavigate}>
+        <button className='bg-[#1A51A2] px-3 py-2 rounded-lg text-white' onClick={handleNavigate}>
           Xem giỏ hàng
         </button>
       </div>
@@ -340,19 +339,19 @@ export default function Search() {
   return (
     <>
       <div className='z-20 mx-auto w-full  md:pb-3 md:pt-8 bg-[rgb(46,105,193,1)]'>
-        <div className='flex items-center md:mb-4 px-24 '>
+        <div className='flex items-center md:mb-4 px-6 py-2 md:px-24 md:py-0'>
           <div className='flex w-full flex-col-reverse items-start md:flex-row gap-2'>
             <div
-              className='flex md:flex-col shrink-0 w-[20%] items-center cursor-pointer'
+              className=' md:flex-col shrink-0 w-[20%] items-center cursor-pointer md:block hidden'
               onClick={() => navigate('/')}
             >
               <img
                 src='/assets/images/test.png'
                 alt='Logo'
-                className='h-16 w-2/3 object-cover mx-auto -translate-x-8'
+                className='h-16 w-2/3 object-cover mx-auto md:-translate-x-8  '
               />
             </div>
-            <div className=' grid  grid-cols-1  w-[70%] relative'>
+            <div className=' grid  grid-cols-1  md:w-[70%] w-[100%] relative'>
               <div className='w-full'>
                 <form className='col-span-9 mb-1 ' onSubmit={handleOnSubmit}>
                   <div className='mx-auto w-full'>
@@ -377,7 +376,7 @@ export default function Search() {
                       </button>
 
                       <input
-                        className='w-full border-neutral-500 focus:ring-neutral-500 focus:border-neutral-700 outline-none p-1  flex h-11 items-center justify-start rounded-md border-0 pl-10 text-start text-base font-medium text-neutral-800 truncate '
+                        className='w-full border-neutral-500 focus:ring-neutral-500 focus:border-neutral-700 outline-none p-1 flex h-11 items-center justify-start rounded-md border-0 pl-3 md:pl-10 text-start text-base font-medium text-neutral-800 truncate placeholder:text-sm md:placeholder:text-lg'
                         placeholder='Tên thuốc, triệu chứng, vitamin và thực phẩm chức năng'
                         autoComplete='off'
                         {...register('search')} // Đăng ký với React Hook Form
@@ -424,7 +423,7 @@ export default function Search() {
                       </div>
                     </>
                   )}
-                  <div className='p-5 cursor-pointer'>
+                  <div className='p-5 cursor-pointer '>
                     {search && <div className='font-semibold'>Danh mục</div>}
                     {search &&
                       Array.from(
@@ -478,9 +477,35 @@ export default function Search() {
                 </div>
               )}
             </div>
-            <div className='flex relative'>
+            <div className='flex relative items-center justify-between md:justify-start w-full md:w-auto'>
+              <div className='flex justify-center items-center gap-2 md:hidden '>
+                <span>
+                  <svg
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='w-5 h-5 text-white'
+                  >
+                    <path
+                      d='M21.2188 11.2222H2.78125C2.34977 11.2222 2 11.5704 2 11.9999C2 12.4295 2.34977 12.7777 2.78125 12.7777H21.2188C21.6502 12.7777 22 12.4295 22 11.9999C22 11.5704 21.6502 11.2222 21.2188 11.2222Z'
+                      fill='currentColor'
+                    ></path>
+                    <path
+                      d='M21.2188 5H2.78125C2.34977 5 2 5.34821 2 5.77777C2 6.20733 2.34977 6.55554 2.78125 6.55554H21.2188C21.6502 6.55554 22 6.20733 22 5.77777C22 5.34821 21.6502 5 21.2188 5Z'
+                      fill='currentColor'
+                    ></path>
+                    <path
+                      d='M21.2188 17.4446H2.78125C2.34977 17.4446 2 17.7928 2 18.2223C2 18.6519 2.34977 19.0001 2.78125 19.0001H21.2188C21.6502 19.0001 22 18.6519 22 18.2223C22 17.7928 21.6502 17.4446 21.2188 17.4446Z'
+                      fill='currentColor'
+                    ></path>
+                  </svg>
+                </span>
+              </div>
+              <div className=' items-center cursor-pointer block md:hidden' onClick={() => navigate('/')}>
+                <img src='/assets/images/test.png' alt='Logo' className='h-10 w-auto object-contain mx-auto' />
+              </div>
               <Popover content={Profile} placement='bottomRight' overlayStyle={{ width: '300px' }}>
-                <button className='px-3 text-white h-10'>
+                <button className='px-3 text-white h-10 hidden md:block'>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
                     fill='none'
@@ -497,33 +522,40 @@ export default function Search() {
                   </svg>
                 </button>
               </Popover>
-              <Popover content={ShopingCart} placement='bottomRight' className='' overlayStyle={{ width: '450px' }}>
-                <Badge
-                  count={
-                    data?.data?.data?.filter((element) => {
-                      return element.product_quantity > 0
-                    }).length
-                  }
-                  offset={[-15, 7]}
+              <div className='flex justify-center items-center'>
+                <Popover
+                  content={ShopingCart}
+                  placement='bottomRight'
+                  className=''
+                  overlayClassName=' w-[300px] md:w-[450px] md:w-full' // responsive, full width on small screens, 50% width on larger screens
                 >
-                  <div className='h-10 px-3'>
-                    <svg
-                      xmlns='http://www.w3.org/2000/svg'
-                      fill='none'
-                      viewBox='0 0 24 24'
-                      strokewidth='1.5'
-                      stroke='currentColor'
-                      className='size-7 h-10 text-white '
-                    >
-                      <path
-                        strokelinecap='round'
-                        strokelinejoin='round'
-                        d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z'
-                      />
-                    </svg>
-                  </div>
-                </Badge>
-              </Popover>
+                  <Badge
+                    count={
+                      data?.data?.data?.filter((element) => {
+                        return element.product_quantity > 0
+                      }).length
+                    }
+                    offset={[-15, 7]}
+                  >
+                    <div className='h-10 px-3'>
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        strokewidth='1.5'
+                        stroke='currentColor'
+                        className='size-7 h-10 text-white '
+                      >
+                        <path
+                          strokelinecap='round'
+                          strokelinejoin='round'
+                          d='M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z'
+                        />
+                      </svg>
+                    </div>
+                  </Badge>
+                </Popover>
+              </div>
               <div className='border-color-white absolute bottom-[6px] right-0 top-[6px] hidden border-l-[1px] md:inline-block'></div>
             </div>
             {isAuthenticated ? (
@@ -536,12 +568,12 @@ export default function Search() {
                 </div>
               </Popover>
             ) : (
-              <Button type='' className=' font-semibold h-10'>
-                <span className='text-base ' onClick={() => navigate('/login')}>
+              <Button type='' className='font-semibold h-10 hidden md:block'>
+                <span className='text-base' onClick={() => navigate('/login')}>
                   Đăng nhập
                 </span>
-                <span>/</span>
-                <span className='text-base' onClick={() => navigate('/register')}>
+                <span className='text-base'>/</span> {/* This is visible only on mobile */}
+                <span className='text-base ' onClick={() => navigate('/Register')}>
                   Đăng kí
                 </span>
               </Button>
@@ -553,7 +585,7 @@ export default function Search() {
           <div className='flex w-[20%] '>
             <button
               onClick={handleClick}
-              className='flex font-semibold bg-white test-sm py-2 px-2 rounded-sm justify-between w-[200px] hover:text-blue'
+              className='md:flex font-semibold bg-white test-sm py-2 px-2 rounded-sm justify-between w-[200px] hover:text-blue  hidden'
             >
               <div className='flex justify-center items-center gap-2'>
                 <span>
@@ -586,7 +618,7 @@ export default function Search() {
               </span>
             </button>
           </div>
-          <div className='flex w-[80%] items-center gap-4 text-white font-medium cursor-pointer'>
+          <div className=' md:w-[80%] items-center gap-4 text-white font-medium cursor-pointer md:flex hidden'>
             <p onClick={() => navigate('/benh')}>Tra cứu bệnh </p>
             <p
               onClick={() =>
@@ -630,17 +662,3 @@ export default function Search() {
     </>
   )
 }
-// <div className='col-span-2 flex flex-col justify-between rounded-lg overflow-hidden  pt-3  mb-5'>
-//             <div className=''>
-//               <img
-//                 src='https://prod-cdn.pharmacity.io/e-com/images/banners/20240920042514-0-Web_AllScreen%20Directory%20menu0310_%28522x976%29px.webp'
-//                 alt=''
-//                 className=''
-//               />
-//             </div>
-//           </div>
-// <img
-//                 class='w-[70px] h-[70px] cursor-pointer object-contain  bg-transparent  rounded-full'
-//                 src='/assets/images/Logo_Pbl6.png'
-//                 alt='Logo'
-//               />

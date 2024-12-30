@@ -42,40 +42,37 @@ export default function ProductList() {
   // console.log(saleproduct)
   return (
     <div className='bg-white'>
-      <div class='bg-neutral-100 h-3'></div>
-      <div className='px-24 flex flex-col '>
-        <div className='flex justify-between py-4 bg-[#3165b3] rounded-lg  items-center'>
-          <h1 className='font-semibold line-clamp-1 text-base md:text-[20px] pl-2 text-white'>Sản phẩm bán chạy</h1>
+      <div className='bg-neutral-100 h-3'></div>
+      <div className='px-4 sm:px-8 md:px-16 lg:px-24 flex flex-col'>
+        <div className='flex justify-between py-4 bg-[#3165b3] rounded-lg items-center'>
+          <h1 className='font-semibold line-clamp-1 text-sm sm:text-base md:text-lg lg:text-[20px] pl-2 text-white'>
+            Sản phẩm bán chạy
+          </h1>
         </div>
 
         <div className='mb-5 mt-3'>
-          <div className='grid grid-cols-6 gap-x-4 '>
+          <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4'>
             <ProductItem sanphammoi={saleproduct} sanphambanchay='sanphambanchay' />
           </div>
         </div>
       </div>
-
-      <div class='bg-neutral-100 h-3'></div>
+      <div className='bg-neutral-100 h-3'></div>
       <div className='bg-[#60e0c0]'>
-        <div className='px-24 flex flex-col'>
-          <div className='flex justify-between py-4 bg-[#3165b3] rounded-lg  items-center my-3'>
-            <h1 className='font-semibold line-clamp-1 text-base md:text-[20px] pl-2 text-white'>Sản phẩm mới nhất</h1>
+        <div className='px-4 sm:px-8 md:px-16 lg:px-24 flex flex-col'>
+          <div className='flex justify-between py-4 bg-[#3165b3] rounded-lg items-center my-3'>
+            <h1 className='font-semibold line-clamp-1 text-sm sm:text-base md:text-lg lg:text-[20px] pl-2 text-white'>
+              Sản phẩm mới nhất
+            </h1>
           </div>
           <div className='mb-5'>
-            <div className='grid grid-cols-6 gap-x-4 '>
+            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4'>
               <ProductItem sanphammoi={newproduct} />
             </div>
           </div>
         </div>
       </div>
-      <div class='bg-neutral-100 h-3'></div>
-
-      {/**/}
-
-      <div class='bg-neutral-100 h-3' />
-
-      <Category />
-      <div class='bg-blue h-3' />
+      <div className='bg-neutral-100 h-3'></div>
+      <div className='bg-neutral-100 h-3' />
     </div>
   )
 }
@@ -282,3 +279,5 @@ export default function ProductList() {
 //               Xem thêm
 //             </a>
 //           </div>
+// <Category />
+// <div class='bg-blue h-3' />

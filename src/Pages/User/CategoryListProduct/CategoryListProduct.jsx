@@ -348,8 +348,7 @@ export default function CategoryListProduct() {
           content='Khám phá các danh mục sản phẩm tại Nhà Thuốc PBL6, từ thuốc kê đơn, thực phẩm chức năng đến thiết bị y tế. Đảm bảo chất lượng và giá cả hợp lý, phù hợp với mọi nhu cầu chăm sóc sức khỏe.'
         />
       </Helmet>
-
-      <div className='px-24 py-6'>
+      <div className='px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 py-4 sm:py-5 md:py-6 lg:py-6'>
         <div class='hidden bg-neutral-100 md:block  mb-4'>
           <div class='container '>
             <div>
@@ -413,11 +412,11 @@ export default function CategoryListProduct() {
         <div className='text-[24px] font-bold leading-[32px] flex-1 max-md:text-base max-md:font-semibold md:flex'>
           {categorySlug}
         </div>
-        <div className='grid grid-cols-8'>
+        <div className='grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 justify-center items-center'>
           {getCategorybyid?.data?.data?.children &&
             getCategorybyid?.data?.data.children.map((element) => {
               return (
-                <div className='flex flex-col items-center gap-y-2  w-[120px] h-[160px] p-2  mt-2 '>
+                <div className='flex flex-col items-center gap-y-2 w-[120px] h-[160px] p-2 mt-2'>
                   <div className='w-[100px] h-[100px]' onClick={() => handleClickCategory(element.category_name)}>
                     <img
                       src={element.category_thumbnail}
@@ -431,7 +430,7 @@ export default function CategoryListProduct() {
             })}
         </div>
       </div>
-      <div className='px-24 grid grid-cols-12 gap-2 mt-5'>
+      <div className=' px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24  grid grid-cols-12 gap-2 mt-5'>
         <div className='col-span-2 flex flex-col'>
           <div className='flex text-lg  py-4 justify-between items-center'>
             <p className=' font-semibold'>Bộ lọc tìm kiếm</p>
@@ -623,42 +622,43 @@ export default function CategoryListProduct() {
                   Giá tăng dần{' '}
                 </button>
               </div>
-              <div className='grid grid-cols-5 px-3 py-4  gap-3'>
+              <div className='grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 px-3 py-4 gap-3'>
                 {productsData?.data?.data?.data?.map((element) => {
                   return (
                     <div className='border border-1 shadow-lg rounded-lg overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105'>
-                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=' '>
-                        <img src={element?.product_images?.length > 0 ? element.product_images[0] : anhloi} alt='' />
+                      <Link to={`/${generateNameId(element.product_name, element.product_id)}`} className=''>
+                        <img
+                          src={element?.product_images?.length > 0 ? element.product_images[0] : anhloi}
+                          alt=''
+                          className='w-full h-auto'
+                        />
                       </Link>
 
                       <div className='p-3'>
                         <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
-                          <h3 class='line-clamp-2  font-semibold text-base'>{element.product_name}</h3>
+                          <h3 className='line-clamp-2 font-semibold text-base'>{element.product_name}</h3>
                         </Link>
                         {element?.parent_category_name === 'Thuốc kê đơn' ? (
-                          <>
-                            <button
-                              className='text-center w-full mt-4 bg-blue rounded-lg p-2'
-                              onClick={() => {
-                                navigate(`/${generateNameId(element.product_name, element.product_id)}`)
-                              }}
-                            >
-                              Cần tư vấn
-                            </button>
-                          </>
+                          <button
+                            className='text-center w-full mt-4 bg-blue rounded-lg p-2'
+                            onClick={() => {
+                              navigate(`/${generateNameId(element.product_name, element.product_id)}`)
+                            }}
+                          >
+                            Cần tư vấn
+                          </button>
                         ) : (
                           <>
-                            <del class='block h-5 text-sm font-semibold text-neutral-600 mt-2'>115.000 đ</del>
+                            <del className='block h-5 text-sm font-semibold text-neutral-600 mt-2'>115.000 đ</del>
                             <div className='flex justify-between items-center'>
                               <span>Đã bán {element.product_sold}</span>
-                              <span class='mt-[2px] block h-6 text-base font-bold text-blue '>
+                              <span className='mt-[2px] block h-6 text-base font-bold text-blue'>
                                 {new Intl.NumberFormat('vi-VN', {
                                   style: 'currency',
                                   currency: 'VND'
                                 }).format(element.product_price ?? 0)}
                               </span>
                             </div>
-                            <div class='flex items-center py-1 text-sm'></div>
                           </>
                         )}
                       </div>
@@ -666,6 +666,7 @@ export default function CategoryListProduct() {
                   )
                 })}
               </div>
+
               {productsData?.data?.data?.data?.length === 0 && (
                 <div style={{ width: '100%', margin: '0 auto' }}>
                   <Empty description='Không có dữ liệu' />

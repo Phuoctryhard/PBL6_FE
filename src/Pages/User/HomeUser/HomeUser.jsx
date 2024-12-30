@@ -21,6 +21,7 @@ export default function HomeUser() {
         <link rel='canonical' href='https://www.tacobell.com/' />
       </Helmet>
       <Header />
+
       <CarouselSlideShow />
       <ProductList />
       <Desease />

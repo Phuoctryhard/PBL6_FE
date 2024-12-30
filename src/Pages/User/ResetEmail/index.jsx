@@ -45,7 +45,7 @@ export default function ResetPassword() {
       },
       onError: (error) => {
         console.log(error?.response?.data?.data[0])
-        toast.error("Thất bại ")
+        toast.error(error?.response?.data?.data[0])
       }
     })
   })
