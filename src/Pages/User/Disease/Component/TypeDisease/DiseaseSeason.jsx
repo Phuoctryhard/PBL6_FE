@@ -3,42 +3,44 @@ import { Link } from 'react-router-dom'
 
 export default function DiseaseSesson({ disease_common }) {
   return (
-    <div className=''>
-      <div className='px-24 flex flex-col'>
-        <div class=' flex items-center justify-between pt-4'>
-          <h4 class='font-semibold md:font-semibold md:text-[20px] text-base'>Nhóm bệnh theo mùa bệnh</h4>
+    <div>
+      <div className='px-4 sm:px-8 md:px-16 lg:px-24 flex flex-col'>
+        {/* Header */}
+        <div className='flex items-center justify-between pt-4'>
+          <h4 className='font-semibold md:font-semibold md:text-[20px] text-base'>Nhóm bệnh theo mùa bệnh</h4>
           <a
-            class='relative flex justify-center border-0 bg-transparent text-sm font-normal text-hyperLink outline-none md:hover:text-primary-600 md:text-base'
+            className='relative flex justify-center border-0 bg-transparent text-sm font-normal text-hyperLink outline-none hover:text-primary-600 md:text-base'
             type='button'
             href='/benh'
           >
             Xem thêm
           </a>
         </div>
-        <div className='grid grid-cols-6 gap-6 py-6'>
-          {disease_common?.map((element) => {
-            return (
-              <div class='flex items-center gap-2 rounded-md shadow-lg'>
+
+        {/* Content */}
+        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6 py-6'>
+          {disease_common?.map((element) => (
+            <div key={element.disease_id} className='flex items-center gap-4 p-2 rounded-md shadow-lg bg-white'>
+              {/* Image */}
+              <Link to={`/benh/${element.disease_id}`}>
+                <img
+                  className='rounded-md object-cover w-[60px] h-[60px] sm:w-[80px] sm:h-[80px]'
+                  src={element.disease_thumbnail}
+                  alt={element.disease_name || 'Thumbnail'}
+                  loading='lazy'
+                  width='80'
+                  height='80'
+                />
+              </Link>
+
+              {/* Name */}
+              <div className='flex-1 text-sm font-medium'>
                 <Link to={`/benh/${element.disease_id}`}>
-                  <img
-                    class='rounded-md object-cover md:h-[80px] md:w-[80px] w-[80px] h-[80px]'
-                    src={element.disease_thumbnail}
-                    alt=''
-                    loading='lazy'
-                    width='500'
-                    height='500'
-                  />
+                  <div className='break-word line-clamp-2 text-sm font-semibold capitalize'>{element.disease_name}</div>
                 </Link>
-                <div class='flex-1 text-sm font-medium'>
-                  <div class='font-medium capitalize text-sm line-clamp-3'>
-                    <a href={`/benh/${element.disease_id}`}>
-                      <div class=' break-word line-clamp-2 text-sm font-semibold'>{element.disease_name}</div>
-                    </a>
-                  </div>
-                </div>
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
