@@ -14,7 +14,7 @@ const AdminDeliveryAPI = {
   updateDeliveryMethod: async (token, id, data) =>
     await fetchWithAuth(`${rootDeliveryMethod}/update/${id}`, 'POST', token, 'update delivery method', data),
   deleteDeliveryMethod: async (token, id, formData) =>
-    await fetch(`${rootDeliveryMethod}/${id}`, 'DELETE', token, 'delete delivery method', formData)
+    await fetchWithAuth(`${rootDeliveryMethod}/${id}`, 'DELETE', token, 'delete delivery method', formData)
 }
 
 export default AdminDeliveryAPI

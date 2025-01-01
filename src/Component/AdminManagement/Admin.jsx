@@ -42,7 +42,7 @@ const filterTheme = {
 const Admin = () => {
   const { setIsLogin } = useAdminMainLayoutFunction()
   const { isProfile } = useAuth()
-  const { role } = isProfile
+  const { role = null || undefined } = isProfile ? isProfile : {}
   const token = localStorage.getItem('accesstoken')
   const [messageApi, contextHolder] = message.useMessage()
   const openMessage = (type, content, duration) => {
@@ -59,7 +59,7 @@ const Admin = () => {
   const [searchValue, setSearchValue] = useState('')
   const [selectedFrom, setSelectedFrom] = useState(null)
   const [selectedTo, setSelectedTo] = useState(null)
-  const [roles, setRoles] = useState(['Admin', 'Super Admin', 'Manager'])
+  const [roles, setRoles] = useState(['Admin', 'Super Admin'])
   const [selectedRoles, setSelectedRoles] = useState()
   const [adminStatus, setAdminStatus] = useState(['Active', 'Deleted'])
   const [selectedAdminStatus, setSelectedAdminStatus] = useState()
@@ -178,7 +178,7 @@ const Admin = () => {
         <span style={{ color: Number(text) === 0 ? 'green' : 'red' }}>{Number(text) === 0 ? 'Active' : 'Deleted'}</span>
       )
     },
-    ...(role.toLowerCase() === 'manager'
+    ...(role && role.toLowerCase() === 'manager'
       ? [
           {
             title: 'Action',
@@ -363,7 +363,7 @@ const Admin = () => {
           item.admin_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
           item.admin_id.toString() === searchValue
         const matchesAdminEmail = item.email.toLowerCase().includes(searchValue.toLowerCase())
-        const matchesRole = selectedRoles !== undefined ? item.admin_is_admin === selectedRoles : true
+        const matchesRole = selectedRoles !== undefined ? item.role_id === selectedRoles : true
         const matchesStatus = selectedAdminStatus !== undefined ? item.admin_is_delete === selectedAdminStatus : true
         const matchesDateRange =
           selectedFrom && selectedTo
@@ -403,8 +403,7 @@ const Admin = () => {
           ...item,
           key: item.admin_id
         }))
-        .sort((a, b) => new Date(b.admin_created_at) - new Date(a.admin_created_at))
-      console.log(tableData[0])
+        .sort((a, b) => new Date(b.admin_updated_at) - new Date(a.admin_updated_at))
       setFilterData(tableData)
       setData(tableData)
       setTableParams({
@@ -427,6 +426,24 @@ const Admin = () => {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    try {
+      if (role === null || undefined) throw new Error('401 Unauthorized')
+      if (role.toLowerCase() === 'superadmin') {
+        setRoles(['Admin'])
+      } else {
+        setRoles(['Admin', 'Super Admin'])
+      }
+    } catch (e) {
+      if (e.message.includes('401')) {
+        setIsLogin(false)
+        return
+      }
+      setStatus(400)
+      setMessageResult(e.message)
+    }
+  }, [role])
 
   useEffect(() => {
     fetchAllPermissions()
@@ -1148,11 +1165,9 @@ const Admin = () => {
                 options={roles.map((item) => {
                   switch (item) {
                     case 'Admin':
-                      return { label: 'Admin', value: 0 }
+                      return { label: 'Admin', value: 1 }
                     case 'Super Admin':
-                      return { label: 'Super Admin', value: 1 }
-                    case 'Manager':
-                      return { label: 'Manager', value: 2 }
+                      return { label: 'Super Admin', value: 2 }
                   }
                 })}
                 value={selectedRoles}

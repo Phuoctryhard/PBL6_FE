@@ -422,13 +422,13 @@ const ViewOrder = () => {
             <div className='flex gap-4 justify-end'>
               <span className='font-extralight text-right'>Create Date:</span>
               <span className='font-medium value-detail text-left whitespace-nowrap'>
-                {DateFormat(data?.order_created_at || new Date())}
+                {DateFormat(data?.order_created_at)}
               </span>
             </div>
             <div className='flex gap-4 justify-end'>
               <span className='font-extralight text-right'>Due Date:</span>
               <span className='font-medium value-detail text-left whitespace-nowrap'>
-                {DateFormat(data?.receiver_created_at || new Date())}
+                {DateFormat(data?.order_updated_at || new Date())}
               </span>
             </div>
           </div>

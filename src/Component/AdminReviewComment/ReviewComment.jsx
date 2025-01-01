@@ -385,12 +385,14 @@ const ReviewComment = () => {
       if (!result) {
         throw new Error('Error fetch all review. No review found.')
       }
-      const tableData = data.map((item) => ({
-        ...item,
-        key: item.review_id,
-        product_images: item.product_images ? JSON.parse(item.product_images) : [],
-        review_images: item.review_images ? JSON.parse(item.review_images) : []
-      }))
+      const tableData = data
+        .map((item) => ({
+          ...item,
+          key: item.review_id,
+          product_images: item.product_images ? JSON.parse(item.product_images) : [],
+          review_images: item.review_images ? JSON.parse(item.review_images) : []
+        }))
+        .sort((a, b) => new Date(b.review_updated_at) - new Date(a.review_updated_at))
       setData(tableData)
       setFilterData(tableData)
       setTableParams({

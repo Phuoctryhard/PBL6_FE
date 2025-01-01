@@ -252,7 +252,7 @@ const Suppliers = () => {
           supplier_address: item.supplier_address ? item.supplier_address : 'N/A',
           supplier_phone: item.supplier_phone ? item.supplier_phone : 'N/A'
         }))
-        .sort((a, b) => new Date(b.supplier_created_at) - new Date(a.supplier_created_at))
+        .sort((a, b) => new Date(b.supplier_updated_at) - new Date(a.supplier_updated_at))
       const supplierNames = data.map((item) => item.supplier_name)
       setSupplierNames(supplierNames)
       setFilterData(tableData)
@@ -282,7 +282,7 @@ const Suppliers = () => {
         item.supplier_name.toLowerCase().includes(searchValue.toLowerCase()) ||
         item.supplier_id.toString() === searchValue
       const matchesAddress = item.supplier_address.toLowerCase().includes(searchValue.toLowerCase())
-      const matchesPhone = item.supplier_phone.toLowerCase().includes(searchValue.toLowerCase())
+      const matchesPhone = item.supplier_phone === searchValue
       const matchesEmail = item.supplier_email.toLowerCase().includes(searchValue.toLowerCase())
       const matchesContactPerson = item.contact_person.toLowerCase().includes(searchValue.toLowerCase())
       const matchesStatus = selectedStatus !== undefined ? item.supplier_is_delete === Number(selectedStatus) : true
@@ -308,6 +308,7 @@ const Suppliers = () => {
       searchSuppliers()
     }
   }, [
+    tableData,
     searchValue,
     tableParams.pagination?.current,
     tableParams?.sortOrder,

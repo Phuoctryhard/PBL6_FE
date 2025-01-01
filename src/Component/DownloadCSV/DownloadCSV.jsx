@@ -18,7 +18,6 @@ const DownloadCSV = ({ data, columns, filename }) => {
   const [headers, setHeaders] = useState([])
   const [body, setBody] = useState([])
   useEffect(() => {
-    console.log('data', data)
     try {
       if (!data || !columns || !filename) {
         setError(true)

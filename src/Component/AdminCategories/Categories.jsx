@@ -261,6 +261,7 @@ const Categories = () => {
 
     data.forEach((item) => {
       if (item.category_parent_id !== null) {
+        if (map[item.category_parent_id] === undefined) return data
         map[item.category_parent_id].children.push(map[item.category_id])
       } else {
         tree.push(map[item.category_id])
@@ -374,10 +375,12 @@ const Categories = () => {
       setData1D(category1DTableData)
 
       const treeDataConvert = convertDataToTree(categoryData)
-      const tableData = treeDataConvert.map((item) => ({
-        ...item,
-        key: item.category_id
-      }))
+      const tableData = treeDataConvert
+        .map((item) => ({
+          ...item,
+          key: item.category_id
+        }))
+        .sort((a, b) => new Date(b.category_update_at - a.category_update_at))
       const treeDataSelect = convertToTreeData(treeDataConvert)
       const typeData = [...new Set(tableData.map((item) => item.category_type))]
       const typeDataFilter = typeData.map((item) => ({
@@ -400,6 +403,7 @@ const Categories = () => {
         setIsLogin(false)
         return
       }
+
       setStatus(400)
       setMessageResult(e.message)
     } finally {
@@ -943,6 +947,11 @@ const Categories = () => {
               autoFocus
               onChange={(e) => {
                 setSearchValue(e.target.value)
+                if (e.target.value === '') {
+                  fetchCategories(token, {
+                    search: ''
+                  })
+                }
               }}
             />
             <button onClick={() => {}}>

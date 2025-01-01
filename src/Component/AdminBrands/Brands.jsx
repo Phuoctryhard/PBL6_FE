@@ -249,7 +249,7 @@ const Brands = () => {
             : true
         return matchesBrandName && matchesDateRange
       })
-      const tableData = result.sort((a, b) => new Date(b.brand_created_at) - new Date(a.brand_created_at))
+      const tableData = result.sort((a, b) => new Date(b.brand_updated_at) - new Date(a.brand_updated_at))
       setFilterData(tableData)
       setTableParams({
         ...tableParams,
@@ -307,6 +307,7 @@ const Brands = () => {
       searchBrand()
     }
   }, [
+    data,
     searchValue,
     tableParams.pagination?.current,
     tableParams?.sortOrder,
