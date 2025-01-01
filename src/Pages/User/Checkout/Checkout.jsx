@@ -126,6 +126,8 @@ export default function Checkout() {
             //setIsModalOpenBuy(true)
             setCheckedProducts([])
           } else {
+            setIsLoading(true)
+            window.location.href = res.data.data
           }
           //console.log(res)
           toast.success(' Chuyển sang trang thanh toán, vui lòng chờ trong giây lát đi! ', { autoClose: 1000 }) // Đóng sau 1 giây

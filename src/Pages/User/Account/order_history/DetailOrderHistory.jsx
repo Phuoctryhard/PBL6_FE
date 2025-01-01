@@ -1,10 +1,11 @@
 import React from 'react'
 import { Divider } from 'antd'
 import { Descriptions } from 'antd'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import OrderApi from '../../../../Api/user/order'
 import { IdcardFilled } from '@ant-design/icons'
+import { generateNameId } from '../../../../until'
 export default function DetailOrderHistory() {
   const { slug } = useParams()
   console.log(slug)
@@ -71,7 +72,19 @@ export default function DetailOrderHistory() {
 
       {/* Trạng thái đơn hàng */}
       <div className='bg-slate-300 rounded-lg px-2 py-4'>
-        <div className='text-lg semibold '>{data?.data?.data?.delivery_status} đơn hàng</div>
+        <div className='text-lg semibold'>
+          {(() => {
+            const statusMap = {
+              pending: 'Đang xử lý',
+              cancelled: 'Hủy',
+              shipped: 'Đang giao',
+              delivered: 'Đã giao',
+              confirmed: 'Đã xác nhận'
+            }
+            return statusMap[data?.data?.data?.delivery_status] || 'Trạng thái không xác định'
+          })()}{' '}
+          đơn hàng
+        </div>
         <div className=''>vào {formatDate(data?.data?.data?.order_updated_at)}</div>
       </div>
 
@@ -83,15 +96,19 @@ export default function DetailOrderHistory() {
           return (
             <div className='flex p-2 mt-4' key={item.order_detail_id}>
               <div className='flex-shrink-0 w-20 h-20'>
-                <img
-                  src={productImages[0]} // Hiển thị ảnh đầu tiên
-                  alt={item.product_name}
-                  className='w-full h-full rounded-lg object-contain'
-                />
+                <Link to={`/${generateNameId(item.product_name, item.product_id)}`}>
+                  <img
+                    src={productImages[0]} // Hiển thị ảnh đầu tiên
+                    alt={item.product_name}
+                    className='w-full h-full rounded-lg object-contain'
+                  />
+                </Link>
               </div>
               <div className='ml-3 flex-grow'>
                 <div className='flex flex-col justify-between gap-y-1'>
-                  <p className='font-semibold'>{item.product_name}</p>
+                  <Link to={`/${generateNameId(item.product_name, item.product_id)}`}>
+                    <p className='font-semibold'>{item.product_name}</p>
+                  </Link>
                   <span className='text-sm'>Phân loại hàng: {item.order_quantity}</span>
                   <span className='text-sm'>Số lượng: {item.order_quantity}</span>
                 </div>

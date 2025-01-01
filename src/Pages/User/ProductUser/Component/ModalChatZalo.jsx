@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Button, Modal } from 'antd'
 import Logo from './Logo.jpg'
 import Zalo from './zalo.jpg'
+import { Link } from 'react-router-dom'
 const ModalChatZalo = ({ OpenModalChat, setOpenModalChat }) => {
   const showModal = () => {
     setOpenModalChat(true)
@@ -19,13 +20,17 @@ const ModalChatZalo = ({ OpenModalChat, setOpenModalChat }) => {
           {/* Phần thông tin nhà thuốc */}
           <div className='flex gap-4 items-center'>
             <div className='w-[100px] h-[100px] rounded-full overflow-hidden border-2 border-gray-200'>
-              <img src={Logo} alt='' className='w-full h-full object-cover' />
+              <img src='/assets/images/Logo_Pbl6.png' alt='' className='w-full h-full object-contain' />
             </div>
             <div className='flex flex-col'>
               <span className='text-2xl font-bold text-gray-800'>Nhà thuốc Pbl6</span>
-              <button className='mt-2 px-4 py-2 bg-blue rounded-lg font-semibold shadow-lg hover:bg-blue'>
+
+              <Link
+                to='https://www.facebook.com/profile.php?id=61571237860020'
+                className='mt-2 px-4 py-2 bg-blue rounded-lg font-semibold shadow-lg hover:bg-blue text-center'
+              >
                 Nhắn tin
-              </button>
+              </Link>
             </div>
           </div>
 
