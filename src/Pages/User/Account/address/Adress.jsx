@@ -89,7 +89,7 @@ export default function Adress() {
       </div>
       <Flex gap='middle' vertical>
         <Spin spinning={isLoading} tip='Loading...'>
-          {currentData?.map((element) => {
+          {currentData?.map((element, index) => {
             {
               return (
                 <>
@@ -109,9 +109,11 @@ export default function Adress() {
                           ' , ' +
                           element.province_name}
                       </div>
-                      <span class='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
-                        Nhà riêng
-                      </span>
+                      {index === 0 && ( // Chỉ hiển thị nhãn "Mặc định" cho phần tử đầu tiên
+                        <span className='mt-2 rounded-sm px-1 py-[4px] text-xs font-medium text-[#CE4712] bg-[#FFE0C7]'>
+                          Mặc định
+                        </span>
+                      )}
                     </div>
                     <div className='w-[20%]  '>
                       <div className='flex flex-grow justify-end gap-x-5 items-center'>
