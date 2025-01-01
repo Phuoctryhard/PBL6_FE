@@ -112,8 +112,14 @@ export default function UpdateAddress({ receiver_address_id }) {
         district_id: ++DetailAddress.data.data.district_id,
         ward_id: +data.ward
       }
+    } else {
+      address_Receive = {
+        receiver_name: data.fullName,
+        receiver_phone: data.phoneNumber, //required
+        receiver_address: data.numberHome
+      }
     }
-    console.log(DetailAddress)
+    console.log(address_Receive)
 
     console.log(data, +data.district, +data.ward)
     const id = receiver_address_id
@@ -144,7 +150,7 @@ export default function UpdateAddress({ receiver_address_id }) {
     if (DetailAddress) {
       console.log(DetailAddress)
       // data.data.data.receiver_name
-      setValue('fullName', 'cdsjnv')
+      setValue('fullName', DetailAddress.data.data.receiver_name)
       setValue('phoneNumber', DetailAddress.data.data.receiver_phone)
       setValue('city', DetailAddress.data.data.province_name)
       setValue('district', DetailAddress.data.data.district_name)

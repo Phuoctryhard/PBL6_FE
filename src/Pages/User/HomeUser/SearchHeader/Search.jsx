@@ -401,20 +401,20 @@ export default function Search() {
                   {!search && (
                     <>
                       <div className='p-5'>
-                        <div className='flex justify-between items-center mb-2 mt-2 '>
-                          <span className='font-semibold'>Tìm kiếm gần đây</span>
-                          Xóa tất cả
-                        </div>
-                      </div>
-
-                      <div className='p-5'>
                         <div className='font-semibold mb-2'>Tìm kiếm phổ biến</div>
                         <div className='flex flex-wrap gap-2 m-2'>
-                          {['Thuốc kê đơn ', 'Thuốc không kê đơn'].map((tag, index) => (
+                          {['Thuốc kê đơn', 'Thuốc không kê đơn'].map((tag, index) => (
                             <button
                               key={index}
                               className='px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200 text-sm'
-                              onClick={() => console.log(`Tìm kiếm phổ biến: ${tag}`)}
+                              onClick={() =>
+                                navigate({
+                                  pathname: '/category',
+                                  search: `?${createSearchParams({
+                                    category_parent_name: tag
+                                  })}`
+                                })
+                              }
                             >
                               {tag}
                             </button>
