@@ -527,7 +527,7 @@ export default function Search() {
                   content={ShopingCart}
                   placement='bottomRight'
                   className=''
-                  overlayClassName=' w-[300px] md:w-[450px] md:w-full' // responsive, full width on small screens, 50% width on larger screens
+                  overlayClassName=' w-[300px] md:w-[450px] ' // responsive, full width on small screens, 50% width on larger screens
                 >
                   <Badge
                     count={

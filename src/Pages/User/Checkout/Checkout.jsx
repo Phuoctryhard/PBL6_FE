@@ -211,7 +211,7 @@ export default function Checkout() {
   console.log(selectedAddress)
   return (
     <Spin tip='Vui lòng chờ trong giây lát!...' spinning={isLoading1}>
-      <div className='px-24 grid grid-cols-1 md: lg:grid-cols-9 bg-[#e5e5e5] gap-y-3'>
+      <div className='px-4 sm:px-8 md:px-24  grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-9 bg-[#e5e5e5] gap-y-3'>
         <Helmet>
           <title>Thanh Toán | Nhà Thuốc PBL6</title>
           <meta
