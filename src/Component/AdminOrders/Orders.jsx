@@ -470,7 +470,7 @@ const Orders = () => {
               key: item.order_id
             }
           })
-          .sort((a, b) => new Date(b.order_created_at) - new Date(a.order_created_at))
+          .sort((a, b) => new Date(b.order_updated_at) - new Date(a.order_updated_at))
         setData(formattedData)
         setFilterData(formattedData)
         setTableParams({

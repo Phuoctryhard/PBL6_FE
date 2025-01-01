@@ -335,7 +335,7 @@ const Customer = () => {
           key: item.user_id,
           user_phone: item.user_phone === null ? 'N/A' : item.user_phone
         }))
-        .sort((a, b) => new Date(b.user_created_at) - new Date(a.user_created_at))
+        .sort((a, b) => new Date(b.user_updated_at) - new Date(a.user_updated_at))
       setData(tableData)
       setFilterData(tableData)
       setTableParams({
@@ -391,8 +391,8 @@ const Customer = () => {
       const result = data.filter((item) => {
         const matchInfo =
           item.user_fullname.toLowerCase().includes(searchValue.toLowerCase()) ||
-          item.user_id.toString() === searchValue
-        item?.email.toLowerCase().includes(searchValue.toLowerCase()) ||
+          item.user_id.toString() === searchValue ||
+          item?.email.toLowerCase().includes(searchValue.toLowerCase()) ||
           item?.user_phone.toLowerCase().includes(searchValue.toLowerCase())
         const matchesGender = (selectedGender === null) | (item.user_gender === selectedGender)
         const matchesBlock = (selectedBlock === null) | (item.user_is_block === selectedBlock)
@@ -431,6 +431,7 @@ const Customer = () => {
       searchCustomer()
     }
   }, [
+    data,
     searchValue,
     selectedFrom,
     selectedTo,

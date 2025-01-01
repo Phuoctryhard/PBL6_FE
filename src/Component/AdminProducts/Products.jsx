@@ -388,10 +388,12 @@ const AdminProducts = () => {
       })
       const res = await ProductsAPI.searchProducts(query)
       const data = res.data
-      const tableData = data.map((product) => ({
-        ...product,
-        key: product.product_id
-      }))
+      const tableData = data
+        .map((product) => ({
+          ...product,
+          key: product.product_id
+        }))
+        .sort((a, b) => new Date(b.product_updated_at) - new Date(a.product_updated_at))
 
       const lowStockProduct = tableData
         .filter((item) => item.product_quantity < 10)

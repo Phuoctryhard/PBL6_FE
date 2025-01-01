@@ -419,7 +419,7 @@ export default function CategoryListProduct() {
                 <div className='flex flex-col items-center gap-y-2 w-[120px] h-[160px] p-2 mt-2'>
                   <div className='w-[100px] h-[100px]' onClick={() => handleClickCategory(element.category_name)}>
                     <img
-                      src={element.category_thumbnail}
+                      src={element.category_thumbnail ? element.category_thumbnail : anhloi}
                       alt='anh'
                       className='w-full h-full object-cover rounded-md border'
                     />
@@ -636,7 +636,7 @@ export default function CategoryListProduct() {
 
                       <div className='p-3'>
                         <Link to={`/${generateNameId(element.product_name, element.product_id)}`}>
-                          <h3 className='line-clamp-2 font-semibold text-base'>{element.product_name}</h3>
+                          <h3 className='line-clamp-2 font-semibold text-base h-[45px]'>{element.product_name}</h3>
                         </Link>
                         {element?.parent_category_name === 'Thuốc kê đơn' ? (
                           <button

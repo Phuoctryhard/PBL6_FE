@@ -247,10 +247,12 @@ const Illness = () => {
         return
       } else {
         const resData = res.data.data
-        const tableData = resData.map((item) => ({
-          ...item,
-          key: item.disease_id
-        }))
+        const tableData = resData
+          .map((item) => ({
+            ...item,
+            key: item.disease_id
+          }))
+          .sort((a, b) => new Date(b.disease_updated_at) - new Date(a.disease_updated_at))
         setData(tableData)
         setFilterData(tableData)
         setTableParams({
@@ -305,6 +307,7 @@ const Illness = () => {
       searchDisease()
     }
   }, [
+    data,
     searchValue,
     tableParams.pagination?.current,
     tableParams?.sortOrder,

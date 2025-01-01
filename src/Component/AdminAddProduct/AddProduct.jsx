@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Select, ConfigProvider, Image, Tooltip, message, Spin, Modal } from 'antd'
-import { DocumentUpload, ProgrammingArrows } from 'iconsax-react'
+import { Select, ConfigProvider, Image, Tooltip, message, Spin, Modal, TreeSelect } from 'antd'
+import { ArrowDown2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
@@ -40,6 +40,7 @@ const AddProduct = () => {
   const [productSlug, setProductSlug] = useState('')
   const [categories, setCategories] = useState([])
   const [category, setCategory] = useState('')
+  const [treeData, setTreeData] = useState([])
   const [brands, setBrands] = useState([])
   const [brand, setBrand] = useState('')
   const [productPrice, setProductPrice] = useState('')
@@ -396,6 +397,16 @@ const AddProduct = () => {
     }))
   }
 
+  const convertToTreeData = (data) => {
+    const filterData = data.filter((item) => item.category_type === 'medicine')
+    return filterData.map((item) => ({
+      title: item.category_name,
+      label: item.category_name,
+      value: item.category_id,
+      children: item.children ? convertToTreeData(item.children) : []
+    }))
+  }
+
   useEffect(() => {
     try {
       CategoriesAPI.getAllCategories(token)
@@ -423,6 +434,19 @@ const AddProduct = () => {
           setStatus(400)
           setMessageResult(err.message)
         })
+      const fetchCategory = async () => {
+        try {
+          const res = await CategoriesAPI.getCategories()
+          const data = res.data
+          const categories = convertToTreeData(data.filter((category) => category.category_is_delete === 0))
+          setTreeData(categories)
+        } catch (err) {
+          setStatus(400)
+          setMessageResult(err.message)
+        }
+      }
+
+      fetchCategory()
       BrandsAPI.getBrands()
         .then(({ data }) => {
           let brands = data.map((brand) => ({
@@ -550,7 +574,7 @@ const AddProduct = () => {
                         <span className='text-[red]'>* </span>Category
                       </label>
                       <ConfigProvider theme={filterTheme}>
-                        <Select
+                        {/* <Select
                           suffixIcon={null}
                           allowClear
                           showSearch
@@ -560,6 +584,21 @@ const AddProduct = () => {
                           options={categories}
                           filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
                           onDropdownVisibleChange={() => setErrorCategory('')}
+                          className='AddForm__select'
+                          onChange={(value) => {
+                            setCategory(value)
+                          }}
+                        /> */}
+                        <TreeSelect
+                          suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
+                          allowClear
+                          showSearch
+                          placeholder='Select Category'
+                          placement='bottomLeft'
+                          filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
+                          treeData={treeData}
+                          treeDefaultExpandAll
+                          value={category || undefined}
                           className='AddForm__select'
                           onChange={(value) => {
                             setCategory(value)
@@ -584,7 +623,7 @@ const AddProduct = () => {
                           allowClear
                           value={brand || undefined}
                           showSearch
-                          filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
+                          filterTreeNode={(input, node) => node.title.toLowerCase().includes(input.toLowerCase())}
                           onDropdownVisibleChange={() => setErrorBrand('')}
                           onChange={(value) => {
                             setBrand(value)

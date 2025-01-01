@@ -160,15 +160,19 @@ export default function OrderHistory() {
                 {element?.order_detail?.map((detail) => (
                   <div className='flex mt-7 p-2' key={detail?.order_detail_id}>
                     <div className='flex-shrink-0 w-20 h-20'>
-                      <img
-                        src={JSON.parse(detail.product_images)[0]} // Lấy ảnh đầu tiên từ mảng `product_images`
-                        alt={detail.product_name}
-                        className='w-full h-full rounded-lg object-contain'
-                      />
+                      <Link to={`/account/order-history/${element.order_id}`}>
+                        <img
+                          src={JSON.parse(detail.product_images)[0]} // Lấy ảnh đầu tiên từ mảng `product_images`
+                          alt={detail.product_name}
+                          className='w-full h-full rounded-lg object-contain'
+                        />
+                      </Link>
                     </div>
                     <div className='flex flex-grow ml-3'>
                       <div className='flex flex-col justify-between'>
-                        <p className='font-semibold line-clamp-2'>{detail.product_name}</p>
+                        <Link to={`/account/order-history/${element.order_id}`}>
+                          <p className='font-semibold line-clamp-2'>{detail.product_name}</p>
+                        </Link>
                         <span className='text-sm'>Phân loại hàng 200</span>
                         <span className='text-sm'>*{detail.order_quantity}</span>
                       </div>

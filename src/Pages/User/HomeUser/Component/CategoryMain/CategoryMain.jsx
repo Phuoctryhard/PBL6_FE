@@ -39,7 +39,7 @@ const CategoryMain = ({ setopenCategory }) => {
           }
         }}
         className='cursor-pointer w-full'
-      >
+      > 
         <div
           className={
             'flex p-3 gap-2 text-black mb-3 mr-2 items-center rounded-lg font-medium hover:bg-[#EBFAFB] w-full'

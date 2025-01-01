@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
-import { Select, ConfigProvider, Image, Tooltip, message, Spin, Modal } from 'antd'
-import { DocumentUpload, ProgrammingArrows } from 'iconsax-react'
+import { Select, ConfigProvider, Image, Tooltip, message, Spin, Modal, TreeSelect } from 'antd'
+import { ArrowDown2, DocumentUpload, ProgrammingArrows } from 'iconsax-react'
 import { CloseOutlined } from '@ant-design/icons'
 import { DeleteOutlined } from '@ant-design/icons'
 import { useState, useEffect, useRef } from 'react'
@@ -85,6 +85,7 @@ const EditProduct = () => {
   const [messageResult, setMessageResult] = useState('')
   const [status, setStatus] = useState(0)
   const [submitLoading, setSubmitLoading] = useState(false)
+  const [treeData, setTreeData] = useState([])
 
   const fetchProducts = async () => {
     try {
@@ -377,68 +378,39 @@ const EditProduct = () => {
     }
   }
 
-  const convertToTreeSelectData = (data) => {
-    return data.map((item) => ({
+  const convertToTreeData = (data) => {
+    const filterData = data.filter((item) => item.category_type === 'medicine')
+    return filterData.map((item) => ({
+      title: item.category_name,
       label: item.category_name,
-      value: item.category_id
+      value: item.category_id,
+      children: item.children ? convertToTreeData(item.children) : []
     }))
-  }
-  const convertDataToTree = (data) => {
-    const map = {}
-    const tree = []
-    data.forEach((item) => {
-      map[item.category_id] = { ...item, children: [] }
-    })
-    data.forEach((item) => {
-      if (item.category_parent_id !== null && map[item.category_parent_id]) {
-        map[item.category_parent_id].children.push(map[item.category_id])
-      } else if (item.category_parent_id === null) {
-        tree.push(map[item.category_id])
-      }
-    })
-    return tree
-  }
-  const getDeepestChildren = (tree) => {
-    const deepestChildren = []
-    const traverse = (node) => {
-      if (!node.children || node.children.length === 0) {
-        deepestChildren.push(node)
-      } else {
-        node.children.forEach((child) => traverse(child))
-      }
-    }
-    tree.forEach((node) => traverse(node))
-    return deepestChildren
   }
 
   useEffect(() => {
     try {
       fetchProducts()
       CategoriesAPI.getAllCategories(token)
-        .then(({ data }) => {
-          try {
-            if (data) {
-              let categories = convertToTreeSelectData(
-                getDeepestChildren(
-                  convertDataToTree(
-                    data.filter(
-                      (category) =>
-                        category.category_is_delete === 0 && !category.category_type.toLowerCase().includes('disease')
-                    )
-                  )
-                )
-              )
-              setCategories(categories)
-            }
-          } catch (err) {
-            setStatus(400)
-            setMessageResult('Error convert category:', err.message)
-          }
-        })
+        .then(({ data }) => {})
         .catch((err) => {
           setStatus(400)
           setMessageResult(err.message)
         })
+
+      const fetchCategory = async () => {
+        try {
+          const res = await CategoriesAPI.getCategories()
+          const data = res.data
+          const categories = convertToTreeData(data.filter((category) => category.category_is_delete === 0))
+          setTreeData(categories)
+        } catch (err) {
+          setStatus(400)
+          setMessageResult(err.message)
+        }
+      }
+
+      fetchCategory()
       BrandsAPI.getBrands()
         .then(({ data }) => {
           let brands = data.map((brand) => ({
@@ -598,16 +570,16 @@ const EditProduct = () => {
                         <span className='text-[red]'>* </span>Category
                       </label>
                       <ConfigProvider theme={filterTheme}>
-                        <Select
-                          suffixIcon={null}
+                        <TreeSelect
+                          suffixIcon={<ArrowDown2 size='15' color='#1D242E' />}
                           allowClear
                           showSearch
                           placeholder='Select Category'
                           placement='bottomLeft'
+                          filterTreeNode={(input, node) => node.title.toLowerCase().includes(input.toLowerCase())}
+                          treeData={treeData}
+                          treeDefaultExpandAll
                           value={category || undefined}
-                          options={categories}
-                          filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
-                          onDropdownVisibleChange={() => setErrorCategory('')}
                           className='AddForm__select'
                           onChange={(value) => {
                             setCategory(value)
@@ -967,10 +939,10 @@ Tá dược: Lactose monohydrat, cellulose vi tinh thi (M101), povidon (kollidon
               </div>
             </div>
           </div>
-          <div className='AddForm__row button__group mt-2'>
+          <div className='flex items-center justify-end gap-4 button__group mt-2'>
             <button
               type='submit'
-              className='h-[46px] px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
+              className='px-4 py-3 bg-[rgb(0,143,153)] rounded-lg text-[#FFFFFF] flex gap-2 font-semibold items-center text-sm hover:bg-opacity-80'
             >
               Submit
             </button>

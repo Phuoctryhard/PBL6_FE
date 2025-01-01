@@ -359,7 +359,7 @@ const Header = forwardRef((_, ref) => {
           const result = searchResult?.map((p) => (
             <button
               key={p.product_id}
-              className='flex items-center gap-2 hover:bg-[rgb(0,143,153,0.1)] hover:cursor-pointer w-full p-2 rounded-md justify-center'
+              className='flex items-center gap-2 hover:bg-[rgb(0,143,153,0.1)] hover:cursor-pointer w-full p-2 rounded-md justify-start'
               to={`/admin/products/${p.product_id}`}
               onClick={() => {
                 const path = window.location.pathname
@@ -370,7 +370,7 @@ const Header = forwardRef((_, ref) => {
                 navigate(`/admin/products/${p.product_id}`, { replace: true })
               }}
             >
-              <span className='text-sm text-[#1D242E] mr-2'>{p.product_id}</span>
+              <span className='text-sm text-[#1D242E] min-w-[50px]'>{p.product_id}</span>
               <img
                 src={
                   p.product_images !== null
@@ -378,7 +378,7 @@ const Header = forwardRef((_, ref) => {
                     : '/assets/images/default-image.png'
                 }
                 alt={p.product_name}
-                className='w-[50px] h-[50px]'
+                className='w-auto h-[50px]'
                 onError={(e) => {
                   e.target.onerror = null
                   e.target.src = '/assets/images/default-image.png'

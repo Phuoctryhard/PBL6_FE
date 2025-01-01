@@ -219,10 +219,12 @@ const Delivery = () => {
         return
       }
       const data = res.data
-      const tableData = data.map((item) => ({
-        ...item,
-        key: item.delivery_method_id
-      }))
+      const tableData = data
+        .map((item) => ({
+          ...item,
+          key: item.delivery_method_id
+        }))
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
       setData(tableData)
       setFilterData(tableData)
       setTableParams({
@@ -310,6 +312,7 @@ const Delivery = () => {
   useEffect(() => {
     if (data) searchDelivery()
   }, [
+    data,
     searchValue,
     selectedFrom,
     selectedTo,
@@ -477,6 +480,7 @@ const Delivery = () => {
       } else if (typeModal === 'update') {
         setMessageResult('Delivery method was successfully updated')
       }
+      fetchAllDelivery()
       handleCancel()
     } catch (e) {
       if (e.message.includes('401')) {

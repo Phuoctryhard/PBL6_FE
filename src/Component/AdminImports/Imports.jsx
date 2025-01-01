@@ -364,7 +364,7 @@ const AdminImports = () => {
           ...item,
           key: item.import_id
         }))
-        .sort((a, b) => new Date(b.import_created_at) - new Date(a.import_created_at))
+        .sort((a, b) => new Date(b.import_updated_at) - new Date(a.import_updated_at))
       setFilterData(tableData)
       setData(tableData)
       setTableParams({
