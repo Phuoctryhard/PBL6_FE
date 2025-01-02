@@ -52,6 +52,7 @@ class Http {
         return response
       },
       function (error) {
+        console.log(error)
         console.log(error.status)
         console.log(error.response.status)
 

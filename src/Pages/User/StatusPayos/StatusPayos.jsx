@@ -19,14 +19,13 @@ export default function StatusPayos() {
         onSuccess: (data) => {
           console.log(data)
           toast.success('Hủy đơn hàng thành công')
-
           navigate('/account/order-history') // Chờ 3 giây trước khi chuyển trang
         }
       })
     } else {
       console.log('Status:', status, 'Order Code:', orderCode)
       toast.success('Thanh toán đơn hàng thành công')
-      navigate('/account/order-history') // Chờ 3 giây trước khi chuyển trang
+      // navigate('/account/order-history') // Chờ 3 giây trước khi chuyển trang
     }
   }, []) // Chỉ chạy khi status hoặc orderCode thay đổi
 

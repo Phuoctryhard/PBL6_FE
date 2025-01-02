@@ -841,7 +841,7 @@ import { useParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import productAPI from '../../../../Api/user/product'
 import DOMPurify from 'dompurify'
-
+import { Empty } from 'antd'
 import CartAPI from '../../../../Api/user/cart'
 import { toast } from 'react-toastify'
 import { queryClient } from '../../../..'
@@ -862,6 +862,8 @@ export default function DetailProduct() {
   const [quantity, setQuantity] = useState(1)
   const { idproduct } = useParams()
   const idproduct1 = getIdfromNameId(idproduct)
+  console.log(idproduct1)
+
   const { data, isLoading } = useQuery({
     queryKey: ['detailProduct', idproduct1],
     queryFn: () => productAPI.getProductById(idproduct1)
@@ -997,7 +999,15 @@ export default function DetailProduct() {
     } else {
     }
   }
+  console.log(data?.data?.data)
   const [OpenModalChat, setOpenModalChat] = useState(false)
+  // if (!data || !data.data) {
+  //   return (
+  //     <div className='h-screen flex justify-center'>
+  //       <Empty />
+  //     </div>
+  //   )
+  // }
   return (
     <div className='px-4 md:px-24'>
       <Helmet>
