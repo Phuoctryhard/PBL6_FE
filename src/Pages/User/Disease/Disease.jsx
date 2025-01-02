@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import diseaseAPI from '../../../Api/user/disease'
 import PartBody from './Component/TypeDisease/PartBody'
 import Speciality from './Component/TypeDisease/Speciality'
-import { Spin } from 'antd'
+import { Descriptions, Spin } from 'antd'
 import { Helmet } from 'react-helmet-async'
 export default function Disease() {
   const { data, isLoading } = useQuery({
@@ -24,10 +24,14 @@ export default function Disease() {
 
         <meta name='description' content='Xem danh sách bệnh trong nhà thuốc Pbl6' />
       </Helmet>
-      <Spin spinning={isLoading}>
-        <DiseaseSesson disease_common={data?.data?.data?.disease_common} />
-        <DiseaseObject disease_by_target_group={data?.data?.data?.disease_by_target_group} />
-        <PartBody disease_Body={data?.data?.data?.disease_body_part} />
+      <Spin spinning={isLoading} Descriptions='loading'>
+        <div className={isLoading ? 'h-screen' : ''}>
+          {' '}
+          {/* Điều chỉnh chiều cao khi loading */}
+          <DiseaseSesson disease_common={data?.data?.data?.disease_common} />
+          <DiseaseObject disease_by_target_group={data?.data?.data?.disease_by_target_group} />
+          <PartBody disease_Body={data?.data?.data?.disease_body_part} />
+        </div>
       </Spin>
     </>
   )

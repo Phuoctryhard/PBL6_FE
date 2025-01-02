@@ -287,13 +287,13 @@ export default function Cart() {
     setIsModalOpenDeleteMany(false)
   }
   return (
-    <div className='px-24'>
+    <div className='px-24 '>
       <Helmet>
         <title>Giỏ Hàng</title>
 
         <meta name='description' content='Xem chi tiết giỏ hàng , những mặt hàng đã thêm vào giỏ hàng nhà thuốc Pbl6' />
       </Helmet>
-      <div className='grid grid-cols-9 pt-5 gap-x-5 '>
+      <div className='grid grid-cols-9 pt-5 gap-x-5 h-screen'>
         <div className='col-span-6'>
           <div className='flex justify-between '>
             <div className='text-2xl font-semibold'>
@@ -310,7 +310,7 @@ export default function Cart() {
             </button>
           </div>
           <div className=''>
-            <div class='w-full max-w-4xl mx-auto my-4 border rounded-lg shadow'>
+            <div class='w-full max-w-4xl mx-auto my-4 border rounded-lg shadow '>
               <div class='flex items-center border-b p-4 bg-gray-100'>
                 <input
                   type='checkbox'

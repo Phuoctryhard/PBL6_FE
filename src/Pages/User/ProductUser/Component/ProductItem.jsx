@@ -52,16 +52,3 @@ export default function ProductItem({ sanphammoi, sanphambanchay }) {
     </>
   )
 }
-
-// ;<span class='mt-[2px] block h-6 text-base font-bold text-blue'>{formatCurrency(element.product_price)}</span>
-
-// <div className='absolute bottom-0 left-0 flex h-[26px] w-full'>
-//                   <img
-//                     className='h-full w-full object-contain'
-//                     src={''}
-//                     alt=''
-//                     loading='lazy'
-//                     width='500'
-//                     height='500'
-//                   />
-//                 </div>

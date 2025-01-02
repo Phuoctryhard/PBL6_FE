@@ -330,6 +330,7 @@ export default function Checkout() {
           <div className='font-semibold'>Phương thức thanh toán</div>
           <div className='grid lg:grid-cols-2 gap-5'>
             {data?.data?.data.map((element) => {
+              console.log(element)
               return (
                 <div className='bg-[#e5e5e5] rounded-md p-2 font-semibold mt-4 w-[70%]' key={element.payment_method_id}>
                   <Radio.Group
@@ -338,12 +339,11 @@ export default function Checkout() {
                     className='flex items-center space-x-5 justify-between '
                   >
                     <Radio value={element.payment_method_id}>{element.payment_method_name}</Radio>
-                    <svg width='38' height='14' viewBox='0 0 38 14' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                      <path
-                        d='M24.6525 0.907898C22.0111 0.907898 19.6506 2.3164 19.6506 4.91872C19.6506 7.90308 23.837 8.10921 23.837 9.60847C23.837 10.2397 23.1338 10.8048 21.9328 10.8048C20.2282 10.8048 18.9543 10.0152 18.9543 10.0152L18.4092 12.6413C18.4092 12.6413 19.8768 13.3082 21.8252 13.3082C24.7131 13.3082 26.9855 11.8306 26.9855 9.18376C26.9855 6.03024 22.7817 5.83024 22.7817 4.43867C22.7817 3.94416 23.3589 3.40232 24.5565 3.40232C25.9078 3.40232 27.0102 3.97658 27.0102 3.97658L27.5437 1.44028C27.5437 1.44028 26.3442 0.907898 24.6525 0.907898V0.907898ZM0.486063 1.09932L0.422104 1.48215C0.422104 1.48215 1.53335 1.69138 2.53421 2.10875C3.8229 2.58735 3.9147 2.86596 4.13174 3.73132L6.49678 13.1108H9.66712L14.5513 1.09932H11.3882L8.24984 9.26601L6.9692 2.34354C6.85176 1.55127 6.25686 1.09932 5.52867 1.09932H0.486063V1.09932ZM15.8232 1.09932L13.3419 13.1108H16.3581L18.8307 1.09932H15.8232V1.09932ZM32.6459 1.09932C31.9186 1.09932 31.5332 1.49992 31.2504 2.19997L26.8314 13.1108H29.9945L30.6065 11.2924H34.46L34.8322 13.1108H37.6231L35.1883 1.09932H32.6459V1.09932ZM33.0573 4.34446L33.9949 8.85177H31.483L33.0573 4.34446V4.34446Z'
-                        fill='#1434CB'
-                      />
-                    </svg>
+                    <img
+                      src={element.payment_method_logo}
+                      className='w-8 h-8 object-contain rounded-full'
+                      alt='payment'
+                    />
                   </Radio.Group>
                 </div>
               )
