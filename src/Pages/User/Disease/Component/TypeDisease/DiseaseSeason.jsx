@@ -8,13 +8,7 @@ export default function DiseaseSesson({ disease_common }) {
         {/* Header */}
         <div className='flex items-center justify-between pt-4'>
           <h4 className='font-semibold md:font-semibold md:text-[20px] text-base'>Nhóm bệnh theo mùa bệnh</h4>
-          <a
-            className='relative flex justify-center border-0 bg-transparent text-sm font-normal text-hyperLink outline-none hover:text-primary-600 md:text-base'
-            type='button'
-            href='/benh'
-          >
-            Xem thêm
-          </a>
+      
         </div>
 
         {/* Content */}

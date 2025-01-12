@@ -7,13 +7,6 @@ export default function Speciality({ speciality }) {
     <div className='px-4 sm:px-8 md:px-16 lg:px-24 flex flex-col'>
       <div className='flex items-center justify-between pt-4'>
         <h4 className='font-semibold md:font-semibold md:text-[20px] text-base'>Nhóm bệnh chuyên khoa</h4>
-        <a
-          className='relative flex justify-center border-0 bg-transparent text-sm font-normal text-hyperLink outline-none md:hover:text-primary-600 md:text-base'
-          type='button'
-          href='/benh'
-        >
-          Xem thêm
-        </a>
       </div>
       <div className='grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6 py-6'>
         {speciality?.map((element) => {
