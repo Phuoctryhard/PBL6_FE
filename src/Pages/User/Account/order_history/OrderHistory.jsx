@@ -63,11 +63,11 @@ export default function OrderHistory() {
   const handleBuyAgain = async (order_detail) => {
     let arrayIdCart = [] // Declare the array before the loop
 
-   // console.log(order_detail)
+    // console.log(order_detail)
 
     // Loop through the order details and trigger the mutation for each product
     for (const element of order_detail) {
-      console.log(element)
+      //  console.log(element)
       try {
         const data = await mutateAddProductCart.mutateAsync({
           product_id: element.product_id,
@@ -75,9 +75,9 @@ export default function OrderHistory() {
         })
 
         // Handle success for each product added to the cart
-        console.log('Product added to cart successfully:', data.data.data)
+        // console.log('Product added to cart successfully:', data.data.data)
         arrayIdCart.push(data.data.data.cart_id) // Track which products were added
-       // console.log('Products added to cart:', arrayIdCart)
+        // console.log('Products added to cart:', arrayIdCart)
 
         // Invalidate the queries after each successful mutation
         queryClient.invalidateQueries({ queryKey: ['getCart'] })
@@ -107,9 +107,9 @@ export default function OrderHistory() {
   const Cancel_CartOrder = useMutation({
     mutationFn: OrderApi.Cancel_CartOrder
   })
-  console.log(isActive)
+
   const handleCancelOrder = (idOrder) => {
-    console.log(idOrder)
+    // console.log(idOrder)
     Cancel_CartOrder.mutate(idOrder, {
       onSuccess: () => {
         toast.success('Hủy đơn hàng thành công')
@@ -120,84 +120,38 @@ export default function OrderHistory() {
       }
     })
   }
+
+  const handleCancelOrder1 = (idOrder) => {
+    // console.log(idOrder)
+    Cancel_CartOrder.mutate(idOrder, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['getOrderApi'] })
+      },
+      onError: () => {
+        toast.error('Hủy đơn hàng thất bại ')
+      }
+    })
+  }
   const [isModalOpen, setIsModalOpen] = useState(false)
   const showModal = (order_id, product_id) => {
-    console.log(order_id, product_id)
+    // console.log(order_id, product_id)
     setIdOrder(order_id)
     setIdProduct(product_id)
     setIsModalOpen(true)
   }
- // console.log(dataAll)
-  // lấy ra params trên url
-  // const useQueryParameter = useQueryParams()
-  // console.log(useQueryParameter)
-
-  // const { data: paymentStatus1 } = useQuery({
-  //   queryKey: ['getPaymentStatus', useQueryParameter],
-  //   queryFn: () => {
-  //     return paymentAPI.getPaymentStatus(useQueryParameter)
-  //   },
-  //   onSuccess: (data) => {
-  //     console.log('Dữ liệu đã tải thành công:', data)
-  //     // Thêm các hành động khác nếu cần
-  //   },
-  //   onError: (error) => {
-  //     console.log(error)
-  //     toast.success('Thanh toan that bai')
-  //   },
-  //   enabled: !!useQueryParameter // Đảm bảo useQueryParameter có giá trị
-  // })
-
-  // const { data: paymentStatus1 } = useQuery({
-  //   queryKey: ['getPaymentStatus', useQueryParameter],
-  //   queryFn: async () => {
-  //     try {
-  //       const response = await paymentAPI.getPaymentStatus(useQueryParameter)
-  //       return response // Trả về dữ liệu nếu thành công
-  //     } catch (error) {
-  //       // Đảm bảo ném lỗi để react-query kích hoạt onError
-  //       throw error.response || error
-  //     }
-  //   },
-  //   enabled: !!useQueryParameter, // Chỉ chạy khi useQueryParameter có giá trị
-  //   onSuccess: (data) => {
-  //     console.log('Dữ liệu đã tải thành công:', data)
-  //     // Thêm các hành động khác nếu cần
-  //   },
-  //   onError: (error) => {
-  //     // Xử lý lỗi và log chi tiết
-  //     const errorMessage = error?.data?.message || error?.message || 'Lỗi không xác định'
-  //     console.error('Lỗi xảy ra:', errorMessage)
-  //     toast.error(`Thanh toán thất bại: ${errorMessage}`)
-  //   }
-  // })
-
-  // const { data: paymentStatus2 } = useQuery({
-  //   queryKey: ['getPaymentStatus2', useQueryParameter],
-  //   queryFn: async () => {
-  //     try {
-  //       const response = await paymentAPI.getPaymentStatusApi2(useQueryParameter)
-  //       return response // Trả về dữ liệu nếu thành công
-  //     } catch (error) {
-  //       console.log(error.response.data.messages[0])
-  //       toast.error(error.response.data.messages[0])
-  //       // Đảm bảo ném lỗi để react-query kích hoạt onError
-  //       throw error.response || error
-  //     }
-  //   },
-  //   enabled: !!useQueryParameter, // Chỉ chạy khi useQueryParameter có giá trị
-  //   onSuccess: (data) => {
-  //     console.log('Dữ liệu đã tải thành công:', data)
-  //     // Thêm các hành động khác nếu cần
-  //   },
-  //   onError: (error) => {
-  //     // Xử lý lỗi và log chi tiết
-  //     const errorMessage = error?.data?.message || error?.message || 'Lỗi không xác định'
-  //     console.error('Lỗi xảy ra:', errorMessage)
-  //     toast.error(`Thanh toán thất bại: ${errorMessage}`)
-  //   }
-  // })
-
+  useEffect(() => {
+    if (dataAll?.length) {
+      dataAll.forEach((element) => {
+        console.log(element)
+        if (
+          (element.payment_method_name === 'PAYOS' || element.payment_method_name === 'VNPAY') &&
+          element.payment_status === 'pending'
+        ) {
+          handleCancelOrder1(element.order_id)
+        }
+      })
+    }
+  }, [dataAll])
   return (
     <div className=''>
       <Helmet>
@@ -225,7 +179,6 @@ export default function OrderHistory() {
       <div className=''>
         {dataAll ? (
           dataAll?.map((element) => {
-            //console.log(element)
             return (
               <div key={element?.order_id}>
                 {element?.order_detail?.map((detail) => (
