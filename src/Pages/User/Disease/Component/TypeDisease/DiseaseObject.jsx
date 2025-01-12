@@ -12,13 +12,7 @@ export default function DiseaseObject({ disease_by_target_group }) {
         {/* Header */}
         <div className='flex items-center justify-between py-4'>
           <h4 className='font-semibold md:text-[20px] text-base'>Bệnh theo đối tượng</h4>
-          <a
-            className='text-hyperLink text-sm font-normal hover:text-primary-600 md:text-base'
-            type='button'
-            href='/benh'
-          >
-            Xem thêm
-          </a>
+          
         </div>
 
         {/* Content */}
